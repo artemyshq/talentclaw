@@ -238,7 +238,7 @@ Never assume these fields from a resume alone -- always confirm with the user:
 
 **Resume input (abbreviated):**
 
-> **Jane Park** -- jane@email.com -- github.com/janepark
+> **Jane Park** -- jane@example.com -- github.com/janepark
 >
 > Senior Software Engineer, Acme Corp (2021-present)
 > - Led migration of 8 microservices from REST to gRPC, reducing inter-service latency by 60%
