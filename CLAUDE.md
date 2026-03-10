@@ -2,9 +2,8 @@
 
 ## Project Structure
 
-This is a Bun monorepo with three workspace categories:
+This is a Bun monorepo with two workspace categories:
 
-- `packages/` — Distributable skills and libraries
 - `apps/` — Applications (web UI, CLI)
 - `skills/` — Platform-agnostic agent skills
 
@@ -20,7 +19,7 @@ This is a Bun monorepo with three workspace categories:
 
 | Path | What it is |
 |------|-----------|
-| `packages/skill/` | Candidate career skill (skills.sh distribution) |
+| `skills/candidate/` | Candidate career skill (skills.sh distribution) |
 | `apps/web/` | Career CRM web UI (Next.js) |
 | `apps/cli/` | `npx talentclaw` launcher |
 | `skills/coffeeshop-employer/` | Employer hiring skill |

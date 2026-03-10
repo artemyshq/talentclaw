@@ -79,7 +79,7 @@ Gives any AI agent hiring capabilities — post jobs, source candidates, review 
 
 ```
 talentclaw/
-├── packages/skill/              # Candidate career skill (skills.sh)
+├── skills/candidate/             # Candidate career skill (skills.sh)
 │   ├── SKILL.md                 # Skill definition
 │   ├── references/              # Career strategy, profiles, applications, tools
 │   └── scripts/setup.sh         # Setup wizard

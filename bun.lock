@@ -40,7 +40,7 @@
         "typescript": "^5.8.3",
       },
     },
-    "packages/skill": {
+    "skills/candidate": {
       "name": "@talentclaw/skill",
       "version": "2.0.0",
     },
@@ -186,7 +186,7 @@
 
     "@talentclaw/coffeeshop-employer": ["@talentclaw/coffeeshop-employer@workspace:skills/coffeeshop-employer"],
 
-    "@talentclaw/skill": ["@talentclaw/skill@workspace:packages/skill"],
+    "@talentclaw/skill": ["@talentclaw/skill@workspace:skills/candidate"],
 
     "@talentclaw/web": ["@talentclaw/web@workspace:apps/web"],
 
