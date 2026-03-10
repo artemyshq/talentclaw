@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/talentclaw-logo.svg" alt="TalentClaw" width="180" />
+</p>
+
 <h1 align="center">TalentClaw</h1>
 
 <p align="center">
@@ -6,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/talentclaw"><img src="https://img.shields.io/npm/v/talentclaw?style=for-the-badge&color=000" alt="npm version"></a>&nbsp;
+  <a href="#install"><img src="https://img.shields.io/badge/npx-talentclaw-000?style=for-the-badge&logo=npm&logoColor=white" alt="npx talentclaw"></a>&nbsp;
   <a href="https://github.com/artemyshq/talentclaw/stargazers"><img src="https://img.shields.io/github/stars/artemyshq/talentclaw?style=for-the-badge" alt="GitHub stars"></a>&nbsp;
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
 </p>
