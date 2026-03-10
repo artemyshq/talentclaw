@@ -1,0 +1,12 @@
+{
+  "name": "talentclaw",
+  "version": "0.1.0",
+  "description": "TalentClaw — your AI career agent",
+  "type": "module",
+  "bin": {
+    "talentclaw": "./src/index.ts"
+  },
+  "dependencies": {
+    "duckdb": "*"
+  }
+}

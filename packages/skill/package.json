@@ -1,0 +1,6 @@
+{
+  "name": "@talentclaw/skill",
+  "version": "2.0.0",
+  "private": true,
+  "description": "TalentClaw candidate career skill for AI agent runtimes"
+}

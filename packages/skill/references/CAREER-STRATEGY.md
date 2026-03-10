@@ -22,6 +22,16 @@ The user is actively looking. They may be unemployed, about to leave, or urgentl
 
 Active searchers need momentum. Avoid over-filtering. A good-enough opportunity today beats a perfect one that never appears.
 
+**Active search weekly cadence:**
+
+| Day | Activity |
+|-----|----------|
+| Monday | Search for new postings, apply to top matches |
+| Tuesday-Wednesday | Follow up on pending applications, check inbox |
+| Thursday | Search again (new postings often appear mid-week) |
+| Friday | Review pipeline, update profile if needed |
+| Weekend | Prepare for any scheduled interviews |
+
 ### Passive / Open
 
 **availability: "passive"**
@@ -35,6 +45,11 @@ The user is employed but open to the right thing. They are not desperate and sho
 - Set tighter filters on role, compensation, and location
 
 Passive candidates have leverage. Use it. Do not flood them with marginal matches.
+
+**The "clearly better" test for passive candidates:** An opportunity should beat the current role on at least 2 of these 3 dimensions to be worth pursuing:
+1. Compensation (20%+ total comp increase)
+2. Growth (meaningfully faster career trajectory)
+3. Quality of life (better team, culture, flexibility, or mission alignment)
 
 ### Not Looking
 
@@ -62,6 +77,12 @@ Mode changes happen because of life events, not calendar dates. When you detect 
 - New job landed, got promoted, renewed motivation -- move to **passive** or **not_looking**
 - Curiosity sparked by a conversation or industry shift -- move from **not_looking** to **passive**
 
+**When mode changes, update immediately:**
+1. Set `availability` to the new value
+2. Adjust `salary_range` if expectations have changed
+3. Review `preferred_roles` -- goals may have shifted
+4. Run a fresh search with updated filters
+
 ---
 
 ## Evaluating Opportunities
@@ -80,6 +101,19 @@ Evaluate every opportunity across these five dimensions:
 
 No opportunity will score perfectly on all five. Help the user identify which dimensions matter most to them right now.
 
+**Scoring template:**
+
+| Dimension | Score (1-5) | Notes |
+|-----------|-------------|-------|
+| Role Fit | | |
+| Growth Trajectory | | |
+| Compensation | | |
+| Culture Signals | | |
+| Team/Manager Quality | | |
+| **Total** | **/25** | |
+
+A score of 18+ is strong. 14-17 is worth a conversation. Below 14, think carefully about whether this is the right move.
+
 ### Red Flags in Job Postings
 
 - Vague requirements like "must be a self-starter" with no specifics about the actual work
@@ -89,6 +123,7 @@ No opportunity will score perfectly on all five. Help the user identify which di
 - Excessively long lists of required technologies (10+ specific tools)
 - "Rockstar" / "ninja" / "guru" language -- signals cultural immaturity
 - The role has been open for 6+ months with no clear reason
+- Reposted multiple times in a short period -- may indicate a revolving door or unrealistic expectations
 
 ### Green Flags in Job Postings
 
@@ -98,6 +133,7 @@ No opportunity will score perfectly on all five. Help the user identify which di
 - Transparent compensation range
 - Concrete description of what success looks like in the first 90 days
 - Mention of growth paths, learning budgets, or internal mobility
+- The posting was clearly written by someone who understands the role (technical accuracy, realistic scope)
 
 ### The 3-Question Filter
 
@@ -117,15 +153,15 @@ Targeting the right level is critical. Aiming too high leads to rejections. Aimi
 
 ### Level Mapping
 
-| Level | Typical Profile |
-|-------|----------------|
-| **intern** | Student or recent bootcamp grad. Learning fundamentals. |
-| **junior** | 0-2 years. Can execute well-defined tasks with guidance. |
-| **mid** | 2-5 years. Works independently on features. Owns small projects. |
-| **senior** | 5-10 years. Owns large features or systems. Mentors others. Makes technical decisions. |
-| **staff** | 8-15+ years. Sets technical direction across teams. Solves ambiguous, cross-cutting problems. |
-| **principal** | 12-20+ years. Shapes company-wide technical strategy. Industry-recognized expertise. |
-| **executive** | VP/CTO/SVP. Organizational leadership, not individual contribution. |
+| Level | Typical Profile | Scope Indicator |
+|-------|----------------|-----------------|
+| **intern** | Student or recent bootcamp grad. Learning fundamentals. | Individual tasks with close guidance |
+| **junior** | 0-2 years. Can execute well-defined tasks with guidance. | Completes assigned work within a team |
+| **mid** | 2-5 years. Works independently on features. Owns small projects. | Owns features end-to-end |
+| **senior** | 5-10 years. Owns large features or systems. Mentors others. Makes technical decisions. | Owns systems, influences team direction |
+| **staff** | 8-15+ years. Sets technical direction across teams. Solves ambiguous, cross-cutting problems. | Cross-team influence, architectural ownership |
+| **principal** | 12-20+ years. Shapes company-wide technical strategy. Industry-recognized expertise. | Org-wide technical strategy |
+| **executive** | VP/CTO/SVP. Organizational leadership, not individual contribution. | Business-level decisions, P&L ownership |
 
 Years of experience are a rough guide, not a rule. Impact and scope matter more than tenure.
 
@@ -135,6 +171,17 @@ Years of experience are a rough guide, not a rule. Impact and scope matter more 
 - **Manager targeting "executive"** -- Managing a team of 8 is senior management, not executive. Executive implies organizational-level scope (multiple teams, P&L ownership, or company strategy).
 - **Bootcamp grad targeting "mid"** -- Intensive training is valuable but does not substitute for production experience. Target junior roles and grow quickly.
 - **Career changer with 15 years in another field** -- Domain expertise transfers, but technical depth needs recalibration. Target one level below where you were in your previous career.
+
+### Calibration Questions
+
+Ask the user these to help determine the right level:
+
+1. "What is the largest scope of work you have owned independently?" (feature, system, architecture, org strategy)
+2. "How many people have you directly mentored or led?"
+3. "Have you made technical decisions that affected teams beyond your own?"
+4. "Can you point to a time you identified and solved a problem no one asked you to solve?"
+
+The answers map directly to scope indicators in the level table above.
 
 ### When to Target Each Direction
 
@@ -154,6 +201,20 @@ When setting `salary_range` values (min, max, currency), use these rules of thum
 - **Level-up move:** Target 20-30% above current base
 - **Career transition or industry change:** Expect flat to modest increase; prioritize the opportunity over the number
 - **Set the floor, not the ceiling:** Your `min` should be the lowest number you would genuinely accept. Your `max` should be ambitious but defensible.
+
+### Compensation by Level (US market, software engineering, 2025-2026 ranges)
+
+These are approximate total compensation ranges for reference. Actual comp varies significantly by company stage, location, and specialization.
+
+| Level | Startup (Seed-A) | Growth (B-D) | Public/Large |
+|-------|------------------|--------------|--------------|
+| Junior | $80-120K | $100-140K | $120-170K |
+| Mid | $110-150K | $130-180K | $160-220K |
+| Senior | $140-190K | $170-240K | $200-320K |
+| Staff | $170-230K | $220-320K | $300-500K |
+| Principal | $200-280K | $280-400K | $400-700K |
+
+*Ranges include base + equity (estimated annual value). Benefits not included.*
 
 ### Location and Remote Adjustments
 
@@ -176,6 +237,16 @@ Base salary is only part of the picture. Help the user think in terms of total c
 
 When comparing offers, normalize to total annual value where possible.
 
+**Equity valuation rules of thumb:**
+
+| Company Stage | How to Value Equity |
+|---------------|-------------------|
+| Pre-seed / Seed | Treat as lottery ticket. Value at $0 for comparison purposes. |
+| Series A-B | High risk, high potential. Discount by 70-80% from paper value. |
+| Series C-D | Lower risk. Discount by 40-60% from paper value. |
+| Pre-IPO (Series E+) | Moderate risk. Discount by 20-40%. |
+| Public company RSUs | Near-cash. Use current stock price minus ~10% for vesting risk. |
+
 ---
 
 ## Career Transitions
@@ -189,6 +260,10 @@ Switching industries (e.g., fintech to healthcare, e-commerce to climate tech):
 - Adjust level expectations down by one notch initially; you will ramp back up once domain knowledge builds
 - Highlight learning velocity and adaptability in `match_reasoning`
 
+**What transfers across industries:** System design, architecture patterns, team leadership, project management, debugging methodology, performance optimization, CI/CD practices, testing strategy.
+
+**What does not transfer:** Domain-specific regulations (HIPAA, PCI, SOX), industry data models, sector-specific tooling, compliance frameworks.
+
 ### Role Pivot
 
 Switching roles (IC to management, management back to IC, frontend to backend):
@@ -196,6 +271,14 @@ Switching roles (IC to management, management back to IC, frontend to backend):
 - **IC to management:** Highlight mentorship, project leadership, cross-team coordination. Show you have already been doing the work informally.
 - **Management to IC:** Emphasize technical depth that you have maintained. Be explicit about why you want to return to hands-on work -- interviewers will ask.
 - **Specialization shift** (e.g., frontend to backend, backend to ML): Show adjacent competency. A frontend engineer who built BFF APIs has backend signal. Make it visible in your profile skills.
+
+**Role pivot profile checklist:**
+
+1. Update `preferred_roles` to reflect the target, not the origin
+2. Rewrite `headline` to position for the new role
+3. Adjust `skills` to emphasize transferable and adjacent skills
+4. Rewrite `experience_summary` to highlight relevant experience for the new direction
+5. Consider adjusting `experience_years` context in the summary (e.g., "8 years in software engineering, including 3 years of informal tech lead responsibilities")
 
 ### Re-entering the Workforce
 
@@ -233,6 +316,22 @@ Rank each offer across four dimensions:
 
 The highest-paying offer is not always the best offer. Help the user weigh what matters most to them right now.
 
+### Offer Comparison Template
+
+| Dimension | Offer A | Offer B | Offer C |
+|-----------|---------|---------|---------|
+| Base salary | | | |
+| Equity (annual est.) | | | |
+| Total comp (annual) | | | |
+| Role level | | | |
+| Team size | | | |
+| Remote/hybrid/onsite | | | |
+| Growth ceiling (1-5) | | | |
+| Learning rate (1-5) | | | |
+| Team quality (1-5) | | | |
+| Sustainability (1-5) | | | |
+| **Overall score** | **/20** | **/20** | **/20** |
+
 ### Timeline Management
 
 When holding multiple offers:
@@ -250,3 +349,25 @@ When turning down an offer:
 - Do not over-explain your reasoning. "I have decided to go in a different direction" is sufficient.
 - Leave the door open if genuine: "I was impressed by the team and would welcome the chance to reconnect in the future."
 - Respond promptly. Do not ghost. The hiring manager invested time in you and deserves a clear answer.
+
+---
+
+## Long-Term Career Planning
+
+### The 3-Year Horizon
+
+When a user is not in immediate job-search mode, help them think about trajectory:
+
+1. **Where do you want to be in 3 years?** Not a specific title -- a description of the kind of work, scope, and impact.
+2. **What skills or experiences are you missing?** Identify the gap between current profile and 3-year target.
+3. **What is the next role that closes that gap?** The right next move is not always the biggest title or highest comp -- it is the one that builds the right foundation.
+
+### Skill Investment Strategy
+
+Help users prioritize which skills to develop:
+
+- **High-demand, durable skills:** System design, distributed systems, data modeling, security fundamentals. These remain valuable across market cycles.
+- **High-demand, volatile skills:** Specific frameworks, cloud provider certifications, trending languages. Valuable now but may shift. Invest selectively.
+- **Emerging skills:** AI/ML engineering, platform engineering, developer experience. Higher risk, higher potential differentiation.
+
+The best investment is usually one skill from each category, weighted toward the durable.

@@ -1,0 +1,13 @@
+{
+  "name": "talentclaw-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "skills/*"
+  ],
+  "scripts": {
+    "dev": "bun run --filter @talentclaw/web dev",
+    "build": "bun run --filter @talentclaw/web build"
+  }
+}
