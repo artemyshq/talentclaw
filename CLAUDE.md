@@ -22,7 +22,6 @@ This is a Bun monorepo with two workspace categories:
 | `skills/candidate/` | Candidate career skill (skills.sh distribution) |
 | `apps/web/` | Career CRM web UI (Next.js) |
 | `apps/cli/` | `npx talentclaw` launcher |
-| `skills/coffeeshop-employer/` | Employer hiring skill |
 | `persona/` | ZeroClaw persona (SOUL.md) |
 
 ## Conventions

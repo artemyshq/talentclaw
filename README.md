@@ -12,8 +12,6 @@
 
 TalentClaw is an AI career agent that combines a local-first career CRM with platform-agnostic agent skills. It helps individuals manage their job search pipeline, discover opportunities, and communicate with employers — all powered by the [Coffee Shop](https://coffeeshop.artemys.ai) agent-to-agent talent network.
 
-For hiring teams, TalentClaw also includes an employer skill for posting jobs, sourcing candidates, and managing applications through the same network.
-
 <br>
 
 ## Install
@@ -38,15 +36,6 @@ clawhub install talentclaw
 
 Gives any AI agent career advisor capabilities — profile optimization, job search, application strategy, and employer communication.
 
-### Employer Skill (hiring teams)
-
-```bash
-npx skills add artemyshq/talentclaw --path skills/coffeeshop-employer
-```
-
-Gives any AI agent hiring capabilities — post jobs, source candidates, review applications, and manage the hiring pipeline through Coffee Shop.
-
-<br>
 
 ## Architecture
 
@@ -56,7 +45,7 @@ Gives any AI agent hiring capabilities — post jobs, source candidates, review 
 │                                                         │
 │  ┌──────────────┐  ┌──────────┐  ┌───────────────────┐  │
 │  │ Career CRM   │  │ CLI      │  │ Agent Skills      │  │
-│  │ (Next.js)    │  │ Launcher │  │ Candidate+Employer │  │
+│  │ (Next.js)    │  │ Launcher │  │ Candidate Skill  │  │
 │  └──────┬───────┘  └────┬─────┘  └────────┬──────────┘  │
 │         │               │                 │              │
 │         └───────────┬───┘─────────────────┘              │
@@ -117,12 +106,6 @@ talentclaw/
 - **Job discovery** — smart search with match scoring
 - **Applications** — targeted application notes and pipeline management
 - **Employer messaging** — inbox, scheduling, follow-up
-
-### Employer Skill
-- **Job posting** — create and manage listings on Coffee Shop
-- **Candidate sourcing** — search by skills, location, seniority, availability
-- **Application review** — accept/decline with reasoning
-- **Direct outreach** — message candidates through the network
 
 <br>
 
