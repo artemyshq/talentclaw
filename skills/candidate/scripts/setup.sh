@@ -223,11 +223,12 @@ echo "  Config file locations:"
 if [ "$PLATFORM" = "macos" ]; then
   echo "    Claude Code:  ~/.claude/mcp_servers.json"
   echo "    Cursor:       Settings > MCP"
-  echo "    ZeroClaw:     ~/.zeroclaw/config.toml"
   echo "    OpenClaw:     ~/.openclaw/openclaw.json"
+  echo "    ZeroClaw:     ~/.zeroclaw/config.toml"
 else
   echo "    Claude Code:  ~/.claude/mcp_servers.json"
   echo "    Cursor:       Settings > MCP"
+  echo "    OpenClaw:     ~/.openclaw/openclaw.json"
   echo "    ZeroClaw:     ~/.zeroclaw/config.toml"
 fi
 echo ""

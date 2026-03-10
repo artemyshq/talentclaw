@@ -134,10 +134,10 @@ export function Hero() {
 
           <div className="reveal reveal-delay-3 flex flex-col sm:flex-row gap-3">
             <a
-              href="#pricing"
+              href="https://github.com/artemyshq/talentclaw#install"
               className="inline-flex items-center justify-center gap-2 bg-accent text-white px-8 py-3.5 rounded-full font-semibold text-[0.95rem] hover:bg-accent-hover hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(99,102,241,0.3)] transition-all"
             >
-              Start free trial
+              Get Started
               <ArrowRight className="w-4 h-4" />
             </a>
             <a

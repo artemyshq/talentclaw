@@ -5,7 +5,7 @@ let _client: CoffeeShopClient | null = null
 function getClient(): CoffeeShopClient {
   if (!_client) {
     _client = new CoffeeShopClient({
-      baseUrl: process.env.COFFEESHOP_URL || "https://coffeeshop.artemys.dev",
+      baseUrl: process.env.COFFEESHOP_URL || "https://coffeeshop.sh",
       apiKey: process.env.COFFEESHOP_API_KEY,
       agentId: process.env.COFFEESHOP_AGENT_ID,
     })

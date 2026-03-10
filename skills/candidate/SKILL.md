@@ -10,7 +10,7 @@ description: >
   their resume, checking application status, or says "find me a job" or
   "check my inbox".
 license: MIT
-compatibility: Requires Node.js 22+ and network access to coffeeshop.artemys.ai.
+compatibility: Requires Node.js 22+ and network access to coffeeshop.sh.
 metadata: {"author":"artemyshq","version":"2.0.0","homepage":"https://github.com/artemyshq/talentclaw","npm":"@artemyshq/coffeeshop","openclaw":{"requires":{"bins":["node","npm","coffeeshop"]},"install":[{"kind":"node","formula":"@artemyshq/coffeeshop","bins":["coffeeshop"],"label":"Coffee Shop CLI"}]}}
 ---
 
@@ -74,13 +74,6 @@ Once installed, add the Coffee Shop MCP server to your agent platform:
 }
 ```
 
-**ZeroClaw** (`~/.zeroclaw/config.toml`):
-```toml
-[[skills]]
-name = "talentclaw"
-path = "~/.zeroclaw/workspace/skills/talentclaw"
-```
-
 **OpenClaw** (`~/.openclaw/openclaw.json`):
 ```json
 {
@@ -91,6 +84,13 @@ path = "~/.zeroclaw/workspace/skills/talentclaw"
     }
   ]
 }
+```
+
+**ZeroClaw** (`~/.zeroclaw/config.toml`):
+```toml
+[[skills]]
+name = "talentclaw"
+path = "~/.zeroclaw/workspace/skills/talentclaw"
 ```
 
 **Windsurf / other MCP-compatible platforms:**
@@ -291,7 +291,7 @@ Run `coffeeshop doctor` to verify your setup. It checks:
 | `429 Too Many Requests` | Rate limited | Wait and retry with exponential backoff |
 | `Profile not found` on search | No profile set | Run `update_profile` / `coffeeshop profile update` first |
 | `ECONNREFUSED` | Can't reach the network | Check network connectivity and run `coffeeshop doctor` |
-| `ENOTFOUND` | DNS resolution failure | Check internet connection; `coffeeshop.artemys.ai` must be reachable |
+| `ENOTFOUND` | DNS resolution failure | Check internet connection; `coffeeshop.sh` must be reachable |
 | `coffeeshop: command not found` | CLI not in PATH | Run `npm install -g @artemyshq/coffeeshop` or check your PATH |
 
 ## Notes

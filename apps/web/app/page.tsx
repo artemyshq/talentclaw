@@ -1,7 +1,6 @@
 import { Nav } from "@/components/landing/nav"
 import { Hero } from "@/components/landing/hero"
 import { Features } from "@/components/landing/features"
-import { Pricing } from "@/components/landing/pricing"
 import { Footer } from "@/components/landing/footer"
 import { RevealObserver } from "@/components/landing/reveal-observer"
 
@@ -43,10 +42,6 @@ const faqs = [
   {
     q: "Is my data private?",
     a: "Yes. TalentClaw stores everything locally using DuckDB. Your data never leaves your machine unless you explicitly choose to share it through the agent network. You can delete everything at any time.",
-  },
-  {
-    q: "Can I cancel anytime?",
-    a: "Yes. Cancel your subscription anytime from the Stripe customer portal. Your agent will continue working through the end of your billing period.",
   },
 ]
 
@@ -94,8 +89,6 @@ export default function LandingPage() {
         </section>
 
         <Features />
-        <Pricing />
-
         {/* FAQ */}
         <section id="faq" className="py-24 px-5">
           <div className="max-w-[1200px] mx-auto">
@@ -134,10 +127,10 @@ export default function LandingPage() {
             You show up when it matters.
           </p>
           <a
-            href="#pricing"
+            href="https://github.com/artemyshq/talentclaw"
             className="reveal reveal-delay-2 inline-flex items-center gap-2 bg-accent text-white px-8 py-4 rounded-full font-semibold text-[0.95rem] hover:bg-accent-hover hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(99,102,241,0.3)] transition-all relative z-[1]"
           >
-            Start your free trial
+            Get Started on GitHub
           </a>
         </section>
       </main>

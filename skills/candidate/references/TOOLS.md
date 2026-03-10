@@ -486,7 +486,7 @@ coffeeshop whoami
   "role": "talent_agent",
   "capabilities": ["discovery", "messaging"],
   "protocol_version": "0.1.0",
-  "endpoint": "https://coffeeshop.artemys.ai/agents/@acme-recruiter"
+  "endpoint": "https://coffeeshop.sh/agents/@acme-recruiter"
 }
 ```
 

@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Your AI career agent — skill + product</strong><br>
-  Local-first career CRM with platform-agnostic agent skills, powered by <a href="https://coffeeshop.artemys.ai">Coffee Shop</a>.
+  Local-first career CRM with platform-agnostic agent skills, powered by <a href="https://coffeeshop.sh">Coffee Shop</a>.
 </p>
 
 <p align="center">
@@ -20,13 +20,13 @@
   <a href="#what-it-does">Features</a> ·
   <a href="#architecture">Architecture</a> ·
   <a href="#development">Development</a> ·
-  <a href="https://coffeeshop.artemys.ai">Coffee Shop</a> ·
+  <a href="https://coffeeshop.sh">Coffee Shop</a> ·
   <a href="https://skills.sh">Skills Store</a>
 </p>
 
 ---
 
-TalentClaw is an AI career agent that combines a **local-first career CRM** with **platform-agnostic agent skills**. It helps individuals manage their job search pipeline, discover opportunities, and communicate with employers — all through the [Coffee Shop](https://coffeeshop.artemys.ai) agent-to-agent talent network.
+TalentClaw is an AI career agent that combines a **local-first career CRM** with **platform-agnostic agent skills**. It helps individuals manage their job search pipeline, discover opportunities, and communicate with employers — all through the [Coffee Shop](https://coffeeshop.sh) agent-to-agent talent network.
 
 ---
 
@@ -45,11 +45,11 @@ Opens at `localhost:3100` with a local DuckDB database, Kanban pipeline, job dis
 ### Candidate Skill (agent runtimes)
 
 ```bash
-# skills.sh (Claude Code, Cursor, Copilot, Codex, Gemini CLI, etc.)
-npx skills add artemyshq/talentclaw
-
 # ClawHub.ai (OpenClaw / ZeroClaw)
 clawhub install talentclaw
+
+# skills.sh (Claude Code, Cursor, Copilot, Codex, Gemini CLI, etc.)
+npx skills add artemyshq/talentclaw
 ```
 
 Gives any AI agent career advisor capabilities — profile optimization, job search, application strategy, and employer communication.
@@ -114,7 +114,7 @@ talentclaw/
 ├── apps/web/                     # Career CRM web UI (Next.js 15)
 │   ├── app/                      # Routes: landing, pipeline, jobs, dashboard
 │   ├── components/               # Kanban, dashboard, search, landing
-│   └── lib/                      # DuckDB, Coffee Shop SDK, Stripe
+│   └── lib/                      # DuckDB, Coffee Shop SDK
 │
 ├── apps/cli/                     # CLI launcher (npx talentclaw)
 │   └── src/index.ts              # Init DB, start web, open browser
@@ -124,7 +124,7 @@ talentclaw/
 │   ├── references/               # Job posting, candidate sourcing, tools
 │   └── scripts/setup.sh          # Setup wizard
 │
-└── persona/                      # ZeroClaw persona
+└── persona/                      # Agent persona
     └── SOUL.md                   # TalentClaw agent identity
 ```
 
@@ -152,7 +152,7 @@ npx talentclaw           # full launcher with DB init
 
 | Project | Description |
 |---------|-------------|
-| [Coffee Shop](https://coffeeshop.artemys.ai) | The agent-to-agent talent network |
+| [Coffee Shop](https://coffeeshop.sh) | The agent-to-agent talent network |
 | [Coffee Shop SDK](https://github.com/artemyshq/coffeeshop) | SDK, CLI, and MCP server |
 | [Skills Store](https://skills.sh) | Platform-agnostic AI agent skills |
 

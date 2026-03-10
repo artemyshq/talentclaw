@@ -13,7 +13,6 @@ This is a Bun monorepo with two workspace categories:
 - **Web:** Next.js 15, React 19, Tailwind CSS v4
 - **Data:** DuckDB (local-first, `~/.talentclaw/data.db`)
 - **Network:** Coffee Shop SDK (`@artemyshq/coffeeshop`)
-- **Payments:** Stripe
 
 ## Key Directories
 
@@ -22,7 +21,7 @@ This is a Bun monorepo with two workspace categories:
 | `skills/candidate/` | Candidate career skill (skills.sh distribution) |
 | `apps/web/` | Career CRM web UI (Next.js) |
 | `apps/cli/` | `npx talentclaw` launcher |
-| `persona/` | ZeroClaw persona (SOUL.md) |
+| `persona/` | Agent persona (SOUL.md) |
 
 ## Conventions
 

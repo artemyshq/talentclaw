@@ -32,11 +32,6 @@ export function Nav() {
             </a>
           </li>
           <li>
-            <a href="#pricing" className="text-sm text-text-secondary hover:text-text-primary transition-colors">
-              Pricing
-            </a>
-          </li>
-          <li>
             <Link
               href="/dashboard"
               className="text-sm text-text-secondary hover:text-text-primary transition-colors"
@@ -46,7 +41,7 @@ export function Nav() {
           </li>
           <li>
             <a
-              href="#pricing"
+              href="https://github.com/artemyshq/talentclaw"
               className="bg-accent text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors"
             >
               Get Started
@@ -82,13 +77,6 @@ export function Nav() {
           >
             How it works
           </a>
-          <a
-            href="#pricing"
-            onClick={() => setOpen(false)}
-            className="text-2xl font-medium text-text-primary"
-          >
-            Pricing
-          </a>
           <Link
             href="/dashboard"
             onClick={() => setOpen(false)}
@@ -97,7 +85,7 @@ export function Nav() {
             Dashboard
           </Link>
           <a
-            href="#pricing"
+            href="https://github.com/artemyshq/talentclaw"
             onClick={() => setOpen(false)}
             className="text-2xl font-medium text-accent"
           >
