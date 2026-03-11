@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import {
   existsSync,
   mkdirSync,
@@ -13,6 +11,20 @@ import { fileURLToPath } from "node:url";
 import { spawn, exec, execSync } from "node:child_process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// ---------------------------------------------------------------------------
+// Path resolution (works in both dev monorepo and published npm package)
+// ---------------------------------------------------------------------------
+function resolvePackagePath(devPath: string, publishedPath: string): string {
+  const published = resolve(__dirname, publishedPath);
+  if (existsSync(published)) return published;
+  return resolve(__dirname, devPath);
+}
+
+// In dev: apps/cli/src/ → ../../../skills and ../../web
+// Published: dist/ → ../skills and ../web
+const skillSrcDir = resolvePackagePath("../../../skills", "../skills");
+const webDir = resolvePackagePath("../../web", "../web");
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -154,15 +166,14 @@ if (!runtime) {
 // ---------------------------------------------------------------------------
 // 4. Install TalentClaw skill into runtime
 // ---------------------------------------------------------------------------
-const skillSrc = resolve(__dirname, "../../../skills");
 let skillInstalled = false;
 
-if (runtime && runtime.skillDir && existsSync(skillSrc)) {
+if (runtime && runtime.skillDir && existsSync(skillSrcDir)) {
   log("◆", "Installing TalentClaw skill...");
 
   try {
     mkdirSync(runtime.skillDir, { recursive: true });
-    cpSync(skillSrc, runtime.skillDir, { recursive: true });
+    cpSync(skillSrcDir, runtime.skillDir, { recursive: true });
 
     // Don't copy the workspace package.json into the skill dir
     const pkgInSkill = join(runtime.skillDir, "package.json");
@@ -311,8 +322,6 @@ if (runtime && (runtime.name === "OpenClaw" || runtime.name === "ZeroClaw")) {
 // 8. Start Next.js dev server at localhost:3100
 // ---------------------------------------------------------------------------
 log("◆", "Starting web UI...");
-
-const webDir = resolve(__dirname, "../../web");
 
 const nextProcess = spawn("npx", ["next", "dev", "--port", "3100"], {
   cwd: webDir,

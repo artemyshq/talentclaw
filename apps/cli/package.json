@@ -4,6 +4,18 @@
   "description": "TalentClaw — your AI career agent",
   "type": "module",
   "bin": {
-    "talentclaw": "./src/index.ts"
+    "talentclaw": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "prepack": "bun run build && node scripts/prepack.mjs"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "web"
+  ],
+  "devDependencies": {
+    "tsup": "^8.5.1"
   }
 }
