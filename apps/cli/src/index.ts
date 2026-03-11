@@ -16,9 +16,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // Path resolution (works in both dev monorepo and published npm package)
 // ---------------------------------------------------------------------------
 function resolvePackagePath(devPath: string, publishedPath: string): string {
-  const published = resolve(__dirname, publishedPath);
-  if (existsSync(published)) return published;
-  return resolve(__dirname, devPath);
+  // Prefer dev (monorepo) path so local development uses apps/web directly
+  const dev = resolve(__dirname, devPath);
+  if (existsSync(dev)) return dev;
+  return resolve(__dirname, publishedPath);
 }
 
 // In dev: apps/cli/src/ → ../../../skills and ../../web
