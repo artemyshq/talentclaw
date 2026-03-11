@@ -119,11 +119,6 @@ talentclaw/
 ├── apps/cli/                     # CLI launcher (npx talentclaw)
 │   └── src/index.ts              # Scaffold workspace, start web, open browser
 │
-├── skills/coffeeshop-employer/   # Employer hiring skill
-│   ├── SKILL.md                  # Skill definition
-│   ├── references/               # Job posting, candidate sourcing, tools
-│   └── scripts/setup.sh          # Setup wizard
-│
 └── persona/                      # Agent persona
     └── SOUL.md                   # TalentClaw agent identity
 ```

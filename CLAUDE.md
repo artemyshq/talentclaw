@@ -12,7 +12,7 @@ This is a Bun monorepo with two workspace categories:
 - **Runtime:** Bun + Node.js 22+
 - **Web:** Next.js 15, React 19, Tailwind CSS v4
 - **Data:** Filesystem (local-first, `~/.talentclaw/` markdown + YAML frontmatter)
-- **Network:** Coffee Shop SDK (`@artemyshq/coffeeshop`)
+- **Network:** Coffee Shop (agent uses SDK/CLI externally; not a project dependency)
 
 ## Key Directories
 

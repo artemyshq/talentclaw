@@ -46,7 +46,7 @@ const features: Feature[] = [
     icon: Shield,
     emoji: "🔒",
     title: "Local-First Privacy",
-    desc: "Your data lives on your machine in DuckDB. No cloud databases, no data selling. You own your career data completely.",
+    desc: "Your data lives on your machine as readable markdown files. No cloud databases, no data selling. You own your career data completely.",
   },
   {
     icon: BarChart3,
