@@ -191,7 +191,17 @@ export function JobsList({ jobs }: JobsListProps) {
         ))}
       </div>
 
-      {filteredJobs.length === 0 && (
+      {jobs.length === 0 && (
+        <div className="text-center py-16">
+          <Search className="w-10 h-10 text-text-muted mx-auto mb-4" />
+          <p className="text-text-secondary text-sm">No jobs yet.</p>
+          <p className="text-text-muted text-xs mt-1">
+            Run <code className="text-accent bg-accent/5 px-1.5 py-0.5 rounded text-[0.7rem]">talentclaw search</code> or ask your agent to find opportunities.
+          </p>
+        </div>
+      )}
+
+      {jobs.length > 0 && filteredJobs.length === 0 && (
         <div className="text-center py-16">
           <Search className="w-10 h-10 text-text-muted mx-auto mb-4" />
           <p className="text-text-secondary text-sm">No jobs match your search.</p>

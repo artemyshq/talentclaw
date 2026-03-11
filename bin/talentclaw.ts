@@ -9,6 +9,8 @@ import { homedir, platform } from "node:os";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn, exec, execSync } from "node:child_process";
+import { log, which, DATA_DIR } from "./helpers.js";
+import { runSearch } from "./search.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(__dirname, "..");
@@ -17,22 +19,10 @@ const skillSrcDir = join(packageRoot, "skills");
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function log(icon: string, msg: string) {
-  console.log(`${icon} ${msg}`);
-}
-
 function check(label: string, ok: boolean, detail?: string) {
   const status = ok ? "\x1b[32m[ok]\x1b[0m" : "\x1b[33m[!!]\x1b[0m";
   console.log(`${status} ${label}${detail ? ` — ${detail}` : ""}`);
   return ok;
-}
-
-function which(cmd: string): string | null {
-  try {
-    return execSync(`which ${cmd}`, { encoding: "utf-8" }).trim();
-  } catch {
-    return null;
-  }
 }
 
 function cmdVersion(cmd: string): string | null {
@@ -53,6 +43,15 @@ if (major < 22) {
       `\nInstall the latest LTS from https://nodejs.org or use a version manager like fnm / nvm.\n`,
   );
   process.exit(1);
+}
+
+// ---------------------------------------------------------------------------
+// Subcommand routing
+// ---------------------------------------------------------------------------
+const subcommand = process.argv[2];
+if (subcommand === "search") {
+  await runSearch(process.argv.slice(3));
+  process.exit(0);
 }
 
 console.log("\n\x1b[1mTalentClaw\x1b[0m — your AI career agent\n");
@@ -152,7 +151,29 @@ if (!runtime) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Install TalentClaw skill into runtime
+// 4. Install Coffee Shop CLI
+// ---------------------------------------------------------------------------
+let hasCoffeeshop = !!which("coffeeshop");
+
+if (hasCoffeeshop) {
+  const csVersion = cmdVersion("coffeeshop");
+  log("◆", `Coffee Shop detected${csVersion ? ` (${csVersion})` : ""}`);
+} else {
+  log("◆", "Installing Coffee Shop...");
+  try {
+    execSync("npm install -g coffeeshop", { stdio: "inherit" });
+    hasCoffeeshop = true;
+    log("  ✓", "Coffee Shop installed globally");
+  } catch {
+    log(
+      "  ✗",
+      "Failed to install Coffee Shop. Install it manually: npm install -g coffeeshop",
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 5. Install TalentClaw skill into runtime
 // ---------------------------------------------------------------------------
 let skillInstalled = false;
 
@@ -185,7 +206,7 @@ if (runtime && runtime.skillDir && existsSync(skillSrcDir)) {
 // ---------------------------------------------------------------------------
 log("◆", "Scaffolding workspace...");
 
-const dataDir = process.env.TALENTCLAW_DIR || join(homedir(), ".talentclaw");
+const dataDir = DATA_DIR;
 const dirs = [
   dataDir,
   join(dataDir, "jobs"),
@@ -225,25 +246,31 @@ if (!existsSync(profilePath)) {
   writeFileSync(
     profilePath,
     `---
-# Your career profile — edit this file to get started
-# display_name: Your Name
-# headline: "Your Role | Your Specialty"
-# skills: [TypeScript, React, Node.js]
-# experience_years: 5
-# preferred_roles: [Senior Engineer, Staff Engineer]
-# preferred_locations: [Remote]
-# remote_preference: remote_ok
-# salary_range: { min: 150000, max: 200000, currency: USD }
-# availability: active
+# Your career profile — your agent fills this in during onboarding
+# display_name:
+# headline:
+# skills: []
+# experience_years:
+# preferred_roles: []
+# preferred_locations: []
+# remote_preference:
+# salary_range: { min: 0, max: 0, currency: USD }
+# availability:
 ---
 
-## Summary
+## Career Context
 
-Tell TalentClaw about your experience and what you're looking for.
+Your agent builds this section during your first conversation — it captures who you are, not just what you've done.
 
-## Notes
+### Career Arc
 
-Add any notes about your job search here.
+### Core Strengths
+
+### Current Situation
+
+### What I'm Looking For
+
+### Constraints
 `,
     "utf-8",
   );
@@ -371,7 +398,8 @@ function printChecklist() {
   check("Agent runtime", !!runtime, runtime?.name || "none");
   check("TalentClaw skill", skillInstalled);
   check("Workspace", existsSync(dataDir), dataDir);
-  check("Coffee Shop", hasApiKey, hasApiKey ? "connected" : "run coffeeshop register");
+  check("Coffee Shop CLI", hasCoffeeshop, hasCoffeeshop ? "installed" : "npm install -g coffeeshop");
+  check("Coffee Shop account", hasApiKey, hasApiKey ? "connected" : "your agent will set this up");
   if (runtime?.name === "OpenClaw" || runtime?.name === "ZeroClaw") {
     check("Gateway", gatewayReachable, gatewayReachable ? "reachable" : `start with: ${runtime.cmd} start`);
   }

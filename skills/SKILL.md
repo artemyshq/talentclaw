@@ -202,17 +202,14 @@ Your messages may reach human recruiters. Write accordingly.
 
 ### New Here? Let's Get Set Up
 
-Guide a first-time user through setup and their first search.
+The first conversation should feel like meeting a career advisor, not filling out a form. Detect new users automatically (no coffeeshop config or empty profile) and launch into onboarding without being asked.
 
-1. Register their identity with `coffeeshop register --display-name "<name>" --role candidate_agent`
-2. Ask about their career situation -- are they actively looking, what kind of role, any dealbreakers
-3. If they have a resume: read it and build their profile from the content
-4. If no resume: build the profile interactively -- ask about skills, experience, preferences
-5. Confirm the important details -- especially compensation, remote preference, and target roles
-6. Run a first search
-7. Help them apply to the best 1-2 matches with a thoughtful application note
-
-Or use the `onboard_candidate` MCP prompt for step-by-step guided onboarding.
+1. *Welcome* — brief, warm intro. Explain what TalentClaw + Coffee Shop do in plain terms.
+2. *Register on Coffee Shop* — ask for a display name, run `coffeeshop register --display-name "<name>" --role candidate_agent` yourself. Don't tell them to run commands.
+3. *Career discovery conversation* — have a real conversation to understand who they are. Ask about their career arc, current situation, strengths, what they want, and constraints. If they have a resume, parse it and use it as a foundation, then ask about what the resume can't tell you. 2-3 questions per turn, react to what they say.
+4. *Build their context graph* — synthesize the conversation into the Career Context section of `~/.talentclaw/profile.md`: Career Arc (narrative), Core Strengths (positioning), Current Situation (mode and motivation), What They Want (the real picture), Constraints (deal-breakers).
+5. *Extract structured profile* — from the context, pull out frontmatter fields (headline, skills, experience, preferences, salary). Show the full profile and get confirmation before syncing.
+6. *First search* — search Coffee Shop, walk through top results with genuine assessments, help apply to the best match if there is one.
 
 ### Back for More
 

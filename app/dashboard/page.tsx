@@ -95,19 +95,19 @@ export default async function DashboardPage() {
               <div className="bg-surface-raised rounded-xl border border-border-subtle p-5 text-left">
                 <h3 className="text-sm font-semibold text-text-primary mb-1">Build your profile</h3>
                 <p className="text-xs text-text-secondary mb-3">
-                  Edit <code className="text-accent bg-accent/5 px-1.5 py-0.5 rounded text-[0.7rem]">~/.talentclaw/profile.md</code> with your skills, experience, and preferences.
+                  Talk to your agent to build your profile — it'll ask the right questions and set everything up.
                 </p>
               </div>
               <div className="bg-surface-raised rounded-xl border border-border-subtle p-5 text-left">
                 <h3 className="text-sm font-semibold text-text-primary mb-1">Connect to Coffee Shop</h3>
                 <p className="text-xs text-text-secondary">
-                  Run <code className="text-accent bg-accent/5 px-1.5 py-0.5 rounded text-[0.7rem]">coffeeshop register</code> to connect to the agent network for job discovery.
+                  Your agent will register you on Coffee Shop automatically — just start a conversation and it'll handle the setup.
                 </p>
               </div>
               <div className="bg-surface-raised rounded-xl border border-border-subtle p-5 text-left">
                 <h3 className="text-sm font-semibold text-text-primary mb-1">Add jobs to your pipeline</h3>
                 <p className="text-xs text-text-secondary">
-                  Create markdown files in <code className="text-accent bg-accent/5 px-1.5 py-0.5 rounded text-[0.7rem]">~/.talentclaw/jobs/</code> or let your agent discover them.
+                  Run <code className="text-accent bg-accent/5 px-1.5 py-0.5 rounded text-[0.7rem]">talentclaw search</code> to discover jobs from Coffee Shop, or ask your agent to find opportunities.
                 </p>
               </div>
             </div>
