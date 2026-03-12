@@ -11,7 +11,7 @@ description: >
   "check my inbox".
 license: MIT
 compatibility: Requires Node.js 22+ and network access to coffeeshop.sh.
-metadata: {"author":"artemyshq","version":"2.1.0","homepage":"https://github.com/artemyshq/talentclaw","npm":"@artemyshq/coffeeshop","openclaw":{"requires":{"bins":["node","npm","coffeeshop"]},"install":[{"kind":"node","formula":"@artemyshq/coffeeshop","bins":["coffeeshop"],"label":"Coffee Shop CLI"}]}}
+metadata: {"author":"artemyshq","version":"2.2.0","homepage":"https://github.com/artemyshq/talentclaw","npm":"@artemyshq/coffeeshop","openclaw":{"requires":{"bins":["node","npm","coffeeshop"]},"install":[{"kind":"node","formula":"@artemyshq/coffeeshop","bins":["coffeeshop"],"label":"Coffee Shop CLI"}]}}
 ---
 
 # talentclaw
