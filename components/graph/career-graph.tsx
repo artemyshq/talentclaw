@@ -1065,11 +1065,19 @@ export default function CareerGraph({
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
-      {/* Toolbar */}
-      <div className="flex items-center justify-end gap-3 px-5 py-3 border-b border-border-subtle bg-surface-raised z-20">
+    <div ref={containerRef} className="flex-1 relative overflow-hidden bg-surface min-h-0">
+        <canvas
+          ref={canvasRef}
+          className="block w-full h-full"
+          onMouseMove={handleMouseMove}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+          onWheel={handleWheel}
+        />
+
         {/* Search */}
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-overlay border border-border-subtle rounded-lg text-xs min-w-[180px]">
+        <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-surface-raised/90 backdrop-blur-sm border border-black/5 rounded-lg text-xs min-w-[180px] shadow-sm z-10">
           <Search className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
           <input
             type="text"
@@ -1081,39 +1089,26 @@ export default function CareerGraph({
         </div>
 
         {/* Zoom controls */}
-        <div className="flex items-center gap-0.5">
+        <div className="absolute bottom-4 left-4 flex items-center gap-0.5 z-10">
           <button
             onClick={handleZoomOut}
-            className="w-7 h-7 rounded-md border border-border-subtle bg-surface-raised text-text-secondary text-sm flex items-center justify-center hover:border-border-default hover:bg-surface-overlay transition-all"
+            className="w-7 h-7 rounded-md border border-black/5 bg-surface-raised/90 backdrop-blur-sm text-text-secondary text-sm flex items-center justify-center hover:bg-surface-overlay transition-all shadow-sm"
           >
             <Minus className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={handleZoomReset}
-            className="w-7 h-7 rounded-md border border-border-subtle bg-surface-raised text-text-secondary text-sm flex items-center justify-center hover:border-border-default hover:bg-surface-overlay transition-all"
+            className="w-7 h-7 rounded-md border border-black/5 bg-surface-raised/90 backdrop-blur-sm text-text-secondary text-sm flex items-center justify-center hover:bg-surface-overlay transition-all shadow-sm"
           >
             <RotateCcw className="w-3 h-3" />
           </button>
           <button
             onClick={handleZoomIn}
-            className="w-7 h-7 rounded-md border border-border-subtle bg-surface-raised text-text-secondary text-sm flex items-center justify-center hover:border-border-default hover:bg-surface-overlay transition-all"
+            className="w-7 h-7 rounded-md border border-black/5 bg-surface-raised/90 backdrop-blur-sm text-text-secondary text-sm flex items-center justify-center hover:bg-surface-overlay transition-all shadow-sm"
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
         </div>
-      </div>
-
-      {/* Canvas area */}
-      <div ref={containerRef} className="flex-1 relative overflow-hidden bg-surface">
-        <canvas
-          ref={canvasRef}
-          className="block w-full h-full"
-          onMouseMove={handleMouseMove}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-          onWheel={handleWheel}
-        />
 
         {/* Constellation panel */}
         {clusters.length > 0 && (
@@ -1186,7 +1181,6 @@ export default function CareerGraph({
         <div className="absolute bottom-4 right-4 font-mono text-[11px] text-text-muted z-10">
           {visibleCount} of {nodes.length} nodes
         </div>
-      </div>
     </div>
   )
 }
