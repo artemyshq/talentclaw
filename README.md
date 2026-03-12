@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Your AI career agent — skill + product</strong><br>
-  Local-first career CRM with platform-agnostic agent skills, powered by <a href="https://coffeeshop.sh">Coffee Shop</a>.
+  Local-first career hub with platform-agnostic agent skills, powered by <a href="https://coffeeshop.sh">Coffee Shop</a>.
 </p>
 
 <p align="center">
@@ -26,13 +26,13 @@
 
 ---
 
-talentclaw is an AI career agent that combines a **local-first career CRM** with **platform-agnostic agent skills**. It helps individuals manage their job search pipeline, discover opportunities, and communicate with employers — all through the [Coffee Shop](https://coffeeshop.sh) agent-to-agent talent network.
+talentclaw is an AI career agent that combines a **local-first career hub** with **platform-agnostic agent skills**. It helps individuals manage their job search pipeline, discover opportunities, and communicate with employers — all through the [Coffee Shop](https://coffeeshop.sh) agent-to-agent talent network.
 
 ---
 
 ## 📦 Install
 
-### Career CRM (full product)
+### Career Hub (full product)
 
 **Node 22+ required.**
 
@@ -45,7 +45,7 @@ npm install -g talentclaw
 talentclaw
 ```
 
-Detects your agent runtime (OpenClaw, ZeroClaw, Claude Code), installs the talentclaw skill, scaffolds your workspace at `~/.talentclaw/`, and opens the career CRM at `localhost:3100`.
+Detects your agent runtime (OpenClaw, ZeroClaw, Claude Code), installs the talentclaw skill, scaffolds your workspace at `~/.talentclaw/`, and opens the career hub at `localhost:3100`.
 
 ### Candidate Skill (agent runtimes)
 
@@ -63,7 +63,7 @@ Gives any AI agent career advisor capabilities — profile optimization, job sea
 
 ## ✨ What It Does
 
-### Career CRM
+### Career Hub
 
 - 📋 **Kanban pipeline** — drag-and-drop stages: Discovered, Saved, Applied, Interviewing, Offer, Accepted/Rejected
 - 🔍 **Job discovery** — search Coffee Shop with filters for skills, location, remote, compensation
@@ -87,7 +87,7 @@ Gives any AI agent career advisor capabilities — profile optimization, job sea
 │                      talentclaw                         │
 │                                                         │
 │  ┌──────────────┐  ┌──────────┐  ┌───────────────────┐  │
-│  │  Career CRM  │  │   CLI    │  │   Agent Skills    │  │
+│  │  Career Hub  │  │   CLI    │  │   Agent Skills    │  │
 │  │  (Next.js)   │  │ Launcher │  │ Candidate Skill   │  │
 │  └──────┬───────┘  └────┬─────┘  └────────┬──────────┘  │
 │         │               │                 │              │
@@ -116,7 +116,7 @@ talentclaw/
 │   ├── references/               # Career strategy, profiles, applications, tools
 │   └── scripts/setup.sh          # Setup wizard
 │
-├── apps/web/                     # Career CRM web UI (Next.js 15)
+├── apps/web/                     # Career Hub web UI (Next.js 15)
 │   ├── app/                      # Routes: landing, pipeline, jobs, dashboard
 │   ├── components/               # Kanban, dashboard, search, landing
 │   └── lib/                      # Filesystem data layer
