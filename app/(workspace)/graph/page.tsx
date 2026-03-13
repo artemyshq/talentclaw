@@ -1,5 +1,5 @@
 import { buildCareerGraph } from "@/lib/graph-data"
-import CareerGraph from "@/components/graph/career-graph"
+import CareerGraphWrapper from "@/components/graph/career-graph-wrapper"
 import { Share2 } from "lucide-react"
 
 export default async function GraphPage() {
@@ -32,7 +32,7 @@ export default async function GraphPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-      <CareerGraph nodes={nodes} edges={edges} />
+      <CareerGraphWrapper nodes={nodes} edges={edges} />
     </div>
   )
 }
