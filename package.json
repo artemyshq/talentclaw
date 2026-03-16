@@ -1,8 +1,28 @@
 {
   "name": "talentclaw",
-  "version": "2.2.0",
-  "description": "talentclaw — your AI career agent",
+  "version": "0.3.0",
+  "description": "talentclaw — your AI career agent. Local-first career hub + platform-agnostic agent skills, powered by Coffee Shop.",
+  "author": "Artemys <hello@artemys.ai> (https://artemys.ai)",
+  "license": "MIT",
   "type": "module",
+  "homepage": "https://talentclaw.sh",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/artemyshq/talentclaw.git"
+  },
+  "bugs": {
+    "url": "https://github.com/artemyshq/talentclaw/issues"
+  },
+  "keywords": [
+    "career",
+    "agent",
+    "cli",
+    "ai",
+    "job-search",
+    "talent",
+    "coffee-shop",
+    "skills"
+  ],
   "engines": {
     "node": ">=22"
   },
@@ -11,50 +31,46 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "next build && cp -r .next/static .next/standalone/.next/static",
     "build:cli": "tsup",
+    "build:all": "npm run build && npm run build:cli",
+    "prepack": "npm run build:all",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run"
   },
   "files": [
     "dist",
-    "app",
-    "components",
-    "lib",
+    ".next/standalone",
+    ".next/static",
     "skills",
-    "persona",
-    "next.config.ts",
-    "tsconfig.json",
-    "postcss.config.mjs",
-    "next-env.d.ts"
+    "persona"
   ],
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
+    "@artemyshq/coffeeshop": "^0.1.2",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@tailwindcss/typography": "^0.5.19",
-    "d3-force": "^3.0.0",
-    "gray-matter": "^4.0.3",
-    "lucide-react": "^0.511.0",
-    "next": "^15.3.3",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1",
-    "zod": "^3.24.0"
-  },
-  "devDependencies": {
-    "@artemyshq/coffeeshop": "^0.1.2",
     "@tailwindcss/postcss": "^4.1.8",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/d3-force": "^3.0.10",
     "@types/node": "^22.15.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "d3-force": "^3.0.0",
+    "gray-matter": "^4.0.3",
+    "lucide-react": "^0.511.0",
+    "next": "^15.3.3",
     "postcss": "^8.5.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "tailwindcss": "^4.1.8",
     "tsup": "^8.5.1",
     "typescript": "^5.8.3",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "zod": "^3.24.0"
   }
 }

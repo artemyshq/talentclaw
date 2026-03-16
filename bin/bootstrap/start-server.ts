@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { platform } from "node:os";
 import { spawn, exec } from "node:child_process";
 import { DATA_DIR, log } from "../helpers.js";
@@ -19,10 +20,18 @@ export function startServer(
 ): void {
   log("◆", "Starting web UI...");
 
-  const nextProcess = spawn("npx", ["next", "dev", "--port", "3100"], {
-    cwd: packageRoot,
+  const serverJs = join(packageRoot, ".next", "standalone", "server.js");
+
+  if (!existsSync(serverJs)) {
+    log("  ✗", "Standalone server not found — build may be incomplete");
+    printChecklist(state, false, "standalone server missing");
+    return;
+  }
+
+  const nextProcess = spawn("node", [serverJs], {
+    cwd: join(packageRoot, ".next", "standalone"),
     stdio: "pipe",
-    shell: true,
+    env: { ...process.env, PORT: "3100", HOSTNAME: "0.0.0.0" },
   });
 
   let uiReady = false;
@@ -30,11 +39,15 @@ export function startServer(
   let uiError = "";
   let checklistPrinted = false;
 
-  function printChecklist() {
+  function printChecklist(
+    st: BootstrapState,
+    ready: boolean,
+    error?: string,
+  ) {
     if (checklistPrinted) return;
     checklistPrinted = true;
 
-    const { runtime, skillInstalled, hasCoffeeshop, hasApiKey, gatewayReachable } = state;
+    const { runtime, skillInstalled, hasCoffeeshop, hasApiKey, gatewayReachable } = st;
 
     console.log("\n\x1b[2m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m");
     console.log("\x1b[1mBootstrap checklist\x1b[0m\n");
@@ -60,11 +73,11 @@ export function startServer(
       );
     }
 
-    const uiOk = uiReady && !uiFailed;
+    const uiOk = ready && !error;
     check(
       "Web UI",
       uiOk,
-      uiOk ? "http://localhost:3100" : uiError || "failed to start",
+      uiOk ? "http://localhost:3100" : error || "failed to start",
     );
 
     console.log("\n\x1b[2m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m");
@@ -88,8 +101,8 @@ export function startServer(
         }
       });
     } else {
-      console.log(`\n\x1b[33mWeb UI failed to start\x1b[0m — ${uiError}`);
-      if (uiError.includes("already in use")) {
+      console.log(`\n\x1b[33mWeb UI failed to start\x1b[0m — ${error}`);
+      if (error?.includes("already in use")) {
         console.log(
           `  Kill the existing process: \x1b[1mlsof -ti :3100 | xargs kill\x1b[0m`,
         );
@@ -100,9 +113,9 @@ export function startServer(
 
   nextProcess.stdout?.on("data", (data: Buffer) => {
     const text = data.toString();
-    if (!uiReady && !uiFailed && text.includes("Ready")) {
+    if (!uiReady && !uiFailed && (text.includes("Ready") || text.includes("Listening") || text.includes("started server"))) {
       uiReady = true;
-      printChecklist();
+      printChecklist(state, true);
     }
   });
 
@@ -112,7 +125,7 @@ export function startServer(
       uiFailed = true;
       uiError = "port 3100 is already in use";
       process.stderr.write(data);
-      printChecklist();
+      printChecklist(state, false, uiError);
     } else if (text.includes("Error") || text.includes("error")) {
       process.stderr.write(data);
     }
@@ -122,23 +135,23 @@ export function startServer(
     if (code !== null && code !== 0 && !uiReady && !uiFailed) {
       uiFailed = true;
       uiError = uiError || `server exited with code ${code}`;
-      printChecklist();
+      printChecklist(state, false, uiError);
     }
   });
 
   nextProcess.on("error", (err) => {
     uiFailed = true;
     uiError = err.message;
-    printChecklist();
+    printChecklist(state, false, uiError);
   });
 
   // Fallback: print checklist after timeout if "Ready" never appears
   setTimeout(() => {
     if (!uiReady && !uiFailed) {
       uiReady = true;
-      printChecklist();
+      printChecklist(state, true);
     }
-  }, 8000);
+  }, 5000);
 
   // Graceful shutdown
   process.on("SIGINT", () => {

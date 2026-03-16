@@ -25,10 +25,16 @@ if (subcommand === "search") {
   process.exit(0);
 }
 
+// Parse --runtime flag (for non-interactive / agent use)
+const runtimeFlag = (() => {
+  const idx = process.argv.indexOf("--runtime");
+  return idx !== -1 ? process.argv[idx + 1] : undefined;
+})();
+
 console.log("\n\x1b[1mtalentclaw\x1b[0m — your AI career agent\n");
 
 // 2. Detect or install agent runtime
-let runtime = detectRuntime();
+let runtime = await detectRuntime(runtimeFlag);
 if (!runtime) {
   runtime = installRuntime();
 }
