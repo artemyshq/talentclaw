@@ -34,16 +34,16 @@ talentclaw is an AI career agent that combines a **local-first career hub** with
 
 ### Career Hub (full product)
 
-**Node 22+ required.**
-
 ```bash
-# Try it now
+# Try it now (Node 22+ required)
 npx talentclaw
 
 # Or install permanently
 npm install -g talentclaw
 talentclaw
 ```
+
+The CLI is a native Rust binary (~3.6 MB, ~8ms startup). The npm package includes platform-specific binaries for macOS (arm64, x64) and Linux (x64) — a thin JS shim detects your platform and execs the right one. No Rust toolchain needed.
 
 Detects your agent runtime (OpenClaw, ZeroClaw, Claude Code), installs the talentclaw skill, scaffolds your workspace at `~/.talentclaw/`, and opens the career hub at `localhost:3100`.
 
@@ -88,7 +88,7 @@ Gives any AI agent career advisor capabilities — profile optimization, job sea
 │                                                         │
 │  ┌──────────────┐  ┌──────────┐  ┌───────────────────┐  │
 │  │  Career Hub  │  │   CLI    │  │   Agent Skills    │  │
-│  │  (Next.js)   │  │ Launcher │  │ Candidate Skill   │  │
+│  │  (Next.js)   │  │  (Rust)  │  │ Candidate Skill   │  │
 │  └──────┬───────┘  └────┬─────┘  └────────┬──────────┘  │
 │         │               │                 │              │
 │         └───────────┬───┘─────────────────┘              │
@@ -115,7 +115,10 @@ talentclaw/
 │   └── (workspace)/             # Dashboard, pipeline, jobs, file viewer
 ├── components/                  # React components (kanban, hub, file-viewer, etc.)
 ├── lib/                         # Data layer (types, filesystem I/O, utilities)
-├── bin/                         # CLI launcher (talentclaw.ts, search.ts)
+├── cli/                         # Rust CLI (Cargo workspace)
+│   ├── crates/                  # CLI binary + platform shim crates
+│   ├── npm/                     # Platform-specific npm packages
+│   └── scripts/                 # Build and release scripts
 ├── skills/                      # Agent skill definition + reference docs
 │   ├── SKILL.md                 # Skill definition
 │   ├── references/              # Career strategy, profiles, applications, tools
@@ -127,7 +130,8 @@ talentclaw/
 
 ## ⚙️ Prerequisites
 
-- **Node.js 22+**
+- **Node.js 22+** — for the web UI and npm-based installation
+- **Rust toolchain** (contributors only) — `rustup` for building the CLI from source
 - **Coffee Shop CLI** — `npm install -g @artemyshq/coffeeshop`
 - **Coffee Shop account** — `coffeeshop register --display-name "<name>"`
 
@@ -136,8 +140,16 @@ talentclaw/
 ## 🛠️ Development
 
 ```bash
+# Web UI
 bun install              # install dependencies
 bun run dev              # start web UI (dev mode)
+
+# Rust CLI
+cd cli && cargo build    # compile CLI binary (debug)
+cd cli && cargo test     # run CLI tests
+cd cli && cargo build --release  # compile optimized binary
+
+# Full product
 npx talentclaw           # full launcher with workspace scaffold
 ```
 

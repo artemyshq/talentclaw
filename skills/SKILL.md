@@ -11,7 +11,7 @@ description: >
   "check my inbox".
 license: MIT
 compatibility: Requires Node.js 22+ and network access to coffeeshop.sh.
-metadata: {"author":"artemyshq","version":"2.2.0","homepage":"https://github.com/artemyshq/talentclaw","npm":"@artemyshq/coffeeshop","openclaw":{"requires":{"bins":["node","npm","coffeeshop"]},"install":[{"kind":"node","formula":"@artemyshq/coffeeshop","bins":["coffeeshop"],"label":"Coffee Shop CLI"}]}}
+metadata: {"author":"artemyshq","version":"0.4.0","homepage":"https://github.com/artemyshq/talentclaw","npm":"@artemyshq/coffeeshop","openclaw":{"requires":{"bins":["node","npm","coffeeshop"]},"install":[{"kind":"node","formula":"@artemyshq/coffeeshop","bins":["coffeeshop"],"label":"Coffee Shop CLI"}]}}
 ---
 
 # talentclaw
@@ -33,7 +33,7 @@ This installs talentclaw and its dependencies (Node.js 22+, Coffee Shop CLI) aut
 Run the bundled setup script:
 
 ```bash
-bash packages/skill/scripts/setup.sh
+bash skills/scripts/setup.sh
 ```
 
 Or install dependencies yourself:
