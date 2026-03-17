@@ -1,10 +1,10 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import type { GraphNode, GraphEdge } from './graph-types'
+import type { TimelineBranch } from '@/lib/timeline-data'
 
-const CareerGraphCanvas = dynamic(
-  () => import('@/components/graph/career-graph-canvas'),
+const CareerTimelineCanvas = dynamic(
+  () => import('@/components/graph/career-timeline-canvas'),
   {
     ssr: false,
     loading: () => <div className="flex-1 bg-surface" />,
@@ -12,11 +12,9 @@ const CareerGraphCanvas = dynamic(
 )
 
 export default function CareerGraphWrapper({
-  nodes,
-  edges,
+  branches,
 }: {
-  nodes: GraphNode[]
-  edges: GraphEdge[]
+  branches: TimelineBranch[]
 }) {
-  return <CareerGraphCanvas nodes={nodes} edges={edges} />
+  return <CareerTimelineCanvas branches={branches} />
 }

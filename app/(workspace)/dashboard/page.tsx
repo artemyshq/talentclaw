@@ -5,7 +5,7 @@ import {
   getProfile,
   getCoffeeShopStatus,
 } from "@/lib/fs-data"
-import { buildCareerGraph } from "@/lib/graph-data"
+import { buildTimelineData } from "@/lib/timeline-data"
 import { PIPELINE_STAGES } from "@/lib/types"
 import { ProfileCard } from "@/components/hub/profile-card"
 import { CoffeeShopCard } from "@/components/hub/coffeeshop-card"
@@ -14,17 +14,18 @@ import { UpcomingActions } from "@/components/hub/upcoming-actions"
 import CareerGraphWrapper from "@/components/graph/career-graph-wrapper"
 
 export default async function DashboardPage() {
-  const [jobs, applications, activityLog, profile, graph, coffeeShopStatus] = await Promise.all([
+  const [jobs, applications, activityLog, profile, coffeeShopStatus] = await Promise.all([
     listJobs(),
     listApplications(),
     getActivityLog(10),
     getProfile(),
-    buildCareerGraph(),
     getCoffeeShopStatus(),
   ])
 
   const isFirstRun =
     !profile.frontmatter.display_name && !profile.frontmatter.headline
+
+  const timelineBranches = buildTimelineData(profile.frontmatter)
 
   // Stage counts
   const stageCounts: Record<string, number> = {}
@@ -54,28 +55,31 @@ export default async function DashboardPage() {
     .slice(0, 5)
 
   return (
-    <div className="p-6 max-w-6xl xl:max-w-[1400px] 2xl:max-w-[1600px] mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-5 xl:grid-cols-7 gap-6">
-        {/* Left column */}
-        <div className="lg:col-span-3 xl:col-span-4 space-y-6">
-          <ProfileCard
-            profile={profile.frontmatter}
-            isFirstRun={isFirstRun}
-            stageCounts={stageCounts}
-          />
-          {graph.nodes.length > 1 && (
-            <div className="bg-surface-raised rounded-2xl border border-border-subtle overflow-hidden h-[480px] xl:h-[560px] 2xl:h-[640px]">
-              <CareerGraphWrapper nodes={graph.nodes} edges={graph.edges} />
-            </div>
-          )}
-        </div>
+    <div className="p-6 max-w-6xl xl:max-w-[1400px] 2xl:max-w-[1600px] mx-auto space-y-6">
+      {/* Profile greeting + pipeline funnel */}
+      <ProfileCard
+        profile={profile.frontmatter}
+        isFirstRun={isFirstRun}
+        stageCounts={stageCounts}
+      />
 
-        {/* Right column */}
-        <div className="lg:col-span-2 xl:col-span-3 space-y-6">
-          <CoffeeShopCard status={coffeeShopStatus} />
-          <UpcomingActions actions={upcomingActions} />
-          <ActivityFeed entries={activityLog} />
+      {/* Career timeline — full width */}
+      {timelineBranches.length > 0 && (
+        <div className="bg-surface-raised rounded-2xl border border-border-subtle overflow-hidden">
+          <div className="px-6 pt-5 pb-0">
+            <h3 className="font-prose text-lg text-text-primary">Career Graph</h3>
+          </div>
+          <div className="h-[300px] xl:h-[360px] 2xl:h-[420px]">
+            <CareerGraphWrapper branches={timelineBranches} />
+          </div>
         </div>
+      )}
+
+      {/* Info cards grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <CoffeeShopCard status={coffeeShopStatus} />
+        <UpcomingActions actions={upcomingActions} />
+        <ActivityFeed entries={activityLog} />
       </div>
     </div>
   )
