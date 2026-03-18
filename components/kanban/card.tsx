@@ -3,6 +3,8 @@
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { Calendar, Building2, ChevronRight } from "lucide-react"
+import type { MatchBreakdown } from "@/lib/match-scoring"
+import { MatchTooltip } from "@/components/jobs/match-tooltip"
 
 export interface KanbanCardData {
   id: string
@@ -11,10 +13,25 @@ export interface KanbanCardData {
   appliedDate: string | null
   nextAction: string | null
   matchScore: number | null
+  matchBreakdown?: MatchBreakdown | null
 }
 
 interface KanbanCardProps {
   card: KanbanCardData
+}
+
+function MatchBadge({ score }: { score: number }) {
+  return (
+    <div className={`text-[0.7rem] font-medium px-1.5 py-0.5 rounded cursor-default ${
+      score >= 90
+        ? "bg-emerald-500/10 text-emerald-400"
+        : score >= 75
+          ? "bg-accent-subtle text-accent"
+          : "bg-amber-500/10 text-amber-400"
+    }`}>
+      {score}% fit
+    </div>
+  )
 }
 
 export function KanbanCard({ card }: KanbanCardProps) {
@@ -61,15 +78,13 @@ export function KanbanCard({ card }: KanbanCardProps) {
             </div>
           )}
           {card.matchScore !== null && (
-            <div className={`text-[0.7rem] font-medium px-1.5 py-0.5 rounded ${
-              card.matchScore >= 90
-                ? "bg-emerald-500/10 text-emerald-400"
-                : card.matchScore >= 75
-                  ? "bg-accent-subtle text-accent"
-                  : "bg-amber-500/10 text-amber-400"
-            }`}>
-              {card.matchScore}% fit
-            </div>
+            card.matchBreakdown ? (
+              <MatchTooltip breakdown={card.matchBreakdown}>
+                <MatchBadge score={card.matchScore} />
+              </MatchTooltip>
+            ) : (
+              <MatchBadge score={card.matchScore} />
+            )
           )}
         </div>
       </div>

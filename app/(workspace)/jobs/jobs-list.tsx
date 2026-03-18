@@ -12,6 +12,8 @@ import {
 import { SearchBar } from "@/components/query/search-bar"
 import { saveJobToPipeline } from "@/app/actions"
 import { formatCompensation } from "@/lib/ui-utils"
+import type { MatchBreakdown } from "@/lib/match-scoring"
+import { MatchTooltip } from "@/components/jobs/match-tooltip"
 
 interface JobListing {
   id: string
@@ -23,6 +25,7 @@ interface JobListing {
   compensationMax: number | null
   skills: string[]
   matchScore: number | null
+  matchBreakdown?: MatchBreakdown | null
   postedDate: string
   source: string
   status: string
@@ -92,15 +95,29 @@ export function JobsList({ jobs }: JobsListProps) {
                     {job.title}
                   </h3>
                   {job.matchScore !== null && (
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      job.matchScore >= 90
-                        ? "bg-emerald-500/10 text-emerald-400"
-                        : job.matchScore >= 80
-                          ? "bg-accent-subtle text-accent"
-                          : "bg-amber-500/10 text-amber-400"
-                    }`}>
-                      {job.matchScore}% match
-                    </span>
+                    job.matchBreakdown ? (
+                      <MatchTooltip breakdown={job.matchBreakdown}>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full cursor-default ${
+                          job.matchScore >= 90
+                            ? "bg-emerald-500/10 text-emerald-400"
+                            : job.matchScore >= 80
+                              ? "bg-accent-subtle text-accent"
+                              : "bg-amber-500/10 text-amber-400"
+                        }`}>
+                          {job.matchScore}% match
+                        </span>
+                      </MatchTooltip>
+                    ) : (
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        job.matchScore >= 90
+                          ? "bg-emerald-500/10 text-emerald-400"
+                          : job.matchScore >= 80
+                            ? "bg-accent-subtle text-accent"
+                            : "bg-amber-500/10 text-amber-400"
+                      }`}>
+                        {job.matchScore}% match
+                      </span>
+                    )
                   )}
                 </div>
 
