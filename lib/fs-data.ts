@@ -7,6 +7,8 @@ import {
   ApplicationFrontmatterSchema,
   ProfileFrontmatterSchema,
   ActivityEntrySchema,
+  ThreadFrontmatterSchema,
+  MessageFrontmatterSchema,
 } from "./types"
 import type {
   JobFile,
@@ -14,6 +16,11 @@ import type {
   ProfileFile,
   ActivityEntry,
   TreeNode,
+  ThreadFile,
+  ThreadFrontmatter,
+  MessageFrontmatter,
+  MessageFile,
+  ProfileFrontmatter,
 } from "./types"
 
 // Base directory
@@ -334,6 +341,195 @@ export async function getWorkspaceStats(): Promise<{
     fileCount,
     lastModified: latestMtime > 0 ? new Date(latestMtime).toISOString() : null,
     dataDir,
+  }
+}
+
+// --- Profile Update ---
+
+export async function updateProfile(
+  data: Partial<ProfileFrontmatter>,
+): Promise<void> {
+  const filePath = path.join(getDataDir(), "profile.md")
+  let existingFrontmatter: Record<string, unknown> = {}
+  let existingContent = ""
+
+  try {
+    const raw = await fs.readFile(filePath, "utf-8")
+    const parsed = matter(raw)
+    existingFrontmatter = parsed.data
+    existingContent = parsed.content
+  } catch {
+    // profile.md doesn't exist yet — start fresh
+    await ensureDir(path.dirname(filePath))
+  }
+
+  const merged = { ...existingFrontmatter, ...data, updated_at: new Date().toISOString() }
+  const validated = ProfileFrontmatterSchema.parse(merged)
+  await fs.writeFile(filePath, matter.stringify(existingContent, validated), "utf-8")
+}
+
+// --- Delete Job ---
+
+export async function deleteJob(slug: string): Promise<void> {
+  const filePath = safePath("jobs", slug)
+  try {
+    await fs.access(filePath)
+  } catch {
+    throw new Error(`Job not found: ${slug}`)
+  }
+  await fs.unlink(filePath)
+}
+
+// --- Applications CRUD ---
+
+export async function createApplication(
+  slug: string,
+  frontmatter: Record<string, unknown>,
+  content: string = "",
+): Promise<void> {
+  const filePath = safePath("applications", slug)
+  await ensureDir(path.dirname(filePath))
+  const validated = ApplicationFrontmatterSchema.parse(frontmatter)
+  const fileContent = matter.stringify(content, validated)
+  await fs.writeFile(filePath, fileContent, "utf-8")
+}
+
+export async function updateApplication(
+  slug: string,
+  data: Partial<Record<string, unknown>>,
+): Promise<void> {
+  const filePath = safePath("applications", slug)
+  const raw = await fs.readFile(filePath, "utf-8")
+  const { data: existing, content } = matter(raw)
+  const merged = { ...existing, ...data }
+  const validated = ApplicationFrontmatterSchema.parse(merged)
+  await fs.writeFile(filePath, matter.stringify(content, validated), "utf-8")
+}
+
+// --- Threads / Messages ---
+
+export async function listThreads(): Promise<ThreadFile[]> {
+  const messagesDir = path.join(getDataDir(), "messages")
+  await ensureDir(messagesDir)
+  const entries = await fs.readdir(messagesDir, { withFileTypes: true })
+  const threads: ThreadFile[] = []
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue
+    const threadDir = path.join(messagesDir, entry.name)
+    const threadFilePath = path.join(threadDir, "thread.md")
+    try {
+      const raw = await fs.readFile(threadFilePath, "utf-8")
+      const { data } = matter(raw)
+      const parsed = ThreadFrontmatterSchema.safeParse(data)
+      if (parsed.success) {
+        threads.push({
+          threadId: entry.name,
+          frontmatter: parsed.data,
+          messages: [], // list view omits full message bodies
+        })
+      }
+    } catch {
+      // skip threads without a valid thread.md
+    }
+  }
+
+  return threads
+}
+
+export async function getThread(threadId: string): Promise<ThreadFile | null> {
+  if (threadId.includes("..") || threadId.includes("/") || threadId.includes("\\")) {
+    throw new Error(`Invalid thread ID: ${threadId}`)
+  }
+  const threadDir = path.join(getDataDir(), "messages", threadId)
+  const threadFilePath = path.join(threadDir, "thread.md")
+
+  try {
+    const raw = await fs.readFile(threadFilePath, "utf-8")
+    const { data } = matter(raw)
+    const parsed = ThreadFrontmatterSchema.safeParse(data)
+    if (!parsed.success) return null
+
+    // Read all message files (numbered *.md, excluding thread.md)
+    const files = await fs.readdir(threadDir)
+    const messageFiles = files
+      .filter((f) => f.endsWith(".md") && f !== "thread.md")
+      .sort()
+
+    const messages: MessageFile[] = []
+    for (const file of messageFiles) {
+      const msgRaw = await fs.readFile(path.join(threadDir, file), "utf-8")
+      const { data: msgData, content: msgContent } = matter(msgRaw)
+      const msgParsed = MessageFrontmatterSchema.safeParse(msgData)
+      if (msgParsed.success) {
+        messages.push({
+          filename: file,
+          frontmatter: msgParsed.data,
+          content: msgContent.trim(),
+        })
+      }
+    }
+
+    // Sort by sent_at
+    messages.sort(
+      (a, b) =>
+        new Date(a.frontmatter.sent_at).getTime() -
+        new Date(b.frontmatter.sent_at).getTime(),
+    )
+
+    return {
+      threadId,
+      frontmatter: parsed.data,
+      messages,
+    }
+  } catch {
+    return null
+  }
+}
+
+export async function getUnreadCount(): Promise<number> {
+  const threads = await listThreads()
+  return threads.filter((t) => t.frontmatter.unread).length
+}
+
+export async function createMessage(
+  threadId: string,
+  frontmatter: MessageFrontmatter,
+  content: string,
+): Promise<void> {
+  if (threadId.includes("..") || threadId.includes("/") || threadId.includes("\\")) {
+    throw new Error(`Invalid thread ID: ${threadId}`)
+  }
+  const threadDir = path.join(getDataDir(), "messages", threadId)
+  await ensureDir(threadDir)
+
+  // Determine next message number
+  const files = await fs.readdir(threadDir)
+  const numbered = files
+    .filter((f) => /^\d+\.md$/.test(f))
+    .map((f) => parseInt(f.replace(".md", ""), 10))
+    .sort((a, b) => a - b)
+
+  const nextNum = numbered.length > 0 ? numbered[numbered.length - 1] + 1 : 1
+  const fileName = String(nextNum).padStart(3, "0") + ".md"
+  const filePath = path.join(threadDir, fileName)
+
+  const validated = MessageFrontmatterSchema.parse(frontmatter)
+  await fs.writeFile(filePath, matter.stringify(content, validated), "utf-8")
+
+  // Update thread.md last_active
+  const threadFilePath = path.join(threadDir, "thread.md")
+  try {
+    const raw = await fs.readFile(threadFilePath, "utf-8")
+    const { data, content: threadContent } = matter(raw)
+    data.last_active = new Date().toISOString()
+    await fs.writeFile(
+      threadFilePath,
+      matter.stringify(threadContent, data),
+      "utf-8",
+    )
+  } catch {
+    // thread.md doesn't exist yet — skip update
   }
 }
 

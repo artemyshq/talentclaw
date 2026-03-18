@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Briefcase, KanbanSquare, X } from "lucide-react"
+import { Home, Briefcase, KanbanSquare, Mail, X } from "lucide-react"
 import { useSidebar } from "./sidebar-wrapper"
 import { FileTree } from "./file-tree"
 import type { TreeNode } from "@/lib/types"
@@ -11,12 +11,14 @@ interface SidebarNavProps {
   jobCount: number
   activeCount: number
   tree: TreeNode[]
+  unreadCount: number
 }
 
 export function SidebarNav({
   jobCount,
   activeCount,
   tree,
+  unreadCount,
 }: SidebarNavProps) {
   const pathname = usePathname()
   const { setOpen } = useSidebar()
@@ -39,6 +41,13 @@ export function SidebarNav({
       label: "Pipeline",
       icon: <KanbanSquare className="w-4 h-4" />,
       count: activeCount,
+    },
+    {
+      href: "/inbox",
+      label: "Inbox",
+      icon: <Mail className="w-4 h-4" />,
+      count: unreadCount,
+      showDot: unreadCount > 0,
     },
   ]
 
@@ -76,7 +85,12 @@ export function SidebarNav({
                   : "text-text-secondary hover:text-text-primary hover:bg-surface-overlay"
               }`}
             >
-              {item.icon}
+              <span className="relative">
+                {item.icon}
+                {"showDot" in item && item.showDot && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-accent" />
+                )}
+              </span>
               <span>{item.label}</span>
               {item.count > 0 && (
                 <span className="ml-auto text-[11px] text-text-muted bg-surface-overlay px-1.5 py-0.5 rounded-full min-w-[20px] text-center">

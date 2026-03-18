@@ -215,3 +215,41 @@ export const ActivityEntrySchema = z.object({
 })
 
 export type ActivityEntry = z.infer<typeof ActivityEntrySchema>
+
+// Thread frontmatter (for messages/{thread-id}/thread.md)
+export const ThreadFrontmatterSchema = z.object({
+  participant: z.string(), // who the thread is with
+  subject: z.string().optional(),
+  last_active: z.string(), // ISO date
+  unread: z.boolean().default(false),
+  coffeeshop_thread_id: z.string().optional(),
+})
+
+export type ThreadFrontmatter = z.infer<typeof ThreadFrontmatterSchema>
+
+export interface ThreadFile {
+  threadId: string
+  frontmatter: ThreadFrontmatter
+  messages: MessageFile[]
+}
+
+// Match breakdown (for job intelligence)
+export const MatchBreakdownSchema = z.object({
+  overall: z.number().min(0).max(100),
+  skills_overlap: z.number().min(0).max(100),
+  skills_matched: z.array(z.string()).optional(),
+  skills_missing: z.array(z.string()).optional(),
+  experience_fit: z.number().min(0).max(100),
+  salary_alignment: z.number().min(0).max(100),
+  location_match: z.boolean().optional(),
+  remote_match: z.boolean().optional(),
+})
+
+export type MatchBreakdown = z.infer<typeof MatchBreakdownSchema>
+
+// Profile completeness
+export interface ProfileCompletenessResult {
+  percentage: number
+  missing: string[] // list of missing fields like "skills", "experience", "headline"
+  suggestions: string[] // human-readable suggestions
+}
