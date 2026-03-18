@@ -2,15 +2,20 @@
 
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Calendar, Building2, GripVertical } from "lucide-react"
+import { Calendar, Building2, GripVertical, Send } from "lucide-react"
 import type { KanbanCardData } from "@/components/kanban/card"
 import { matchScoreClass } from "@/lib/ui-utils"
+import { AgentActionButton } from "@/components/shared/agent-action-button"
+import { APPLY_PROMPT } from "@/lib/agent-prompts"
 
 interface PipelineCardProps {
   card: KanbanCardData
+  stage?: string
 }
 
-export function PipelineCard({ card }: PipelineCardProps) {
+const APPLY_STAGES = new Set(["discovered", "saved"])
+
+export function PipelineCard({ card, stage }: PipelineCardProps) {
   const {
     attributes,
     listeners,
@@ -25,6 +30,8 @@ export function PipelineCard({ card }: PipelineCardProps) {
     transition,
     opacity: isDragging ? 0.5 : 1,
   }
+
+  const showApply = stage && APPLY_STAGES.has(stage)
 
   return (
     <div
@@ -63,6 +70,17 @@ export function PipelineCard({ card }: PipelineCardProps) {
           </div>
         )}
       </div>
+
+      {showApply && (
+        <div className="mt-2.5 pt-2.5 border-t border-border-subtle">
+          <AgentActionButton
+            prompt={APPLY_PROMPT(card.id, card.title, card.company || "this company")}
+            label="Apply with agent"
+            icon={<Send className="w-3 h-3" />}
+            size="sm"
+          />
+        </div>
+      )}
     </div>
   )
 }
