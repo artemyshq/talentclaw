@@ -4,7 +4,7 @@ import {
 } from "@/components/workspace/sidebar-wrapper"
 import { Sidebar } from "@/components/workspace/sidebar"
 import { TopBar } from "@/components/workspace/top-bar"
-import { listJobs, getWorkspaceTree, getCoffeeShopStatus } from "@/lib/fs-data"
+import { listJobs, getWorkspaceTree, getCoffeeShopStatus, getUnreadCount } from "@/lib/fs-data"
 import type { CoffeeShopStatus } from "@/lib/fs-data"
 
 export default async function WorkspaceLayout({
@@ -15,12 +15,14 @@ export default async function WorkspaceLayout({
   let jobs: Awaited<ReturnType<typeof listJobs>> = []
   let tree: Awaited<ReturnType<typeof getWorkspaceTree>>["tree"] = []
   let coffeeShopStatus: CoffeeShopStatus = { connected: false }
+  let unreadCount = 0
 
   try {
-    ;[jobs, { tree }, coffeeShopStatus] = await Promise.all([
+    ;[jobs, { tree }, coffeeShopStatus, unreadCount] = await Promise.all([
       listJobs(),
       getWorkspaceTree(),
       getCoffeeShopStatus(),
+      getUnreadCount(),
     ])
   } catch {
     // Fall through with safe defaults so layout still renders
@@ -39,6 +41,7 @@ export default async function WorkspaceLayout({
           <Sidebar
             jobCount={jobCount}
             activeCount={activeCount}
+            unreadCount={unreadCount}
             tree={tree}
             coffeeShopStatus={coffeeShopStatus}
           />

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Briefcase, KanbanSquare, X } from "lucide-react"
+import { Home, Briefcase, KanbanSquare, MessageSquare, X } from "lucide-react"
 import { useSidebar } from "./sidebar-wrapper"
 import { FileTree } from "./file-tree"
 import type { TreeNode } from "@/lib/types"
@@ -10,12 +10,14 @@ import type { TreeNode } from "@/lib/types"
 interface SidebarNavProps {
   jobCount: number
   activeCount: number
+  unreadCount: number
   tree: TreeNode[]
 }
 
 export function SidebarNav({
   jobCount,
   activeCount,
+  unreadCount,
   tree,
 }: SidebarNavProps) {
   const pathname = usePathname()
@@ -39,6 +41,12 @@ export function SidebarNav({
       label: "Pipeline",
       icon: <KanbanSquare className="w-4 h-4" />,
       count: activeCount,
+    },
+    {
+      href: "/inbox",
+      label: "Inbox",
+      icon: <MessageSquare className="w-4 h-4" />,
+      count: unreadCount,
     },
   ]
 
@@ -64,7 +72,9 @@ export function SidebarNav({
       {/* Main nav */}
       <nav className="px-3 pb-3">
         {navItems.map((item) => {
-          const isActive = pathname === item.href
+          const isActive =
+            pathname === item.href || pathname?.startsWith(item.href + "/")
+          const isUnreadBadge = item.href === "/inbox" && item.count > 0
           return (
             <Link
               key={item.href}
@@ -79,7 +89,13 @@ export function SidebarNav({
               {item.icon}
               <span>{item.label}</span>
               {item.count > 0 && (
-                <span className="ml-auto text-[11px] text-text-muted bg-surface-overlay px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                <span
+                  className={`ml-auto text-[11px] px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${
+                    isUnreadBadge
+                      ? "bg-accent text-white font-medium"
+                      : "text-text-muted bg-surface-overlay"
+                  }`}
+                >
                   {item.count}
                 </span>
               )}

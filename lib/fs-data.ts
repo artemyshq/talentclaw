@@ -7,6 +7,8 @@ import {
   ApplicationFrontmatterSchema,
   ProfileFrontmatterSchema,
   ActivityEntrySchema,
+  ThreadFrontmatterSchema,
+  MessageFrontmatterSchema,
 } from "./types"
 import type {
   JobFile,
@@ -14,6 +16,8 @@ import type {
   ProfileFile,
   ActivityEntry,
   TreeNode,
+  ThreadFile,
+  MessageFile,
 } from "./types"
 
 // Base directory
@@ -334,6 +338,158 @@ export async function getWorkspaceStats(): Promise<{
     fileCount,
     lastModified: latestMtime > 0 ? new Date(latestMtime).toISOString() : null,
     dataDir,
+  }
+}
+
+// --- Message Threads ---
+
+export async function listThreads(): Promise<ThreadFile[]> {
+  const dir = path.join(getDataDir(), "messages")
+  await ensureDir(dir)
+
+  let entries: string[]
+  try {
+    entries = await fs.readdir(dir)
+  } catch {
+    return []
+  }
+
+  const threads: ThreadFile[] = []
+
+  for (const entry of entries) {
+    const threadDir = path.join(dir, entry)
+    const stat = await fs.stat(threadDir).catch(() => null)
+    if (!stat?.isDirectory()) continue
+
+    const threadFilePath = path.join(threadDir, "thread.md")
+    try {
+      const raw = await fs.readFile(threadFilePath, "utf-8")
+      const { data, content: _body } = matter(raw)
+      const parsed = ThreadFrontmatterSchema.safeParse(data)
+      if (!parsed.success) continue
+
+      const messages = await readThreadMessages(threadDir)
+      threads.push({
+        slug: entry,
+        frontmatter: parsed.data,
+        messages,
+      })
+    } catch {
+      // skip threads without a valid thread.md
+    }
+  }
+
+  return threads
+}
+
+async function readThreadMessages(threadDir: string): Promise<MessageFile[]> {
+  const messages: MessageFile[] = []
+  try {
+    const files = await fs.readdir(threadDir)
+    const msgFiles = files.filter((f) => f.endsWith(".md") && f !== "thread.md")
+    msgFiles.sort() // lexicographic sort — filenames are timestamp-based
+
+    for (const file of msgFiles) {
+      const raw = await fs.readFile(path.join(threadDir, file), "utf-8")
+      const { data, content: body } = matter(raw)
+      const parsed = MessageFrontmatterSchema.safeParse(data)
+      if (parsed.success) {
+        messages.push({
+          filename: file,
+          frontmatter: parsed.data,
+          content: body.trim(),
+        })
+      }
+    }
+  } catch {
+    // empty thread
+  }
+  return messages
+}
+
+export async function getThread(threadSlug: string): Promise<ThreadFile | null> {
+  if (threadSlug.includes("..") || threadSlug.includes("/") || threadSlug.includes("\\")) {
+    return null
+  }
+
+  const threadDir = path.join(getDataDir(), "messages", threadSlug)
+  const threadFilePath = path.join(threadDir, "thread.md")
+
+  try {
+    const raw = await fs.readFile(threadFilePath, "utf-8")
+    const { data } = matter(raw)
+    const parsed = ThreadFrontmatterSchema.safeParse(data)
+    if (!parsed.success) return null
+
+    const messages = await readThreadMessages(threadDir)
+    return {
+      slug: threadSlug,
+      frontmatter: parsed.data,
+      messages,
+    }
+  } catch {
+    return null
+  }
+}
+
+export async function getUnreadCount(): Promise<number> {
+  const threads = await listThreads()
+  return threads.filter((t) => t.frontmatter.unread).length
+}
+
+export async function createMessage(
+  threadSlug: string,
+  content: string,
+  from: string,
+  to: string,
+): Promise<void> {
+  if (threadSlug.includes("..") || threadSlug.includes("/") || threadSlug.includes("\\")) {
+    throw new Error(`Invalid thread slug: ${threadSlug}`)
+  }
+
+  const threadDir = path.join(getDataDir(), "messages", threadSlug)
+  await ensureDir(threadDir)
+
+  const now = new Date()
+  const timestamp = now.toISOString()
+  // Filename: YYYYMMDD-HHmmss-SSS.md
+  const filename = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}${String(now.getSeconds()).padStart(2, "0")}-${String(now.getMilliseconds()).padStart(3, "0")}.md`
+
+  const msgFrontmatter = {
+    direction: "outbound" as const,
+    from,
+    to,
+    sent_at: timestamp,
+  }
+
+  const filePath = path.join(threadDir, filename)
+  await fs.writeFile(filePath, matter.stringify(content, msgFrontmatter), "utf-8")
+
+  // Update thread's last_active timestamp
+  const threadFilePath = path.join(threadDir, "thread.md")
+  try {
+    const raw = await fs.readFile(threadFilePath, "utf-8")
+    const { data, content: body } = matter(raw)
+    data.last_active = timestamp
+    await fs.writeFile(threadFilePath, matter.stringify(body, data), "utf-8")
+  } catch {
+    // thread.md doesn't exist yet — shouldn't happen for replies
+  }
+}
+
+export async function markThreadAsRead(threadSlug: string): Promise<void> {
+  if (threadSlug.includes("..") || threadSlug.includes("/") || threadSlug.includes("\\")) {
+    throw new Error(`Invalid thread slug: ${threadSlug}`)
+  }
+
+  const threadFilePath = path.join(getDataDir(), "messages", threadSlug, "thread.md")
+  try {
+    const raw = await fs.readFile(threadFilePath, "utf-8")
+    const { data, content } = matter(raw)
+    data.unread = false
+    await fs.writeFile(threadFilePath, matter.stringify(content, data), "utf-8")
+  } catch {
+    // thread doesn't exist — no-op
   }
 }
 
