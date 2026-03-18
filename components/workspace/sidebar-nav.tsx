@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Briefcase, KanbanSquare, X } from "lucide-react"
+import { Home, Briefcase, KanbanSquare, User, X } from "lucide-react"
 import { useSidebar } from "./sidebar-wrapper"
 import { FileTree } from "./file-tree"
 import type { TreeNode } from "@/lib/types"
@@ -39,6 +39,12 @@ export function SidebarNav({
       label: "Pipeline",
       icon: <KanbanSquare className="w-4 h-4" />,
       count: activeCount,
+    },
+    {
+      href: "/profile",
+      label: "Profile",
+      icon: <User className="w-4 h-4" />,
+      count: 0,
     },
   ]
 
