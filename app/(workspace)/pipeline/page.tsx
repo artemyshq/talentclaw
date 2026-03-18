@@ -1,10 +1,11 @@
 import { PipelineBoard } from "@/components/pipeline/pipeline-board"
 import { PIPELINE_STAGES } from "@/lib/types"
-import { listJobs } from "@/lib/fs-data"
+import { listJobs, getProfile } from "@/lib/fs-data"
+import { calculateMatchBreakdown } from "@/lib/match-scoring"
 import type { KanbanCardData } from "@/components/kanban/card"
 
 export default async function PipelinePage() {
-  const jobs = await listJobs()
+  const [jobs, profile] = await Promise.all([listJobs(), getProfile()])
 
   const data: Record<string, KanbanCardData[]> = {}
   for (const stage of PIPELINE_STAGES) {
@@ -14,6 +15,9 @@ export default async function PipelinePage() {
   for (const job of jobs) {
     const stage = job.frontmatter.status
     if (data[stage]) {
+      const breakdown = job.frontmatter.match_score != null
+        ? calculateMatchBreakdown(profile.frontmatter, job.frontmatter)
+        : null
       data[stage].push({
         id: job.slug,
         title: job.frontmatter.title,
@@ -21,6 +25,7 @@ export default async function PipelinePage() {
         appliedDate: job.frontmatter.discovered_at || null,
         nextAction: null,
         matchScore: job.frontmatter.match_score ?? null,
+        matchBreakdown: breakdown,
       })
     }
   }

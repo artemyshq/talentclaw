@@ -1,198 +1,297 @@
-import type { ProfileFrontmatter, JobFrontmatter, MatchBreakdown } from "./types"
+import type { ProfileFrontmatter, JobFrontmatter } from "./types"
 
-export function calculateMatchBreakdown(
-  profile: ProfileFrontmatter,
-  job: JobFrontmatter,
-): MatchBreakdown {
-  const skillsResult = calculateSkillsOverlap(profile, job)
-  const experienceFit = calculateExperienceFit(profile, job)
-  const salaryAlignment = calculateSalaryAlignment(profile, job)
-  const locationMatch = calculateLocationMatch(profile, job)
-  const remoteMatch = calculateRemoteMatch(profile, job)
+export interface MatchDimension {
+  label: string
+  score: number // 0–100
+  detail: string // human-readable explanation
+}
 
-  // Weighted overall score
-  const weights = {
-    skills: 0.4,
-    experience: 0.2,
-    salary: 0.2,
-    location: 0.1,
-    remote: 0.1,
-  }
+export interface SkillsBreakdown {
+  matched: string[]
+  missing: string[]
+  extra: string[] // skills you have that the job doesn't list
+}
 
-  const locationScore = locationMatch ? 100 : 50
-  const remoteScore = remoteMatch ? 100 : 50
-
-  const overall = Math.round(
-    skillsResult.overlap * weights.skills +
-      experienceFit * weights.experience +
-      salaryAlignment * weights.salary +
-      locationScore * weights.location +
-      remoteScore * weights.remote,
-  )
-
-  return {
-    overall: Math.min(100, Math.max(0, overall)),
-    skills_overlap: skillsResult.overlap,
-    skills_matched: skillsResult.matched,
-    skills_missing: skillsResult.missing,
-    experience_fit: experienceFit,
-    salary_alignment: salaryAlignment,
-    location_match: locationMatch,
-    remote_match: remoteMatch,
+export interface MatchBreakdown {
+  overall: number
+  dimensions: {
+    skills: MatchDimension & { breakdown: SkillsBreakdown }
+    experience: MatchDimension & { yourYears: number | null; requiredYears: number | null }
+    salary: MatchDimension & { yourRange: { min?: number; max?: number } | null; offeredRange: { min?: number; max?: number } | null }
+    location: MatchDimension
+    remote: MatchDimension
   }
 }
 
-// --- Internal helpers ---
-
-function calculateSkillsOverlap(
+/**
+ * Calculates a detailed match breakdown between a user profile and a job listing.
+ * Uses the job's existing match_score as the overall score if available,
+ * and derives dimensional scores from available data.
+ */
+export function calculateMatchBreakdown(
   profile: ProfileFrontmatter,
-  job: JobFrontmatter,
-): { overlap: number; matched: string[]; missing: string[] } {
-  const profileSkills = (profile.skills || []).map((s) => s.toLowerCase())
+  job: JobFrontmatter
+): MatchBreakdown {
+  const skillsResult = calculateSkillsMatch(profile, job)
+  const experienceResult = calculateExperienceMatch(profile, job)
+  const salaryResult = calculateSalaryMatch(profile, job)
+  const locationResult = calculateLocationMatch(profile, job)
+  const remoteResult = calculateRemoteMatch(profile, job)
 
-  // Collect skills from job tags (common convention for required skills)
-  const jobSkills = (job.tags || []).map((s) => s.toLowerCase())
+  // If the job has a stored match_score, use it; otherwise compute from dimensions
+  const overall =
+    job.match_score ??
+    Math.round(
+      skillsResult.score * 0.35 +
+        experienceResult.score * 0.25 +
+        salaryResult.score * 0.2 +
+        locationResult.score * 0.1 +
+        remoteResult.score * 0.1
+    )
+
+  return {
+    overall,
+    dimensions: {
+      skills: skillsResult,
+      experience: experienceResult,
+      salary: salaryResult,
+      location: locationResult,
+      remote: remoteResult,
+    },
+  }
+}
+
+function normalizeSkill(s: string): string {
+  return s.toLowerCase().trim()
+}
+
+function calculateSkillsMatch(
+  profile: ProfileFrontmatter,
+  job: JobFrontmatter
+): MatchDimension & { breakdown: SkillsBreakdown } {
+  const profileSkills = (profile.skills || []).map(normalizeSkill)
+  const jobSkills = (job.tags || []).map(normalizeSkill)
 
   if (jobSkills.length === 0) {
-    // No job skills to compare — give a neutral score
-    return { overlap: 50, matched: [], missing: [] }
-  }
-
-  const matched: string[] = []
-  const missing: string[] = []
-
-  for (const skill of jobSkills) {
-    if (profileSkills.includes(skill)) {
-      matched.push(skill)
-    } else {
-      missing.push(skill)
+    return {
+      label: "Skills",
+      score: 100,
+      detail: "No specific skills listed",
+      breakdown: { matched: [], missing: [], extra: profileSkills },
     }
   }
 
-  const overlap = Math.round((matched.length / jobSkills.length) * 100)
-  return { overlap, matched, missing }
-}
+  const profileSkillSet = new Set(profileSkills)
+  const jobSkillSet = new Set(jobSkills)
 
-function calculateExperienceFit(
-  profile: ProfileFrontmatter,
-  job: JobFrontmatter,
-): number {
-  const profileYears = profile.experience_years
-  if (profileYears === undefined || profileYears === null) {
-    return 50 // neutral when unknown
-  }
+  const matched = jobSkills.filter((s) => profileSkillSet.has(s))
+  const missing = jobSkills.filter((s) => !profileSkillSet.has(s))
+  const extra = profileSkills.filter((s) => !jobSkillSet.has(s))
 
-  // Without explicit job experience requirements, use a heuristic:
-  // Senior roles (inferred from title) expect 5+ years, mid-level 2-5, entry 0-2
-  const title = (job.title || "").toLowerCase()
-  let expectedMin = 0
-  let expectedMax = 20
+  const score = jobSkills.length > 0 ? Math.round((matched.length / jobSkills.length) * 100) : 100
 
-  if (
-    title.includes("senior") ||
-    title.includes("sr.") ||
-    title.includes("lead") ||
-    title.includes("principal") ||
-    title.includes("staff")
-  ) {
-    expectedMin = 5
-    expectedMax = 20
-  } else if (
-    title.includes("junior") ||
-    title.includes("jr.") ||
-    title.includes("entry") ||
-    title.includes("intern")
-  ) {
-    expectedMin = 0
-    expectedMax = 3
-  } else {
-    // Mid-level default
-    expectedMin = 2
-    expectedMax = 10
-  }
+  // Use original casing from the source arrays
+  const originalJobTags = job.tags || []
+  const originalProfileSkills = profile.skills || []
 
-  if (profileYears >= expectedMin && profileYears <= expectedMax) {
-    return 100
-  } else if (profileYears < expectedMin) {
-    const gap = expectedMin - profileYears
-    return Math.max(0, 100 - gap * 20)
-  } else {
-    // Overqualified — slight penalty but not severe
-    const excess = profileYears - expectedMax
-    return Math.max(50, 100 - excess * 5)
+  const matchedOriginal = originalJobTags.filter((s) =>
+    profileSkillSet.has(normalizeSkill(s))
+  )
+  const missingOriginal = originalJobTags.filter(
+    (s) => !profileSkillSet.has(normalizeSkill(s))
+  )
+  const extraOriginal = originalProfileSkills.filter(
+    (s) => !jobSkillSet.has(normalizeSkill(s))
+  )
+
+  const detail =
+    matched.length === jobSkills.length
+      ? `All ${jobSkills.length} skills matched`
+      : `${matched.length} of ${jobSkills.length} skills matched`
+
+  return {
+    label: "Skills",
+    score,
+    detail,
+    breakdown: {
+      matched: matchedOriginal,
+      missing: missingOriginal,
+      extra: extraOriginal,
+    },
   }
 }
 
-function calculateSalaryAlignment(
+function calculateExperienceMatch(
   profile: ProfileFrontmatter,
-  job: JobFrontmatter,
-): number {
-  const profileRange = profile.salary_range
-  const jobComp = job.compensation
+  job: JobFrontmatter
+): MatchDimension & { yourYears: number | null; requiredYears: number | null } {
+  const yourYears = profile.experience_years ?? null
 
-  if (!profileRange || !jobComp) {
-    return 50 // neutral when unknown
+  // Try to extract required years from the job title or tags (heuristic)
+  // For now, we don't have a dedicated field, so estimate from seniority keywords
+  let requiredYears: number | null = null
+  const titleLower = (job.title || "").toLowerCase()
+  if (titleLower.includes("senior") || titleLower.includes("sr.") || titleLower.includes("sr ")) {
+    requiredYears = 5
+  } else if (titleLower.includes("staff") || titleLower.includes("principal")) {
+    requiredYears = 8
+  } else if (titleLower.includes("lead")) {
+    requiredYears = 6
+  } else if (titleLower.includes("junior") || titleLower.includes("jr.") || titleLower.includes("jr ")) {
+    requiredYears = 1
+  } else if (titleLower.includes("entry")) {
+    requiredYears = 0
   }
 
-  const profileMin = profileRange.min || 0
-  const profileMax = profileRange.max || Infinity
-  const jobMin = jobComp.min || 0
-  const jobMax = jobComp.max || Infinity
-
-  // Check overlap between ranges
-  if (jobMax !== Infinity && profileMin > jobMax) {
-    // Profile expects more than job offers
-    const gap = profileMin - jobMax
-    const maxSalary = Math.max(profileMin, jobMax, 1)
-    return Math.max(0, Math.round(100 - (gap / maxSalary) * 100))
+  if (yourYears === null || requiredYears === null) {
+    return {
+      label: "Experience",
+      score: 75, // neutral when we can't assess
+      detail: yourYears !== null ? `${yourYears} years experience` : "Experience not specified",
+      yourYears,
+      requiredYears,
+    }
   }
 
-  if (profileMax !== Infinity && jobMin > profileMax) {
-    // Job pays more than profile max — this is actually good
-    return 90
+  let score: number
+  if (yourYears >= requiredYears) {
+    score = 100
+  } else {
+    const gap = requiredYears - yourYears
+    score = Math.max(0, Math.round(100 - gap * 20))
   }
 
-  // There's overlap
-  return 100
+  const detail =
+    yourYears >= requiredYears
+      ? `${yourYears}y experience meets ${requiredYears}y requirement`
+      : `${yourYears}y experience, ${requiredYears}y preferred`
+
+  return { label: "Experience", score, detail, yourYears, requiredYears }
+}
+
+function calculateSalaryMatch(
+  profile: ProfileFrontmatter,
+  job: JobFrontmatter
+): MatchDimension & {
+  yourRange: { min?: number; max?: number } | null
+  offeredRange: { min?: number; max?: number } | null
+} {
+  const yourRange = profile.salary_range
+    ? { min: profile.salary_range.min ?? undefined, max: profile.salary_range.max ?? undefined }
+    : null
+  const offeredRange = job.compensation
+    ? { min: job.compensation.min ?? undefined, max: job.compensation.max ?? undefined }
+    : null
+
+  if (!yourRange || !offeredRange) {
+    return {
+      label: "Salary",
+      score: 75,
+      detail: !offeredRange ? "Compensation not listed" : "Your range not set",
+      yourRange,
+      offeredRange,
+    }
+  }
+
+  const yourMin = yourRange.min ?? 0
+  const yourMax = yourRange.max ?? Infinity
+  const offMin = offeredRange.min ?? 0
+  const offMax = offeredRange.max ?? Infinity
+
+  // Check overlap
+  const hasOverlap = yourMin <= offMax && offMin <= yourMax
+  if (!hasOverlap) {
+    const detail = yourMin > offMax ? "Offered below your range" : "Offered above your range"
+    return { label: "Salary", score: 20, detail, yourRange, offeredRange }
+  }
+
+  // Full containment of your range within offered
+  if (offMin <= yourMin && offMax >= yourMax) {
+    return {
+      label: "Salary",
+      score: 100,
+      detail: "Fully within your target range",
+      yourRange,
+      offeredRange,
+    }
+  }
+
+  return {
+    label: "Salary",
+    score: 70,
+    detail: "Partial overlap with your range",
+    yourRange,
+    offeredRange,
+  }
 }
 
 function calculateLocationMatch(
   profile: ProfileFrontmatter,
-  job: JobFrontmatter,
-): boolean {
-  const preferredLocations = profile.preferred_locations
-  const jobLocation = job.location
+  job: JobFrontmatter
+): MatchDimension {
+  const preferredLocations = (profile.preferred_locations || []).map((l) =>
+    l.toLowerCase().trim()
+  )
+  const jobLocation = (job.location || "").toLowerCase().trim()
 
-  if (!preferredLocations || preferredLocations.length === 0 || !jobLocation) {
-    return true // no preference or no job location = match
+  if (!jobLocation || preferredLocations.length === 0) {
+    return {
+      label: "Location",
+      score: 75,
+      detail: !jobLocation ? "Location not specified" : "No location preference set",
+    }
   }
 
-  const jobLoc = jobLocation.toLowerCase()
-  return preferredLocations.some((loc) => jobLoc.includes(loc.toLowerCase()))
+  const isMatch = preferredLocations.some(
+    (loc) => jobLocation.includes(loc) || loc.includes(jobLocation)
+  )
+
+  return {
+    label: "Location",
+    score: isMatch ? 100 : 40,
+    detail: isMatch ? `Matches your preferred location` : `${job.location} not in your preferences`,
+  }
 }
 
 function calculateRemoteMatch(
   profile: ProfileFrontmatter,
-  job: JobFrontmatter,
-): boolean {
-  const remotePref = profile.remote_preference
+  job: JobFrontmatter
+): MatchDimension {
+  const pref = profile.remote_preference
   const jobRemote = job.remote
 
-  if (!remotePref || !jobRemote) {
-    return true // no preference or no info = match
+  if (!pref || !jobRemote) {
+    return {
+      label: "Remote",
+      score: 75,
+      detail: !jobRemote ? "Remote policy not listed" : "No remote preference set",
+    }
   }
 
-  switch (remotePref) {
-    case "remote_only":
-      return jobRemote === "remote"
-    case "onsite":
-      return jobRemote === "onsite"
-    case "hybrid":
-      return jobRemote === "hybrid" || jobRemote === "remote"
-    case "remote_ok":
-    case "flexible":
-      return true // any arrangement works
-    default:
-      return true
+  // Compatibility matrix
+  const compatible: Record<string, string[]> = {
+    remote_only: ["remote"],
+    remote_ok: ["remote", "hybrid"],
+    hybrid: ["hybrid", "remote"],
+    onsite: ["onsite", "hybrid"],
+    flexible: ["remote", "hybrid", "onsite"],
+  }
+
+  const isMatch = (compatible[pref] || []).includes(jobRemote)
+
+  const prefLabels: Record<string, string> = {
+    remote_only: "Remote only",
+    remote_ok: "Remote OK",
+    hybrid: "Hybrid",
+    onsite: "On-site",
+    flexible: "Flexible",
+  }
+
+  return {
+    label: "Remote",
+    score: isMatch ? 100 : 30,
+    detail: isMatch
+      ? `${jobRemote} matches your ${prefLabels[pref] || pref} preference`
+      : `${jobRemote} doesn't match your ${prefLabels[pref] || pref} preference`,
   }
 }
