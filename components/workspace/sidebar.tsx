@@ -8,6 +8,7 @@ import type { CoffeeShopStatus } from "@/lib/fs-data"
 interface SidebarProps {
   jobCount: number
   activeCount: number
+  unreadCount: number
   tree: TreeNode[]
   coffeeShopStatus: CoffeeShopStatus
   unreadCount: number
@@ -16,6 +17,7 @@ interface SidebarProps {
 export function Sidebar({
   jobCount,
   activeCount,
+  unreadCount,
   tree,
   coffeeShopStatus,
   unreadCount,
@@ -34,6 +36,7 @@ export function Sidebar({
       <SidebarNav
         jobCount={jobCount}
         activeCount={activeCount}
+        unreadCount={unreadCount}
         tree={tree}
         unreadCount={unreadCount}
       />

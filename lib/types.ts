@@ -187,6 +187,24 @@ export interface MessageFile {
   content: string
 }
 
+// Thread frontmatter (messages/<thread-slug>/thread.md)
+export const ThreadFrontmatterSchema = z.object({
+  participant: z.string(),
+  subject: z.string().optional(),
+  job_ref: z.string().optional(),
+  coffeeshop_thread_id: z.string().optional(),
+  last_active: z.string(),
+  unread: z.boolean().default(false),
+})
+
+export type ThreadFrontmatter = z.infer<typeof ThreadFrontmatterSchema>
+
+export interface ThreadFile {
+  slug: string
+  frontmatter: ThreadFrontmatter
+  messages: MessageFile[]
+}
+
 // File tree node (for sidebar)
 export interface TreeNode {
   name: string // "acme-sre.md" or "jobs"
