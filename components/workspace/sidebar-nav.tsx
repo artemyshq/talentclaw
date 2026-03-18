@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Briefcase, KanbanSquare, Mail, X } from "lucide-react"
+import { Home, Briefcase, KanbanSquare, Mail, User, X } from "lucide-react"
 import { useSidebar } from "./sidebar-wrapper"
 import { FileTree } from "./file-tree"
 import type { TreeNode } from "@/lib/types"
@@ -48,6 +48,12 @@ export function SidebarNav({
       icon: <Mail className="w-4 h-4" />,
       count: unreadCount,
       showDot: unreadCount > 0,
+    },
+    {
+      href: "/profile",
+      label: "Profile",
+      icon: <User className="w-4 h-4" />,
+      count: 0,
     },
   ]
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import {
   Search,
   MapPin,
@@ -8,8 +9,10 @@ import {
   Wifi,
   Building2,
   Bookmark,
+  Plus,
 } from "lucide-react"
 import { SearchBar } from "@/components/query/search-bar"
+import { DeleteJobButton } from "@/components/jobs/delete-job-button"
 import { saveJobToPipeline } from "@/app/actions"
 import { formatCompensation } from "@/lib/ui-utils"
 
@@ -63,9 +66,16 @@ export function JobsList({ jobs }: JobsListProps) {
 
   return (
     <>
-      {/* Search */}
-      <div className="mb-8">
+      {/* Search + New Job */}
+      <div className="flex items-center gap-3 mb-8">
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        <Link
+          href="/jobs/new"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          New Job
+        </Link>
       </div>
 
       {/* Results count */}
@@ -142,7 +152,7 @@ export function JobsList({ jobs }: JobsListProps) {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   onClick={() => toggleSave(job.id)}
                   className={`p-2 rounded-lg border transition-colors cursor-pointer ${
@@ -154,6 +164,7 @@ export function JobsList({ jobs }: JobsListProps) {
                 >
                   <Bookmark className="w-4 h-4" />
                 </button>
+                <DeleteJobButton slug={job.id} jobTitle={job.title} />
               </div>
             </div>
           </div>
@@ -163,9 +174,12 @@ export function JobsList({ jobs }: JobsListProps) {
       {jobs.length === 0 && (
         <div className="text-center py-16">
           <Search className="w-10 h-10 text-text-muted mx-auto mb-4" />
-          <p className="text-text-secondary text-sm">No jobs yet.</p>
-          <p className="text-text-muted text-xs mt-1">
-            Run <code className="text-accent bg-accent/5 px-1.5 py-0.5 rounded text-[0.7rem]">talentclaw search</code> or ask your agent to find opportunities.
+          <p className="text-text-secondary text-sm">No jobs in your workspace yet.</p>
+          <p className="text-text-muted text-xs mt-2">
+            Run <code className="text-accent bg-accent/5 px-1.5 py-0.5 rounded text-[0.7rem]">talentclaw search</code> to discover opportunities, or{" "}
+            <Link href="/jobs/new" className="text-accent hover:text-accent-hover transition-colors underline underline-offset-2">
+              add one manually
+            </Link>.
           </p>
         </div>
       )}
