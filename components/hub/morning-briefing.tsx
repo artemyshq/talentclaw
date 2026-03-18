@@ -3,12 +3,11 @@ import {
   Mail,
   Calendar,
   TrendingUp,
-  Briefcase,
 } from "lucide-react"
-import type { Briefing } from "@/lib/analytics"
+import type { BriefingResult } from "@/lib/analytics"
 
 interface MorningBriefingProps {
-  briefing: Briefing
+  briefing: BriefingResult
 }
 
 function getGreetingLabel(): string {
@@ -38,11 +37,9 @@ const actionTypeIcons: Record<string, React.ReactNode> = {
 
 export function MorningBriefing({ briefing }: MorningBriefingProps) {
   const hasAnyData =
-    briefing.newJobsCount > 0 ||
-    briefing.unreadMessagesCount > 0 ||
-    briefing.upcomingActions.length > 0 ||
-    briefing.activeApplicationsCount > 0 ||
-    briefing.totalPipelineCount > 0
+    briefing.newJobs > 0 ||
+    briefing.unreadMessages > 0 ||
+    briefing.upcomingActions.length > 0
 
   return (
     <div className="bg-surface-raised rounded-2xl border border-border-subtle p-6">
@@ -66,39 +63,20 @@ export function MorningBriefing({ briefing }: MorningBriefingProps) {
         </p>
       ) : (
         <div className="space-y-3">
-          {/* New jobs */}
           <BriefingRow
             icon={<TrendingUp className="w-4 h-4 text-accent" />}
-            value={briefing.newJobsCount}
-            label={briefing.newJobsCount === 1 ? "new job this week" : "new jobs this week"}
-            accent={briefing.newJobsCount > 0}
+            value={briefing.newJobs}
+            label={briefing.newJobs === 1 ? "new job this week" : "new jobs this week"}
+            accent={briefing.newJobs > 0}
           />
 
-          {/* Messages */}
           <BriefingRow
             icon={<Mail className="w-4 h-4 text-blue-500" />}
-            value={briefing.unreadMessagesCount}
-            label={
-              briefing.unreadMessagesCount === 1
-                ? "recent message"
-                : "recent messages"
-            }
-            accent={briefing.unreadMessagesCount > 0}
+            value={briefing.unreadMessages}
+            label={briefing.unreadMessages === 1 ? "unread message" : "unread messages"}
+            accent={briefing.unreadMessages > 0}
           />
 
-          {/* Active applications */}
-          <BriefingRow
-            icon={<Briefcase className="w-4 h-4 text-violet-500" />}
-            value={briefing.activeApplicationsCount}
-            label={
-              briefing.activeApplicationsCount === 1
-                ? "active application"
-                : "active applications"
-            }
-            accent={briefing.activeApplicationsCount > 0}
-          />
-
-          {/* Upcoming actions */}
           {briefing.upcomingActions.length > 0 && (
             <div className="mt-4 pt-3 border-t border-border-subtle">
               <p className="text-[11px] text-text-muted uppercase tracking-wider mb-2.5">
@@ -107,7 +85,7 @@ export function MorningBriefing({ briefing }: MorningBriefingProps) {
               <div className="space-y-2">
                 {briefing.upcomingActions.slice(0, 3).map((action, i) => (
                   <div
-                    key={`${action.company}-${i}`}
+                    key={`${action.title}-${i}`}
                     className="flex items-center gap-2.5 py-1.5"
                   >
                     <div className="shrink-0">
@@ -119,8 +97,8 @@ export function MorningBriefing({ briefing }: MorningBriefingProps) {
                       <p className="text-sm text-text-primary truncate">
                         {action.title}
                       </p>
-                      <p className="text-xs text-text-muted truncate">
-                        {action.company} &middot; {formatBriefingDate(action.date)}
+                      <p className="text-xs text-text-muted">
+                        {formatBriefingDate(action.date)}
                       </p>
                     </div>
                   </div>

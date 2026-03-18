@@ -10,6 +10,12 @@ import {
 
 // --- Funnel ---
 
+export interface FunnelStage {
+  stage: string
+  count: number
+  conversion: number // conversion rate from previous stage (0-1)
+}
+
 export interface FunnelResult {
   stages: Record<string, number>
   conversions: Record<string, number> // e.g. "discovered→saved": 0.45
@@ -42,6 +48,19 @@ export function calculateFunnel(jobs: JobFile[]): FunnelResult {
   }
 
   return { stages, conversions }
+}
+
+export function funnelToStages(result: FunnelResult): FunnelStage[] {
+  const stageOrder = PIPELINE_STAGES.filter(s => s !== "rejected")
+  return stageOrder.map((stage, i) => {
+    const prevStage = i > 0 ? stageOrder[i - 1] : null
+    const convKey = prevStage ? `${prevStage}\u2192${stage}` : ""
+    return {
+      stage,
+      count: result.stages[stage] || 0,
+      conversion: prevStage ? (result.conversions[convKey] || 0) : 1,
+    }
+  })
 }
 
 // --- Time in Stage ---

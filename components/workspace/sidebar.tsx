@@ -11,7 +11,6 @@ interface SidebarProps {
   unreadCount: number
   tree: TreeNode[]
   coffeeShopStatus: CoffeeShopStatus
-  unreadCount: number
 }
 
 export function Sidebar({
@@ -20,7 +19,6 @@ export function Sidebar({
   unreadCount,
   tree,
   coffeeShopStatus,
-  unreadCount,
 }: SidebarProps) {
   return (
     <>
@@ -38,7 +36,6 @@ export function Sidebar({
         activeCount={activeCount}
         unreadCount={unreadCount}
         tree={tree}
-        unreadCount={unreadCount}
       />
 
       {/* Coffee Shop connection status */}

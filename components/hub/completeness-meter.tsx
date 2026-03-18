@@ -1,13 +1,13 @@
 import Link from "next/link"
 import { AlertCircle, CheckCircle2 } from "lucide-react"
-import type { CompletenessResult } from "@/lib/analytics"
+import type { ProfileCompletenessResult as CompletenessResult } from "@/lib/types"
 
 interface CompletenessMeterProps {
   completeness: CompletenessResult
 }
 
 export function CompletenessMeter({ completeness }: CompletenessMeterProps) {
-  const { percentage, missingFields } = completeness
+  const { percentage, missing: missingFields } = completeness
   const isComplete = percentage === 100
   const circumference = 2 * Math.PI * 40
   const strokeDashoffset = circumference - (percentage / 100) * circumference
@@ -86,15 +86,15 @@ export function CompletenessMeter({ completeness }: CompletenessMeterProps) {
                 {missingFields.length} field{missingFields.length !== 1 ? "s" : ""} remaining
               </p>
               <div className="space-y-1.5">
-                {missingFields.slice(0, 3).map((item) => (
+                {missingFields.slice(0, 3).map((field, i) => (
                   <div
-                    key={item.field}
+                    key={field}
                     className="flex items-start gap-1.5"
                   >
                     <AlertCircle className="w-3.5 h-3.5 text-text-muted shrink-0 mt-0.5" />
                     <p className="text-xs text-text-secondary leading-snug">
-                      <span className="font-medium">{item.field}</span>{" "}
-                      &mdash; {item.suggestion}
+                      <span className="font-medium capitalize">{field}</span>{" "}
+                      &mdash; {completeness.suggestions[i] || `Add your ${field}`}
                     </p>
                   </div>
                 ))}

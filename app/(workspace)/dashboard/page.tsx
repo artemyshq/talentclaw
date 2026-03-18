@@ -5,8 +5,8 @@ import {
   getProfile,
   getCoffeeShopStatus,
 } from "@/lib/fs-data"
-import { buildCareerGraph } from "@/lib/graph-data"
-import { calculateFunnel, generateBriefing, calculateCompleteness } from "@/lib/analytics"
+import { buildTimelineData } from "@/lib/timeline-data"
+import { calculateFunnel, funnelToStages, generateBriefing, calculateCompleteness } from "@/lib/analytics"
 import { PIPELINE_STAGES } from "@/lib/types"
 import { ProfileCard } from "@/components/hub/profile-card"
 import { CoffeeShopCard } from "@/components/hub/coffeeshop-card"
@@ -18,14 +18,15 @@ import { CompletenessMeter } from "@/components/hub/completeness-meter"
 import CareerGraphWrapper from "@/components/graph/career-graph-wrapper"
 
 export default async function DashboardPage() {
-  const [jobs, applications, activityLog, profile, graph, coffeeShopStatus] = await Promise.all([
+  const [jobs, applications, activityLog, profile, coffeeShopStatus] = await Promise.all([
     listJobs(),
     listApplications(),
     getActivityLog(10),
     getProfile(),
-    buildCareerGraph(),
     getCoffeeShopStatus(),
   ])
+
+  const timelineData = buildTimelineData(profile.frontmatter)
 
   const isFirstRun =
     !profile.frontmatter.display_name && !profile.frontmatter.headline
@@ -58,9 +59,9 @@ export default async function DashboardPage() {
     .slice(0, 5)
 
   // Analytics
-  const funnel = calculateFunnel(jobs)
-  const briefing = generateBriefing(jobs, applications, activityLog)
-  const completeness = calculateCompleteness(profile)
+  const funnel = funnelToStages(calculateFunnel(jobs))
+  const briefing = generateBriefing(jobs, applications, [], profile.frontmatter)
+  const completeness = calculateCompleteness(profile.frontmatter)
 
   return (
     <div className="p-6 max-w-6xl xl:max-w-[1400px] 2xl:max-w-[1600px] mx-auto space-y-6">
@@ -85,9 +86,9 @@ export default async function DashboardPage() {
       <PipelineFunnelChart funnel={funnel} />
 
       {/* Row 4: Career Timeline — full width (if data exists) */}
-      {graph.nodes.length > 1 && (
+      {timelineData.length > 0 && (
         <div className="bg-surface-raised rounded-2xl border border-border-subtle overflow-hidden h-[480px] xl:h-[560px] 2xl:h-[640px]">
-          <CareerGraphWrapper nodes={graph.nodes} edges={graph.edges} />
+          <CareerGraphWrapper branches={timelineData} />
         </div>
       )}
 

@@ -234,23 +234,6 @@ export const ActivityEntrySchema = z.object({
 
 export type ActivityEntry = z.infer<typeof ActivityEntrySchema>
 
-// Thread frontmatter (for messages/{thread-id}/thread.md)
-export const ThreadFrontmatterSchema = z.object({
-  participant: z.string(), // who the thread is with
-  subject: z.string().optional(),
-  last_active: z.string(), // ISO date
-  unread: z.boolean().default(false),
-  coffeeshop_thread_id: z.string().optional(),
-})
-
-export type ThreadFrontmatter = z.infer<typeof ThreadFrontmatterSchema>
-
-export interface ThreadFile {
-  threadId: string
-  frontmatter: ThreadFrontmatter
-  messages: MessageFile[]
-}
-
 // Match breakdown (for job intelligence)
 export const MatchBreakdownSchema = z.object({
   overall: z.number().min(0).max(100),

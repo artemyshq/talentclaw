@@ -435,7 +435,7 @@ export async function listThreads(): Promise<ThreadFile[]> {
       const parsed = ThreadFrontmatterSchema.safeParse(data)
       if (parsed.success) {
         threads.push({
-          threadId: entry.name,
+          slug: entry.name,
           frontmatter: parsed.data,
           messages: [], // list view omits full message bodies
         })
@@ -489,7 +489,7 @@ export async function getThread(threadId: string): Promise<ThreadFile | null> {
     )
 
     return {
-      threadId,
+      slug: threadId,
       frontmatter: parsed.data,
       messages,
     }
