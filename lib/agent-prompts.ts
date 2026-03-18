@@ -15,3 +15,7 @@ export function DRAFT_FOLLOWUP_PROMPT(
 
 export const OPTIMIZE_PROFILE_PROMPT =
   "Please review my profile and suggest improvements to make it more compelling for the roles I'm targeting."
+
+export function PARSE_RESUME_PROMPT(resumeText: string): string {
+  return `I'm uploading my resume. Please parse the following resume text and update my profile with the extracted information (name, headline, skills, experience, education, etc.):\n\n---\n${resumeText}\n---`
+}

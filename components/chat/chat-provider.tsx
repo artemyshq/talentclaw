@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { createContext, useContext, useState, useCallback, type ReactNode } from "react"
 import { useChat } from "@/lib/openclaw/use-chat"
 import type { ChatMessage } from "@/lib/openclaw/types"
 
@@ -12,6 +12,7 @@ type ChatContextValue = {
   isAvailable: boolean | null
   error: string | null
   sendMessage: (text: string) => void
+  sendPrefilled: (text: string) => void
   clearMessages: () => void
 }
 
@@ -21,8 +22,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const chat = useChat()
 
+  const sendPrefilled = useCallback(
+    (text: string) => {
+      setIsOpen(true)
+      // Brief delay to let the panel open before sending
+      setTimeout(() => {
+        chat.sendMessage(text)
+      }, 150)
+    },
+    [chat],
+  )
+
   return (
-    <ChatContext.Provider value={{ isOpen, setIsOpen, ...chat }}>
+    <ChatContext.Provider value={{ isOpen, setIsOpen, sendPrefilled, ...chat }}>
       {children}
     </ChatContext.Provider>
   )

@@ -3,6 +3,8 @@ import { CrabLogo } from "@/components/crab-logo"
 import { PIPELINE_STAGES } from "@/lib/types"
 import { STAGE_LABELS } from "@/lib/ui-utils"
 import type { ProfileFrontmatter } from "@/lib/types"
+import { ResumeUpload } from "@/components/profile/resume-upload"
+import { ProfileOptimizeButton } from "./profile-optimize-button"
 
 const stageColors: Record<string, string> = {
   discovered: "bg-slate-500/15 text-slate-600 border-slate-200",
@@ -61,6 +63,9 @@ export function ProfileCard({ profile, isFirstRun, stageCounts }: ProfileCardPro
             description="Run talentclaw search to discover jobs, or ask your agent."
           />
         </div>
+
+        {/* Resume upload for quick onboarding */}
+        <ResumeUpload />
       </div>
     )
   }
@@ -78,12 +83,15 @@ export function ProfileCard({ profile, isFirstRun, stageCounts }: ProfileCardPro
             <p className="text-sm text-text-secondary mt-1">{profile.headline}</p>
           )}
         </div>
-        <Link
-          href="/pipeline"
-          className="text-xs text-accent hover:text-accent-hover transition-colors shrink-0"
-        >
-          View pipeline &rarr;
-        </Link>
+        <div className="flex items-center gap-3 shrink-0">
+          <ProfileOptimizeButton />
+          <Link
+            href="/pipeline"
+            className="text-xs text-accent hover:text-accent-hover transition-colors"
+          >
+            View pipeline &rarr;
+          </Link>
+        </div>
       </div>
 
       {/* Pipeline funnel */}

@@ -76,7 +76,7 @@ function StageSection({ stage, cards }: StageSectionProps) {
         {cards.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {cards.map((card) => (
-              <PipelineCard key={card.id} card={card} />
+              <PipelineCard key={card.id} card={card} stage={stage} />
             ))}
           </div>
         ) : (
