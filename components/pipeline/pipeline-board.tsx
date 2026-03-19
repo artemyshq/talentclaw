@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useId } from "react"
 import {
   DndContext,
   DragOverlay,
@@ -155,6 +155,7 @@ function StageBar({ stages, columns }: StageBarProps) {
 // ---------------------------------------------------------------------------
 
 export function PipelineBoard({ initialData }: PipelineBoardProps) {
+  const dndId = useId()
   const [columns, setColumns] =
     useState<Record<string, KanbanCardData[]>>(initialData)
   const [activeCard, setActiveCard] = useState<KanbanCardData | null>(null)
@@ -253,6 +254,7 @@ export function PipelineBoard({ initialData }: PipelineBoardProps) {
 
   return (
     <DndContext
+      id={dndId}
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}

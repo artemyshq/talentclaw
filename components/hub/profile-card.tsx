@@ -5,7 +5,7 @@ import type { ProfileFrontmatter, ProfileCompletenessResult } from "@/lib/types"
 import type { BriefingResult, MomentumResult } from "@/lib/analytics"
 import { ResumeUpload } from "@/components/profile/resume-upload"
 import { ProfileOptimizeButton } from "./profile-optimize-button"
-import { TrendingUp, Mail, Calendar, Bot, Lightbulb } from "lucide-react"
+import { TrendingUp, Calendar, Bot, Lightbulb } from "lucide-react"
 
 interface ProfileCardProps {
   profile: ProfileFrontmatter
@@ -83,12 +83,6 @@ export function ProfileCard({
             <MomentumRing score={momentum.score} trend={momentum.trend} qualifier={momentum.qualifier} />
           )}
           <ProfileOptimizeButton />
-          <Link
-            href="/pipeline"
-            className="text-xs text-accent hover:text-accent-hover transition-colors"
-          >
-            View pipeline &rarr;
-          </Link>
         </div>
       </div>
 
@@ -135,11 +129,6 @@ export function ProfileCard({
                   icon={<TrendingUp className="w-3.5 h-3.5 text-accent" />}
                   value={briefing.newJobs}
                   label={`new ${pluralize(briefing.newJobs, "job")}`}
-                />
-                <BriefingStat
-                  icon={<Mail className="w-3.5 h-3.5 text-blue-500" />}
-                  value={briefing.unreadMessages}
-                  label="unread"
                 />
                 {briefing.agentActions > 0 && (
                   <BriefingStat

@@ -11,6 +11,8 @@ const pageNames: Record<string, string> = {
   "/jobs": "Jobs",
 }
 
+const hiddenTopBarRoutes = new Set([...Object.keys(pageNames), "/profile"])
+
 function FileBreadcrumb({ pathname }: { pathname: string }) {
   const raw = pathname.replace(/^\/file\//, "")
   const segments = raw.split("/").filter(Boolean).map(decodeURIComponent)
@@ -50,7 +52,7 @@ export function TopBar() {
   const pageName = pageNames[pathname] || "Career Hub"
   const isFilePath = pathname.startsWith("/file/")
 
-  if (pathname === "/dashboard" || pathname === "/jobs" || pathname === "/pipeline") return null
+  if (hiddenTopBarRoutes.has(pathname)) return null
 
   return (
     <header className="h-12 flex items-center justify-between px-5 border-b border-border-subtle bg-surface/80 backdrop-blur-sm shrink-0">

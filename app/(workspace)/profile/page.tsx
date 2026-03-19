@@ -5,7 +5,7 @@ export default async function ProfilePage() {
   const profile = await getProfile()
 
   return (
-    <div className="max-w-4xl mx-auto px-5 py-8">
+    <div className="w-full max-w-[1080px] mx-auto px-8 py-8">
       <div className="mb-8">
         <h1 className="font-prose text-2xl text-text-primary">Your Profile</h1>
         <p className="text-sm text-text-secondary mt-1">

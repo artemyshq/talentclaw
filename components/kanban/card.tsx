@@ -56,7 +56,7 @@ export function KanbanCard({ card }: KanbanCardProps) {
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-surface-overlay rounded-xl p-4 border border-border-subtle hover:border-accent/30 cursor-grab active:cursor-grabbing transition-colors group"
+      className="bg-surface-raised rounded-xl p-4 border border-border-subtle hover:border-accent/30 cursor-grab active:cursor-grabbing transition-colors group"
     >
       <h4 className="text-sm font-semibold text-text-primary mb-1 group-hover:text-accent-hover transition-colors">
         {card.title}

@@ -39,7 +39,7 @@ export function PipelineCard({ card, stage }: PipelineCardProps) {
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-surface-overlay rounded-xl p-3.5 border-l-2 border border-border-subtle border-l-border-subtle hover:border-accent/30 hover:border-l-accent/50 cursor-grab active:cursor-grabbing transition-colors group relative"
+      className="bg-surface-raised rounded-xl p-3.5 border-l-2 border border-border-subtle border-l-border-subtle hover:border-accent/30 hover:border-l-accent/50 cursor-grab active:cursor-grabbing transition-colors group relative"
     >
       {/* Drag handle hint */}
       <div className="absolute top-2.5 right-2.5 text-text-muted opacity-0 group-hover:opacity-60 transition-opacity">
