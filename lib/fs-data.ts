@@ -9,6 +9,8 @@ import {
   ActivityEntrySchema,
   ThreadFrontmatterSchema,
   MessageFrontmatterSchema,
+  ContactFrontmatterSchema,
+  CompanyFrontmatterSchema,
 } from "./types"
 import type {
   JobFile,
@@ -21,6 +23,8 @@ import type {
   MessageFrontmatter,
   MessageFile,
   ProfileFrontmatter,
+  ContactFile,
+  CompanyFile,
 } from "./types"
 import { getCached, setCache, invalidateCache } from "./cache"
 
@@ -68,36 +72,87 @@ function safePath(subdir: string, slug: string): string {
   return resolved
 }
 
-// --- Jobs ---
+// --- Graph Dirty Flag ---
 
-export async function listJobs(): Promise<JobFile[]> {
-  const dir = path.join(getDataDir(), "jobs")
+let _graphDirty = false
+
+export function markGraphDirty(): void {
+  _graphDirty = true
+}
+
+export function isGraphDirty(): boolean {
+  return _graphDirty
+}
+
+export function clearGraphDirty(): void {
+  _graphDirty = false
+}
+
+// --- Generic Entity Helpers ---
+
+interface ListEntitiesResult<T> {
+  items: { slug: string; frontmatter: T; content: string }[]
+  warnings: string[]
+}
+
+async function listEntities<T>(
+  subdir: string,
+  schema: { safeParse: (data: unknown) => { success: true; data: T } | { success: false; error: { message: string } } },
+): Promise<ListEntitiesResult<T>> {
+  const dir = path.join(getDataDir(), subdir)
   await ensureDir(dir)
   const files = await fs.readdir(dir)
   const mdFiles = files.filter((f) => f.endsWith(".md"))
 
-  const jobs: JobFile[] = []
-  for (const file of mdFiles) {
-    const content = await fs.readFile(path.join(dir, file), "utf-8")
-    const { data, content: body } = matter(content)
-    const parsed = JobFrontmatterSchema.safeParse(data)
+  const items: { slug: string; frontmatter: T; content: string }[] = []
+  const warnings: string[] = []
+
+  const results = await Promise.all(
+    mdFiles.map(async (file) => {
+      try {
+        const content = await fs.readFile(path.join(dir, file), "utf-8")
+        const { data, content: body } = matter(content)
+        return { file, data, body, error: null }
+      } catch (err) {
+        return { file, data: null, body: null, error: err }
+      }
+    })
+  )
+
+  for (const { file, data, body, error } of results) {
+    if (error || !data) {
+      warnings.push(`${subdir}/${file}: read error`)
+      continue
+    }
+    const parsed = schema.safeParse(data)
     if (parsed.success) {
-      jobs.push({
+      items.push({
         slug: file.replace(/\.md$/, ""),
         frontmatter: parsed.data,
-        content: body.trim(),
+        content: (body ?? "").trim(),
       })
+    } else {
+      warnings.push(`${subdir}/${file}: ${parsed.error.message}`)
     }
   }
-  return jobs
+  return { items, warnings }
 }
 
-export async function getJob(slug: string): Promise<JobFile | null> {
-  const filePath = safePath("jobs", slug)
+// Exported for graph module to reuse
+export { listEntities }
+
+// --- Generic single-entity helpers ---
+
+async function getEntity<T>(
+  subdir: string,
+  schema: { safeParse: (data: unknown) => { success: true; data: T } | { success: false } },
+  slug: string,
+): Promise<{ slug: string; frontmatter: T; content: string } | null> {
+  const filePath = safePath(subdir, slug)
   try {
     const content = await fs.readFile(filePath, "utf-8")
     const { data, content: body } = matter(content)
-    const parsed = JobFrontmatterSchema.safeParse(data)
+    const parsed = schema.safeParse(data)
     if (!parsed.success) return null
     return { slug, frontmatter: parsed.data, content: body.trim() }
   } catch {
@@ -105,17 +160,75 @@ export async function getJob(slug: string): Promise<JobFile | null> {
   }
 }
 
+async function createEntity<T>(
+  subdir: string,
+  schema: { parse: (data: unknown) => T },
+  slug: string,
+  frontmatter: Record<string, unknown>,
+  content: string = "",
+): Promise<void> {
+  const filePath = safePath(subdir, slug)
+  await ensureDir(path.dirname(filePath))
+  const validated = schema.parse(frontmatter)
+  const fileContent = matter.stringify(content, validated as Record<string, unknown>)
+  await fs.writeFile(filePath, fileContent, "utf-8")
+  invalidateWorkspaceCache()
+  markGraphDirty()
+}
+
+async function updateEntity<T>(
+  subdir: string,
+  schema: { parse: (data: unknown) => T },
+  slug: string,
+  data: Partial<Record<string, unknown>>,
+): Promise<void> {
+  const filePath = safePath(subdir, slug)
+  await withFileLock(filePath, async () => {
+    const raw = await fs.readFile(filePath, "utf-8")
+    const { data: existing, content } = matter(raw)
+    const merged = { ...existing, ...data }
+    const validated = schema.parse(merged)
+    await fs.writeFile(filePath, matter.stringify(content, validated as Record<string, unknown>), "utf-8")
+  })
+  invalidateWorkspaceCache()
+  markGraphDirty()
+}
+
+async function deleteEntity(
+  subdir: string,
+  entityName: string,
+  slug: string,
+): Promise<void> {
+  const filePath = safePath(subdir, slug)
+  try {
+    await fs.unlink(filePath)
+  } catch (err: unknown) {
+    if (err && typeof err === "object" && "code" in err && err.code === "ENOENT") {
+      throw new Error(`${entityName} not found: ${slug}`)
+    }
+    throw err
+  }
+  invalidateWorkspaceCache()
+  markGraphDirty()
+}
+
+// --- Jobs ---
+
+export async function listJobs(): Promise<JobFile[]> {
+  const { items } = await listEntities("jobs", JobFrontmatterSchema)
+  return items
+}
+
+export async function getJob(slug: string): Promise<JobFile | null> {
+  return getEntity("jobs", JobFrontmatterSchema, slug)
+}
+
 export async function createJob(
   slug: string,
   frontmatter: Record<string, unknown>,
   content: string = "",
 ): Promise<void> {
-  const filePath = safePath("jobs", slug)
-  await ensureDir(path.dirname(filePath))
-  const validated = JobFrontmatterSchema.parse(frontmatter)
-  const fileContent = matter.stringify(content, validated)
-  await fs.writeFile(filePath, fileContent, "utf-8")
-  invalidateWorkspaceCache()
+  return createEntity("jobs", JobFrontmatterSchema, slug, frontmatter, content)
 }
 
 export async function updateJobStatus(
@@ -130,30 +243,14 @@ export async function updateJobStatus(
     await fs.writeFile(filePath, matter.stringify(content, data), "utf-8")
   })
   invalidateWorkspaceCache()
+  markGraphDirty()
 }
 
 // --- Applications ---
 
 export async function listApplications(): Promise<ApplicationFile[]> {
-  const dir = path.join(getDataDir(), "applications")
-  await ensureDir(dir)
-  const files = await fs.readdir(dir)
-  const mdFiles = files.filter((f) => f.endsWith(".md"))
-
-  const apps: ApplicationFile[] = []
-  for (const file of mdFiles) {
-    const content = await fs.readFile(path.join(dir, file), "utf-8")
-    const { data, content: body } = matter(content)
-    const parsed = ApplicationFrontmatterSchema.safeParse(data)
-    if (parsed.success) {
-      apps.push({
-        slug: file.replace(/\.md$/, ""),
-        frontmatter: parsed.data,
-        content: body.trim(),
-      })
-    }
-  }
-  return apps
+  const { items } = await listEntities("applications", ApplicationFrontmatterSchema)
+  return items
 }
 
 // --- Profile ---
@@ -403,19 +500,13 @@ export async function updateProfile(
     await fs.writeFile(filePath, matter.stringify(existingContent, validated), "utf-8")
   })
   invalidateWorkspaceCache()
+  markGraphDirty()
 }
 
 // --- Delete Job ---
 
 export async function deleteJob(slug: string): Promise<void> {
-  const filePath = safePath("jobs", slug)
-  try {
-    await fs.access(filePath)
-  } catch {
-    throw new Error(`Job not found: ${slug}`)
-  }
-  await fs.unlink(filePath)
-  invalidateWorkspaceCache()
+  return deleteEntity("jobs", "Job", slug)
 }
 
 // --- Applications CRUD ---
@@ -425,27 +516,14 @@ export async function createApplication(
   frontmatter: Record<string, unknown>,
   content: string = "",
 ): Promise<void> {
-  const filePath = safePath("applications", slug)
-  await ensureDir(path.dirname(filePath))
-  const validated = ApplicationFrontmatterSchema.parse(frontmatter)
-  const fileContent = matter.stringify(content, validated)
-  await fs.writeFile(filePath, fileContent, "utf-8")
-  invalidateWorkspaceCache()
+  return createEntity("applications", ApplicationFrontmatterSchema, slug, frontmatter, content)
 }
 
 export async function updateApplication(
   slug: string,
   data: Partial<Record<string, unknown>>,
 ): Promise<void> {
-  const filePath = safePath("applications", slug)
-  await withFileLock(filePath, async () => {
-    const raw = await fs.readFile(filePath, "utf-8")
-    const { data: existing, content } = matter(raw)
-    const merged = { ...existing, ...data }
-    const validated = ApplicationFrontmatterSchema.parse(merged)
-    await fs.writeFile(filePath, matter.stringify(content, validated), "utf-8")
-  })
-  invalidateWorkspaceCache()
+  return updateEntity("applications", ApplicationFrontmatterSchema, slug, data)
 }
 
 // --- Threads / Messages ---
@@ -576,5 +654,34 @@ export async function createMessage(
     }
   })
   invalidateWorkspaceCache()
+  markGraphDirty()
 }
+
+// --- Contacts CRUD ---
+
+export async function listContacts(): Promise<ContactFile[]> {
+  const { items } = await listEntities("contacts", ContactFrontmatterSchema)
+  return items
+}
+
+export const getContact = (slug: string) => getEntity("contacts", ContactFrontmatterSchema, slug)
+export const createContact = (slug: string, fm: Record<string, unknown>, content = "") =>
+  createEntity("contacts", ContactFrontmatterSchema, slug, fm, content)
+export const updateContact = (slug: string, data: Partial<Record<string, unknown>>) =>
+  updateEntity("contacts", ContactFrontmatterSchema, slug, data)
+export const deleteContact = (slug: string) => deleteEntity("contacts", "Contact", slug)
+
+// --- Companies CRUD ---
+
+export async function listCompanies(): Promise<CompanyFile[]> {
+  const { items } = await listEntities("companies", CompanyFrontmatterSchema)
+  return items
+}
+
+export const getCompany = (slug: string) => getEntity("companies", CompanyFrontmatterSchema, slug)
+export const createCompany = (slug: string, fm: Record<string, unknown>, content = "") =>
+  createEntity("companies", CompanyFrontmatterSchema, slug, fm, content)
+export const updateCompany = (slug: string, data: Partial<Record<string, unknown>>) =>
+  updateEntity("companies", CompanyFrontmatterSchema, slug, data)
+export const deleteCompany = (slug: string) => deleteEntity("companies", "Company", slug)
 

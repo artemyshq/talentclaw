@@ -1,5 +1,7 @@
 import {
   PIPELINE_STAGES,
+  PROGRESSED_STATUSES,
+  OFFER_STATUSES,
   type JobFile,
   type ApplicationFile,
   type ActivityEntry,
@@ -7,6 +9,7 @@ import {
   type ProfileFrontmatter,
   type ProfileCompletenessResult,
 } from "./types"
+import type { MatchBreakdown } from "./match-scoring"
 
 // --- Funnel ---
 
@@ -125,14 +128,19 @@ export interface BriefingResult {
   newJobs: number
   unreadMessages: number
   upcomingActions: Array<{ title: string; date: string; type: string }>
+  agentActions: number
 }
 
-export function generateBriefing(
-  jobs: JobFile[],
-  applications: ApplicationFile[],
-  threads: Array<{ threadId: string; frontmatter: ThreadFrontmatter }>,
-  profile: ProfileFrontmatter,
-): BriefingResult {
+interface BriefingInput {
+  jobs: JobFile[]
+  applications: ApplicationFile[]
+  threads: Array<{ threadId: string; frontmatter: ThreadFrontmatter }>
+  profile: ProfileFrontmatter
+  activityLog?: ActivityEntry[]
+}
+
+export function generateBriefing(input: BriefingInput): BriefingResult {
+  const { jobs, applications, threads, activityLog } = input
   // Count jobs discovered in the last 7 days
   const sevenDaysAgo = new Date()
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
@@ -164,7 +172,14 @@ export function generateBriefing(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
   )
 
-  return { newJobs, unreadMessages, upcomingActions }
+  // Count agent actions from enriched activity log (last 7 days)
+  const agentActions = (activityLog || []).filter((e) => {
+    const meta = e.metadata as Record<string, unknown> | undefined
+    if (!meta || meta.type !== "agent_action") return false
+    return new Date(e.ts) >= sevenDaysAgo
+  }).length
+
+  return { newJobs, unreadMessages, upcomingActions, agentActions }
 }
 
 // --- Profile Completeness ---
@@ -251,4 +266,128 @@ export function calculateCompleteness(
   const percentage = Math.round((filled / fields.length) * 100)
 
   return { percentage, missing, suggestions }
+}
+
+// --- Momentum ---
+
+export interface MomentumResult {
+  score: number | null
+  trend: "up" | "flat" | "down"
+  qualifier: string
+}
+
+function dataQualifier(count: number, noun: string): string {
+  if (count < 3) return `Not enough data`
+  if (count < 5) return `Limited data \u2014 ${count} ${noun}`
+  return `Based on ${count} ${noun}`
+}
+
+export function computeMomentum(
+  jobs: JobFile[],
+  applications: ApplicationFile[],
+  activityLog: ActivityEntry[],
+): MomentumResult {
+  const appCount = applications.length
+  if (appCount < 3) {
+    return { score: null, trend: "flat", qualifier: dataQualifier(appCount, "applications") }
+  }
+
+  // Factors: application rate (last 14d vs prior 14d), interview rate, response rate
+  const now = Date.now()
+  const twoWeeksMs = 14 * 24 * 60 * 60 * 1000
+
+  const recentApps = applications.filter(
+    (a) => a.frontmatter.applied_at && now - new Date(a.frontmatter.applied_at).getTime() < twoWeeksMs
+  ).length
+  const olderApps = applications.filter(
+    (a) =>
+      a.frontmatter.applied_at &&
+      now - new Date(a.frontmatter.applied_at).getTime() >= twoWeeksMs &&
+      now - new Date(a.frontmatter.applied_at).getTime() < twoWeeksMs * 2
+  ).length
+
+  // Interview conversion rate
+  const interviewingOrBeyond = applications.filter((a) =>
+    (PROGRESSED_STATUSES as readonly string[]).includes(a.frontmatter.status)
+  ).length
+  const interviewRate = appCount > 0 ? interviewingOrBeyond / appCount : 0
+
+  // Activity rate — recent events per day
+  const recentActivity = activityLog.filter(
+    (e) => now - new Date(e.ts).getTime() < twoWeeksMs
+  ).length
+  const activityPerDay = recentActivity / 14
+
+  // Composite score (0-100)
+  let score = 0
+  // Application volume (30 points): 5+ apps in 2 weeks = max
+  score += Math.min(30, (recentApps / 5) * 30)
+  // Interview conversion (40 points): 30%+ = max
+  score += Math.min(40, (interviewRate / 0.3) * 40)
+  // Activity engagement (30 points): 2+ events/day = max
+  score += Math.min(30, (activityPerDay / 2) * 30)
+  score = Math.round(score)
+
+  // Trend from application rate comparison
+  let trend: "up" | "flat" | "down" = "flat"
+  if (olderApps > 0) {
+    const ratio = recentApps / olderApps
+    if (ratio > 1.25) trend = "up"
+    else if (ratio < 0.75) trend = "down"
+  } else if (recentApps > 0) {
+    trend = "up"
+  }
+
+  return { score, trend, qualifier: dataQualifier(appCount, "applications") }
+}
+
+// --- Confidence Breakdown ---
+
+export interface ConfidenceResult {
+  score: number
+  reasoning: string
+  qualifier: string
+}
+
+export function computeConfidenceBreakdown(
+  matchBreakdown: MatchBreakdown,
+  applicationHistory: ApplicationFile[],
+): ConfidenceResult {
+  const historyCount = applicationHistory.length
+
+  // Start from the match score
+  let score = matchBreakdown.overall
+
+  // Adjust based on historical success for similar-scoring jobs
+  const pastWithOffers = applicationHistory.filter((a) =>
+    (OFFER_STATUSES as readonly string[]).includes(a.frontmatter.status)
+  ).length
+  const pastInterviews = applicationHistory.filter((a) =>
+    (PROGRESSED_STATUSES as readonly string[]).includes(a.frontmatter.status)
+  ).length
+
+  if (historyCount >= 3) {
+    const successRate = pastWithOffers / historyCount
+    const interviewRate = pastInterviews / historyCount
+
+    // Blend match score with historical performance (70/30 split)
+    const historyScore = (successRate * 60 + interviewRate * 40) * 100
+    score = Math.round(score * 0.7 + historyScore * 0.3)
+  }
+
+  score = Math.max(0, Math.min(100, score))
+
+  // Build reasoning
+  const parts: string[] = []
+  parts.push(`Match score: ${matchBreakdown.overall}%`)
+  if (historyCount >= 3) {
+    parts.push(`${pastWithOffers}/${historyCount} past applications led to offers`)
+    parts.push(`${pastInterviews}/${historyCount} reached interview stage`)
+  }
+
+  return {
+    score,
+    reasoning: parts.join(". ") + ".",
+    qualifier: dataQualifier(historyCount, "applications"),
+  }
 }

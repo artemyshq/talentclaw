@@ -2,7 +2,7 @@ import Link from "next/link"
 import { CrabLogo } from "@/components/crab-logo"
 import { STAGE_LABELS, STAGE_PILL_COLORS, FUNNEL_STAGES, getGreeting, formatBriefDate } from "@/lib/ui-utils"
 import type { ProfileFrontmatter, ProfileCompletenessResult } from "@/lib/types"
-import type { BriefingResult } from "@/lib/analytics"
+import type { BriefingResult, MomentumResult } from "@/lib/analytics"
 import { ResumeUpload } from "@/components/profile/resume-upload"
 import { ProfileOptimizeButton } from "./profile-optimize-button"
 import { TrendingUp, Mail, Calendar } from "lucide-react"
@@ -13,6 +13,7 @@ interface ProfileCardProps {
   stageCounts: Record<string, number>
   briefing?: BriefingResult
   completeness?: ProfileCompletenessResult
+  momentum?: MomentumResult
 }
 
 export function ProfileCard({
@@ -21,6 +22,7 @@ export function ProfileCard({
   stageCounts,
   briefing,
   completeness,
+  momentum,
 }: ProfileCardProps) {
   if (isFirstRun) {
     return (
@@ -75,6 +77,9 @@ export function ProfileCard({
           )}
         </div>
         <div className="flex items-center gap-3 shrink-0">
+          {momentum && momentum.score !== null && (
+            <MomentumRing score={momentum.score} trend={momentum.trend} qualifier={momentum.qualifier} />
+          )}
           <ProfileOptimizeButton />
           <Link
             href="/pipeline"
@@ -217,6 +222,51 @@ function OnboardingStep({
         <p className="text-xs text-text-secondary mt-0.5 leading-relaxed">
           {description}
         </p>
+      </div>
+    </div>
+  )
+}
+
+function MomentumRing({
+  score,
+  trend,
+  qualifier,
+}: {
+  score: number
+  trend: "up" | "flat" | "down"
+  qualifier: string
+}) {
+  const circumference = 2 * Math.PI * 18
+  const strokeDashoffset = circumference - (score / 100) * circumference
+
+  let ringColor = "stroke-accent"
+  if (score < 40) ringColor = "stroke-warning"
+  else if (score < 70) ringColor = "stroke-amber-500"
+
+  const trendArrow = trend === "up" ? "\u2191" : trend === "down" ? "\u2193" : "\u2192"
+  const trendColor = trend === "up" ? "text-accent" : trend === "down" ? "text-red-500" : "text-amber-500"
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="relative" role="img" aria-label={`Career momentum: ${score}, trending ${trend}`}>
+        <svg width="44" height="44" viewBox="0 0 44 44" className="-rotate-90" aria-hidden="true">
+          <circle cx="22" cy="22" r="18" fill="none" strokeWidth="3" className="stroke-surface-overlay" />
+          <circle
+            cx="22" cy="22" r="18" fill="none" strokeWidth="3" strokeLinecap="round"
+            className={ringColor}
+            style={{ strokeDasharray: circumference, strokeDashoffset, transition: "stroke-dashoffset 0.6s ease-out" }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-[11px] font-semibold text-text-primary">{score}</span>
+        </div>
+      </div>
+      <div>
+        <div className="flex items-center gap-1">
+          <span className={`text-sm font-semibold ${trendColor}`}>{trendArrow}</span>
+          <span className="text-[11px] text-text-muted">Momentum</span>
+        </div>
+        <p className="text-[11px] text-text-muted">{qualifier}</p>
       </div>
     </div>
   )

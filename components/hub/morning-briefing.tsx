@@ -3,12 +3,14 @@ import {
   Mail,
   Calendar,
   TrendingUp,
+  Bot,
 } from "lucide-react"
 import type { BriefingResult } from "@/lib/analytics"
-import { getGreeting, formatBriefDate } from "@/lib/ui-utils"
+import { getGreeting, formatBriefDate, pluralize } from "@/lib/ui-utils"
 
 interface MorningBriefingProps {
   briefing: BriefingResult
+  applicationCount?: number
 }
 
 const actionTypeIcons: Record<string, React.ReactNode> = {
@@ -17,11 +19,12 @@ const actionTypeIcons: Record<string, React.ReactNode> = {
   deadline: <Sparkles className="w-3.5 h-3.5 text-amber-500" />,
 }
 
-export function MorningBriefing({ briefing }: MorningBriefingProps) {
+export function MorningBriefing({ briefing, applicationCount = 0 }: MorningBriefingProps) {
   const hasAnyData =
     briefing.newJobs > 0 ||
     briefing.unreadMessages > 0 ||
-    briefing.upcomingActions.length > 0
+    briefing.upcomingActions.length > 0 ||
+    briefing.agentActions > 0
 
   return (
     <div className="bg-surface-raised rounded-2xl border border-border-subtle p-6">
@@ -48,16 +51,25 @@ export function MorningBriefing({ briefing }: MorningBriefingProps) {
           <BriefingRow
             icon={<TrendingUp className="w-4 h-4 text-accent" />}
             value={briefing.newJobs}
-            label={briefing.newJobs === 1 ? "new job this week" : "new jobs this week"}
+            label={`new ${pluralize(briefing.newJobs, "job")} this week`}
             accent={briefing.newJobs > 0}
           />
 
           <BriefingRow
             icon={<Mail className="w-4 h-4 text-blue-500" />}
             value={briefing.unreadMessages}
-            label={briefing.unreadMessages === 1 ? "unread message" : "unread messages"}
+            label={`unread ${pluralize(briefing.unreadMessages, "message")}`}
             accent={briefing.unreadMessages > 0}
           />
+
+          {briefing.agentActions > 0 && (
+            <BriefingRow
+              icon={<Bot className="w-4 h-4 text-violet-500" />}
+              value={briefing.agentActions}
+              label={`agent ${pluralize(briefing.agentActions, "action")} this week`}
+              accent
+            />
+          )}
 
           {briefing.upcomingActions.length > 0 && (
             <div className="mt-4 pt-3 border-t border-border-subtle">
@@ -89,6 +101,12 @@ export function MorningBriefing({ briefing }: MorningBriefingProps) {
             </div>
           )}
         </div>
+      )}
+
+      {applicationCount > 0 && (
+        <p className="text-[11px] text-text-muted mt-4">
+          Based on {applicationCount} {pluralize(applicationCount, "application")}
+        </p>
       )}
     </div>
   )

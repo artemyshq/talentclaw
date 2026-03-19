@@ -2,29 +2,12 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import type { MatchBreakdown } from "@/lib/match-scoring"
+import { scoreColor, barColor } from "@/lib/ui-utils"
 import { Check, X, Minus } from "lucide-react"
 
 interface MatchTooltipProps {
   breakdown: MatchBreakdown
   children: React.ReactNode
-}
-
-function scoreColor(score: number): string {
-  if (score >= 90) return "text-emerald-400"
-  if (score >= 80) return "text-accent"
-  return "text-amber-400"
-}
-
-function scoreBgColor(score: number): string {
-  if (score >= 90) return "bg-emerald-500/10"
-  if (score >= 80) return "bg-accent-subtle"
-  return "bg-amber-500/10"
-}
-
-function barColor(score: number): string {
-  if (score >= 80) return "bg-emerald-500"
-  if (score >= 60) return "bg-amber-500"
-  return "bg-red-400"
 }
 
 function DimensionRow({
@@ -141,7 +124,7 @@ export function MatchTooltip({ breakdown, children }: MatchTooltipProps) {
     }
   }, [])
 
-  const { skills, experience, salary, location, remote } = breakdown.dimensions
+  const { skills, experience, salary, location, remote, careerTrajectory, cultureFit } = breakdown.dimensions
 
   return (
     <div
@@ -209,6 +192,22 @@ export function MatchTooltip({ breakdown, children }: MatchTooltipProps) {
             score={remote.score}
             detail={remote.detail}
           />
+
+          {careerTrajectory && (
+            <DimensionRow
+              label={careerTrajectory.label}
+              score={careerTrajectory.score}
+              detail={careerTrajectory.detail}
+            />
+          )}
+
+          {cultureFit && (
+            <DimensionRow
+              label={cultureFit.label}
+              score={cultureFit.score}
+              detail={cultureFit.detail}
+            />
+          )}
 
           {/* Arrow */}
           <div

@@ -1,29 +1,11 @@
 "use client"
 
 import type { MatchBreakdown } from "@/lib/match-scoring"
-import { formatCompensation } from "@/lib/ui-utils"
+import { formatCompensation, scoreColor, scoreBgColor, barColor } from "@/lib/ui-utils"
 import { Check, X, Minus, User, Briefcase } from "lucide-react"
 
 interface HowYouCompareProps {
   breakdown: MatchBreakdown
-}
-
-function scoreColor(score: number): string {
-  if (score >= 90) return "text-emerald-400"
-  if (score >= 80) return "text-accent"
-  return "text-amber-400"
-}
-
-function scoreBgColor(score: number): string {
-  if (score >= 90) return "bg-emerald-500/10"
-  if (score >= 80) return "bg-accent-subtle"
-  return "bg-amber-500/10"
-}
-
-function barColor(score: number): string {
-  if (score >= 80) return "bg-emerald-500"
-  if (score >= 60) return "bg-amber-500"
-  return "bg-red-400"
 }
 
 function StatusIcon({ status }: { status: "match" | "miss" | "neutral" }) {
@@ -151,8 +133,33 @@ function ComparisonRow({
   )
 }
 
+function SimpleDimensionSection({ title, dimension }: { title: string; dimension: { score: number; detail: string } }) {
+  return (
+    <div className="space-y-2 pt-3 border-t border-border-subtle">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-medium text-text-primary">{title}</h3>
+        <div className="flex items-center gap-2">
+          <div className="w-16 h-1 bg-surface-overlay rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full ${barColor(dimension.score)}`}
+              style={{ width: `${dimension.score}%` }}
+            />
+          </div>
+          <span className={`text-xs font-medium ${scoreColor(dimension.score)}`}>
+            {dimension.score}%
+          </span>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <StatusIcon status={dimension.score >= 80 ? "match" : dimension.score >= 50 ? "neutral" : "miss"} />
+        <p className="text-xs text-text-secondary">{dimension.detail}</p>
+      </div>
+    </div>
+  )
+}
+
 export function HowYouCompare({ breakdown }: HowYouCompareProps) {
-  const { skills, experience, salary, location, remote } = breakdown.dimensions
+  const { skills, experience, salary, location, remote, careerTrajectory, cultureFit } = breakdown.dimensions
 
   const expYour = experience.yourYears !== null ? `${experience.yourYears} years` : "Not set"
   const expJob =
@@ -304,6 +311,12 @@ export function HowYouCompare({ breakdown }: HowYouCompareProps) {
           </div>
         </div>
       </div>
+
+      {/* Career Trajectory */}
+      {careerTrajectory && <SimpleDimensionSection title="Career Trajectory" dimension={careerTrajectory} />}
+
+      {/* Culture Fit */}
+      {cultureFit && <SimpleDimensionSection title="Culture" dimension={cultureFit} />}
     </div>
   )
 }

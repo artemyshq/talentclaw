@@ -20,6 +20,8 @@ export interface MatchBreakdown {
     salary: MatchDimension & { yourRange: { min?: number; max?: number } | null; offeredRange: { min?: number; max?: number } | null }
     location: MatchDimension
     remote: MatchDimension
+    careerTrajectory?: MatchDimension
+    cultureFit?: MatchDimension
   }
 }
 

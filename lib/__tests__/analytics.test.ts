@@ -113,12 +113,12 @@ describe("generateBriefing", () => {
       makeJob({ status: "interviewing" }),
     ]
 
-    const briefing = generateBriefing(jobs, [], [], {})
+    const briefing = generateBriefing({ jobs, applications: [], threads: [], profile: {} })
     expect(briefing.newJobs).toBe(1)
   })
 
   it("returns zero counts when nothing is happening", () => {
-    const briefing = generateBriefing([], [], [], {})
+    const briefing = generateBriefing({ jobs: [], applications: [], threads: [], profile: {} })
     expect(briefing.newJobs).toBe(0)
     expect(briefing.unreadMessages).toBe(0)
     expect(briefing.upcomingActions).toEqual([])

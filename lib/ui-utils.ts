@@ -137,3 +137,29 @@ export function matchScoreClass(score: number): string {
   if (score >= 75) return "bg-accent-subtle text-accent"
   return "bg-amber-500/10 text-amber-400"
 }
+
+// Score text color (shared across match-tooltip and how-you-compare)
+export function scoreColor(score: number): string {
+  if (score >= 90) return "text-emerald-400"
+  if (score >= 80) return "text-accent"
+  return "text-amber-400"
+}
+
+// Score background color
+export function scoreBgColor(score: number): string {
+  if (score >= 90) return "bg-emerald-500/10"
+  if (score >= 80) return "bg-accent-subtle"
+  return "bg-amber-500/10"
+}
+
+// Progress bar color
+export function barColor(score: number): string {
+  if (score >= 80) return "bg-emerald-500"
+  if (score >= 60) return "bg-amber-500"
+  return "bg-red-400"
+}
+
+// Simple pluralization: pluralize(n, "job") → "job" | "jobs"
+export function pluralize(count: number, singular: string, plural?: string): string {
+  return count === 1 ? singular : (plural ?? `${singular}s`)
+}
