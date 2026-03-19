@@ -5,28 +5,10 @@ import {
   TrendingUp,
 } from "lucide-react"
 import type { BriefingResult } from "@/lib/analytics"
+import { getGreeting, formatBriefDate } from "@/lib/ui-utils"
 
 interface MorningBriefingProps {
   briefing: BriefingResult
-}
-
-function getGreetingLabel(): string {
-  const hour = new Date().getHours()
-  if (hour < 12) return "Good morning"
-  if (hour < 17) return "Good afternoon"
-  return "Good evening"
-}
-
-function formatBriefingDate(dateStr: string): string {
-  try {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    })
-  } catch {
-    return dateStr
-  }
 }
 
 const actionTypeIcons: Record<string, React.ReactNode> = {
@@ -49,7 +31,7 @@ export function MorningBriefing({ briefing }: MorningBriefingProps) {
         </div>
         <div>
           <h3 className="font-prose text-lg text-text-primary">
-            {getGreetingLabel()}
+            {getGreeting()}
           </h3>
           <p className="text-[11px] text-text-muted mt-0.5">
             Your career snapshot
@@ -98,7 +80,7 @@ export function MorningBriefing({ briefing }: MorningBriefingProps) {
                         {action.title}
                       </p>
                       <p className="text-xs text-text-muted">
-                        {formatBriefingDate(action.date)}
+                        {formatBriefDate(action.date)}
                       </p>
                     </div>
                   </div>

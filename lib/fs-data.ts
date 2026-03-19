@@ -129,6 +129,7 @@ export async function updateJobStatus(
     data.status = status
     await fs.writeFile(filePath, matter.stringify(content, data), "utf-8")
   })
+  invalidateWorkspaceCache()
 }
 
 // --- Applications ---
@@ -444,6 +445,7 @@ export async function updateApplication(
     const validated = ApplicationFrontmatterSchema.parse(merged)
     await fs.writeFile(filePath, matter.stringify(content, validated), "utf-8")
   })
+  invalidateWorkspaceCache()
 }
 
 // --- Threads / Messages ---
@@ -559,18 +561,20 @@ export async function createMessage(
 
   // Update thread.md last_active
   const threadFilePath = path.join(threadDir, "thread.md")
-  try {
-    const raw = await fs.readFile(threadFilePath, "utf-8")
-    const { data, content: threadContent } = matter(raw)
-    data.last_active = new Date().toISOString()
-    await fs.writeFile(
-      threadFilePath,
-      matter.stringify(threadContent, data),
-      "utf-8",
-    )
-  } catch {
-    // thread.md doesn't exist yet — skip update
-  }
+  await withFileLock(threadFilePath, async () => {
+    try {
+      const raw = await fs.readFile(threadFilePath, "utf-8")
+      const { data, content: threadContent } = matter(raw)
+      data.last_active = new Date().toISOString()
+      await fs.writeFile(
+        threadFilePath,
+        matter.stringify(threadContent, data),
+        "utf-8",
+      )
+    } catch {
+      // thread.md doesn't exist yet — skip update
+    }
+  })
   invalidateWorkspaceCache()
 }
 

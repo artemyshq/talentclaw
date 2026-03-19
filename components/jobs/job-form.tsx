@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Check, AlertCircle, Loader2 } from "lucide-react"
 import { createJobAction } from "@/app/actions/jobs"
 import { PIPELINE_STAGES } from "@/lib/types"
+import { STAGE_LABELS } from "@/lib/ui-utils"
 
 const REMOTE_OPTIONS = [
   { value: "", label: "Select..." },
@@ -12,16 +13,6 @@ const REMOTE_OPTIONS = [
   { value: "hybrid", label: "Hybrid" },
   { value: "onsite", label: "On-site" },
 ]
-
-const STAGE_LABELS: Record<string, string> = {
-  discovered: "Discovered",
-  saved: "Saved",
-  applied: "Applied",
-  interviewing: "Interviewing",
-  offer: "Offer",
-  accepted: "Accepted",
-  rejected: "Rejected",
-}
 
 export function JobForm() {
   const router = useRouter()

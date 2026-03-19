@@ -1,18 +1,5 @@
 import Link from "next/link"
-import { PIPELINE_STAGES } from "@/lib/types"
-import { STAGE_LABELS } from "@/lib/ui-utils"
-
-const stageColors: Record<string, string> = {
-  discovered: "bg-slate-500/15 text-slate-600 border-slate-200",
-  saved: "bg-blue-500/10 text-blue-600 border-blue-200",
-  applied: "bg-accent-subtle text-accent border-accent/20",
-  interviewing: "bg-violet-500/10 text-violet-600 border-violet-200",
-  offer: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
-  accepted: "bg-green-500/10 text-green-600 border-green-200",
-  rejected: "bg-red-500/10 text-red-500 border-red-200",
-}
-
-const FUNNEL_STAGES = PIPELINE_STAGES.filter((s) => s !== "rejected")
+import { STAGE_LABELS, STAGE_PILL_COLORS, FUNNEL_STAGES } from "@/lib/ui-utils"
 
 interface PipelineFunnelProps {
   stageCounts: Record<string, number>
@@ -50,7 +37,7 @@ export function PipelineFunnel({ stageCounts }: PipelineFunnelProps) {
                   href="/pipeline"
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors hover:opacity-80 ${
                     count > 0
-                      ? stageColors[stage]
+                      ? STAGE_PILL_COLORS[stage]
                       : "bg-surface-overlay text-text-muted border-border-subtle"
                   }`}
                 >

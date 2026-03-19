@@ -1,24 +1,11 @@
 import Link from "next/link"
 import { CrabLogo } from "@/components/crab-logo"
-import { PIPELINE_STAGES } from "@/lib/types"
-import { STAGE_LABELS } from "@/lib/ui-utils"
+import { STAGE_LABELS, STAGE_PILL_COLORS, FUNNEL_STAGES, getGreeting, formatBriefDate } from "@/lib/ui-utils"
 import type { ProfileFrontmatter, ProfileCompletenessResult } from "@/lib/types"
 import type { BriefingResult } from "@/lib/analytics"
 import { ResumeUpload } from "@/components/profile/resume-upload"
 import { ProfileOptimizeButton } from "./profile-optimize-button"
 import { TrendingUp, Mail, Calendar } from "lucide-react"
-
-const stageColors: Record<string, string> = {
-  discovered: "bg-slate-500/15 text-slate-600 border-slate-200",
-  saved: "bg-blue-500/10 text-blue-600 border-blue-200",
-  applied: "bg-accent-subtle text-accent border-accent/20",
-  interviewing: "bg-violet-500/10 text-violet-600 border-violet-200",
-  offer: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
-  accepted: "bg-green-500/10 text-green-600 border-green-200",
-  rejected: "bg-red-500/10 text-red-500 border-red-200",
-}
-
-const FUNNEL_STAGES = PIPELINE_STAGES.filter((s) => s !== "rejected")
 
 interface ProfileCardProps {
   profile: ProfileFrontmatter
@@ -26,13 +13,6 @@ interface ProfileCardProps {
   stageCounts: Record<string, number>
   briefing?: BriefingResult
   completeness?: ProfileCompletenessResult
-}
-
-function getGreeting(): string {
-  const hour = new Date().getHours()
-  if (hour < 12) return "Good morning"
-  if (hour < 17) return "Good afternoon"
-  return "Good evening"
 }
 
 export function ProfileCard({
@@ -124,7 +104,7 @@ export function ProfileCard({
                     href="/pipeline"
                     className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors hover:opacity-80 ${
                       count > 0
-                        ? stageColors[stage]
+                        ? STAGE_PILL_COLORS[stage]
                         : "bg-surface-overlay text-text-muted border-border-subtle"
                     }`}
                   >
@@ -242,14 +222,3 @@ function OnboardingStep({
   )
 }
 
-function formatBriefDate(dateStr: string): string {
-  try {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    })
-  } catch {
-    return dateStr
-  }
-}
