@@ -4,7 +4,7 @@ import {
   getActivityLog,
   getProfile,
 } from "@/lib/fs-data"
-import { buildTimelineData } from "@/lib/timeline-data"
+import { buildCareerGraph } from "@/lib/career-graph-data"
 import { generateBriefing, calculateCompleteness, computeMomentum } from "@/lib/analytics"
 import { PIPELINE_STAGES, PROGRESSED_STATUSES, type ApplicationFile, type JobFile } from "@/lib/types"
 import { ProfileCard } from "@/components/hub/profile-card"
@@ -21,7 +21,7 @@ export default async function DashboardPage() {
     getProfile(),
   ])
 
-  const timelineData = buildTimelineData(profile.frontmatter)
+  const careerGraph = buildCareerGraph(profile.frontmatter)
 
   const isFirstRun =
     !profile.frontmatter.display_name && !profile.frontmatter.headline
@@ -89,10 +89,10 @@ export default async function DashboardPage() {
       {/* Agent Queue (conditional — hidden when empty) */}
       {queueItems.length > 0 && <AgentQueue items={queueItems} />}
 
-      {/* Career Timeline (if data exists) */}
-      {timelineData.length > 0 && (
+      {/* Career Context Graph */}
+      {careerGraph.nodes.length > 1 && (
         <div className="bg-surface-raised rounded-2xl border border-border-subtle overflow-hidden h-[480px] xl:h-[560px] 2xl:h-[640px]">
-          <CareerGraphWrapper branches={timelineData} />
+          <CareerGraphWrapper data={careerGraph} />
         </div>
       )}
 
