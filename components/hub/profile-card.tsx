@@ -1,11 +1,11 @@
 import Link from "next/link"
 import { CrabLogo } from "@/components/crab-logo"
-import { STAGE_LABELS, STAGE_PILL_COLORS, FUNNEL_STAGES, getGreeting, formatBriefDate } from "@/lib/ui-utils"
+import { STAGE_LABELS, STAGE_PILL_COLORS, FUNNEL_STAGES, getGreeting, formatBriefDate, pluralize } from "@/lib/ui-utils"
 import type { ProfileFrontmatter, ProfileCompletenessResult } from "@/lib/types"
 import type { BriefingResult, MomentumResult } from "@/lib/analytics"
 import { ResumeUpload } from "@/components/profile/resume-upload"
 import { ProfileOptimizeButton } from "./profile-optimize-button"
-import { TrendingUp, Mail, Calendar } from "lucide-react"
+import { TrendingUp, Mail, Calendar, Bot, Lightbulb } from "lucide-react"
 
 interface ProfileCardProps {
   profile: ProfileFrontmatter
@@ -14,6 +14,7 @@ interface ProfileCardProps {
   briefing?: BriefingResult
   completeness?: ProfileCompletenessResult
   momentum?: MomentumResult
+  insights?: string[]
 }
 
 export function ProfileCard({
@@ -23,6 +24,7 @@ export function ProfileCard({
   briefing,
   completeness,
   momentum,
+  insights,
 }: ProfileCardProps) {
   if (isFirstRun) {
     return (
@@ -132,13 +134,20 @@ export function ProfileCard({
                 <BriefingStat
                   icon={<TrendingUp className="w-3.5 h-3.5 text-accent" />}
                   value={briefing.newJobs}
-                  label={briefing.newJobs === 1 ? "new job" : "new jobs"}
+                  label={`new ${pluralize(briefing.newJobs, "job")}`}
                 />
                 <BriefingStat
                   icon={<Mail className="w-3.5 h-3.5 text-blue-500" />}
                   value={briefing.unreadMessages}
                   label="unread"
                 />
+                {briefing.agentActions > 0 && (
+                  <BriefingStat
+                    icon={<Bot className="w-3.5 h-3.5 text-violet-500" />}
+                    value={briefing.agentActions}
+                    label={`agent ${pluralize(briefing.agentActions, "action")}`}
+                  />
+                )}
               </>
             )}
 
@@ -175,6 +184,21 @@ export function ProfileCard({
                   </span>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Agent insights */}
+          {insights && insights.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-border-subtle">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Lightbulb className="w-3 h-3 text-amber-500" />
+                <span className="text-[11px] text-text-muted uppercase tracking-wider">What your agent learned</span>
+              </div>
+              <div className="space-y-1">
+                {insights.map((insight, i) => (
+                  <p key={i} className="text-xs text-text-secondary leading-relaxed">{insight}</p>
+                ))}
+              </div>
             </div>
           )}
         </div>

@@ -6,13 +6,11 @@ import {
 } from "@/lib/fs-data"
 import { buildTimelineData } from "@/lib/timeline-data"
 import { generateBriefing, calculateCompleteness, computeMomentum } from "@/lib/analytics"
-import { PIPELINE_STAGES } from "@/lib/types"
+import { PIPELINE_STAGES, PROGRESSED_STATUSES, type ApplicationFile, type JobFile } from "@/lib/types"
 import { ProfileCard } from "@/components/hub/profile-card"
-import { MorningBriefing } from "@/components/hub/morning-briefing"
 import { ActivityFeed } from "@/components/hub/activity-feed"
 import { UpcomingActions } from "@/components/hub/upcoming-actions"
 import { AgentQueue } from "@/components/hub/agent-queue"
-import { OutcomeInsights } from "@/components/hub/outcome-insights"
 import CareerGraphWrapper from "@/components/graph/career-graph-wrapper"
 
 export default async function DashboardPage() {
@@ -72,6 +70,9 @@ export default async function DashboardPage() {
       job: jobMap.get(app.frontmatter.job) ?? null,
     }))
 
+  // Derive agent insights for the profile card
+  const insights = deriveInsights(applications, jobMap)
+
   return (
     <div className="p-6 max-w-6xl xl:max-w-[1400px] 2xl:max-w-[1600px] mx-auto space-y-6">
       {/* Profile Card */}
@@ -82,16 +83,11 @@ export default async function DashboardPage() {
         briefing={briefing}
         completeness={completeness}
         momentum={momentum}
+        insights={insights}
       />
 
       {/* Agent Queue (conditional — hidden when empty) */}
       {queueItems.length > 0 && <AgentQueue items={queueItems} />}
-
-      {/* Briefing + Outcome Insights (2-col on lg) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MorningBriefing briefing={briefing} applicationCount={applications.length} />
-        <OutcomeInsights applications={applications} jobMap={jobMap} />
-      </div>
 
       {/* Career Timeline (if data exists) */}
       {timelineData.length > 0 && (
@@ -118,4 +114,38 @@ function isWithinDays(dateStr: string, days: number): boolean {
 
 function isOverdue(dateStr: string): boolean {
   return new Date(dateStr).getTime() < Date.now()
+}
+
+function deriveInsights(
+  applications: ApplicationFile[],
+  jobMap: Map<string, JobFile>
+): string[] {
+  const insights: string[] = []
+
+  const interviewing = applications.filter((a) =>
+    (PROGRESSED_STATUSES as readonly string[]).includes(a.frontmatter.status)
+  )
+  if (applications.length >= 3) {
+    const rate = Math.round((interviewing.length / applications.length) * 100)
+    insights.push(`${rate}% of your applications have progressed to interviews or beyond.`)
+  }
+
+  const companiesWithResponse = new Set<string>()
+  for (const app of interviewing) {
+    const job = jobMap.get(app.frontmatter.job)
+    if (job) companiesWithResponse.add(job.frontmatter.company)
+  }
+  if (companiesWithResponse.size > 0) {
+    const names = Array.from(companiesWithResponse).slice(0, 3).join(", ")
+    insights.push(`Companies that responded well: ${names}.`)
+  }
+
+  const allJobs = Array.from(jobMap.values())
+  const remoteJobs = allJobs.filter((j) => j.frontmatter.remote === "remote")
+  const onsiteJobs = allJobs.filter((j) => j.frontmatter.remote === "onsite")
+  if (remoteJobs.length > onsiteJobs.length * 2 && remoteJobs.length >= 3) {
+    insights.push("You tend to gravitate toward remote roles. Your agent will prioritize these.")
+  }
+
+  return insights.slice(0, 3)
 }
