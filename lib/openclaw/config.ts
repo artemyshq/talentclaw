@@ -100,24 +100,30 @@ export async function getGatewayConfig(): Promise<GatewayConfig> {
   return { url, token }
 }
 
-let _configuredCache: boolean | null = null
+const CONFIG_TTL = 5_000 // 5 seconds, matches status endpoint cache
+let _configuredCache: { value: boolean; ts: number } | null = null
 
 /**
  * Check whether OpenClaw appears to be configured (config file exists or env var set).
  * Does NOT ping the gateway -- use checkGatewayReachable() for that.
- * Result is memoized since the config file doesn't appear/disappear at runtime.
+ * Result is cached with a 5-second TTL so config changes are picked up promptly.
  */
 export async function isOpenClawConfigured(): Promise<boolean> {
-  if (_configuredCache !== null) return _configuredCache
+  if (_configuredCache !== null && Date.now() - _configuredCache.ts < CONFIG_TTL) {
+    return _configuredCache.value
+  }
 
   if (process.env.OPENCLAW_GATEWAY_URL) {
-    return (_configuredCache = true)
+    _configuredCache = { value: true, ts: Date.now() }
+    return true
   }
 
   try {
     await fs.access(getConfigPath())
-    return (_configuredCache = true)
+    _configuredCache = { value: true, ts: Date.now() }
+    return true
   } catch {
-    return (_configuredCache = false)
+    _configuredCache = { value: false, ts: Date.now() }
+    return false
   }
 }

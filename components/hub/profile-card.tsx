@@ -2,9 +2,11 @@ import Link from "next/link"
 import { CrabLogo } from "@/components/crab-logo"
 import { PIPELINE_STAGES } from "@/lib/types"
 import { STAGE_LABELS } from "@/lib/ui-utils"
-import type { ProfileFrontmatter } from "@/lib/types"
+import type { ProfileFrontmatter, ProfileCompletenessResult } from "@/lib/types"
+import type { BriefingResult } from "@/lib/analytics"
 import { ResumeUpload } from "@/components/profile/resume-upload"
 import { ProfileOptimizeButton } from "./profile-optimize-button"
+import { TrendingUp, Mail, Calendar } from "lucide-react"
 
 const stageColors: Record<string, string> = {
   discovered: "bg-slate-500/15 text-slate-600 border-slate-200",
@@ -22,6 +24,8 @@ interface ProfileCardProps {
   profile: ProfileFrontmatter
   isFirstRun: boolean
   stageCounts: Record<string, number>
+  briefing?: BriefingResult
+  completeness?: ProfileCompletenessResult
 }
 
 function getGreeting(): string {
@@ -31,7 +35,13 @@ function getGreeting(): string {
   return "Good evening"
 }
 
-export function ProfileCard({ profile, isFirstRun, stageCounts }: ProfileCardProps) {
+export function ProfileCard({
+  profile,
+  isFirstRun,
+  stageCounts,
+  briefing,
+  completeness,
+}: ProfileCardProps) {
   if (isFirstRun) {
     return (
       <div className="bg-surface-raised rounded-2xl border border-border-subtle p-8">
@@ -63,17 +73,18 @@ export function ProfileCard({ profile, isFirstRun, stageCounts }: ProfileCardPro
             description="Run talentclaw search to discover jobs, or ask your agent."
           />
         </div>
-
-        {/* Resume upload for quick onboarding */}
         <ResumeUpload />
       </div>
     )
   }
 
   const total = Object.values(stageCounts).reduce((a, b) => a + b, 0)
+  const hasUpcoming = briefing && briefing.upcomingActions.length > 0
+  const showCompleteness = completeness && completeness.percentage < 100
 
   return (
     <div className="bg-surface-raised rounded-2xl border border-border-subtle p-6">
+      {/* Top row: greeting + actions */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-prose text-xl text-text-primary">
@@ -94,7 +105,7 @@ export function ProfileCard({ profile, isFirstRun, stageCounts }: ProfileCardPro
         </div>
       </div>
 
-      {/* Pipeline funnel */}
+      {/* Pipeline funnel pills */}
       <div className="mt-4">
         {total === 0 ? (
           <p className="text-sm text-text-muted py-2">
@@ -124,8 +135,85 @@ export function ProfileCard({ profile, isFirstRun, stageCounts }: ProfileCardPro
             })}
           </div>
         )}
-
       </div>
+
+      {/* Briefing + completeness row */}
+      {(briefing || showCompleteness) && (
+        <div className="mt-4 pt-4 border-t border-border-subtle">
+          <div className="flex flex-wrap gap-x-8 gap-y-3">
+            {/* Briefing stats */}
+            {briefing && (
+              <>
+                <BriefingStat
+                  icon={<TrendingUp className="w-3.5 h-3.5 text-accent" />}
+                  value={briefing.newJobs}
+                  label={briefing.newJobs === 1 ? "new job" : "new jobs"}
+                />
+                <BriefingStat
+                  icon={<Mail className="w-3.5 h-3.5 text-blue-500" />}
+                  value={briefing.unreadMessages}
+                  label="unread"
+                />
+              </>
+            )}
+
+            {/* Completeness */}
+            {showCompleteness && (
+              <div className="flex items-center gap-2">
+                <div className="w-16 h-1.5 bg-surface-overlay rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-accent rounded-full"
+                    style={{ width: `${completeness.percentage}%` }}
+                  />
+                </div>
+                <Link
+                  href="/profile"
+                  className="text-xs text-text-muted hover:text-accent transition-colors"
+                >
+                  Profile {completeness.percentage}%
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Upcoming actions (compact) */}
+          {hasUpcoming && (
+            <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5">
+              {briefing.upcomingActions.slice(0, 3).map((action, i) => (
+                <div key={i} className="flex items-center gap-1.5">
+                  <Calendar className="w-3 h-3 text-text-muted" />
+                  <span className="text-xs text-text-secondary">
+                    {action.title}
+                  </span>
+                  <span className="text-xs text-text-muted">
+                    {formatBriefDate(action.date)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BriefingStat({
+  icon,
+  value,
+  label,
+}: {
+  icon: React.ReactNode
+  value: number
+  label: string
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      {icon}
+      <span className={`text-sm font-semibold ${value > 0 ? "text-text-primary" : "text-text-muted"}`}>
+        {value}
+      </span>
+      <span className="text-xs text-text-muted">{label}</span>
     </div>
   )
 }
@@ -152,4 +240,16 @@ function OnboardingStep({
       </div>
     </div>
   )
+}
+
+function formatBriefDate(dateStr: string): string {
+  try {
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    })
+  } catch {
+    return dateStr
+  }
 }

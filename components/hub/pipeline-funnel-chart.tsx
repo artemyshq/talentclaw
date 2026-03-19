@@ -85,7 +85,7 @@ export function PipelineFunnelChart({ funnel }: PipelineFunnelChartProps) {
                 <div className="w-14 shrink-0 text-right">
                   {stage.conversion !== null ? (
                     <span className={`text-xs font-medium ${textColor}`}>
-                      {stage.conversion}%
+                      {Math.round(stage.conversion * 100)}%
                     </span>
                   ) : (
                     <span className="text-xs text-text-muted">&mdash;</span>

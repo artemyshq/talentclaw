@@ -24,6 +24,25 @@ import type {
 } from "./types"
 import { getCached, setCache, invalidateCache } from "./cache"
 
+// Per-file async mutex to prevent concurrent read-modify-write corruption
+const fileLocks = new Map<string, Promise<void>>()
+
+async function withFileLock<T>(filePath: string, fn: () => Promise<T>): Promise<T> {
+  const prev = fileLocks.get(filePath) || Promise.resolve()
+  let resolve: () => void
+  const next = new Promise<void>(r => { resolve = r })
+  fileLocks.set(filePath, next)
+  await prev
+  try {
+    return await fn()
+  } finally {
+    resolve!()
+    if (fileLocks.get(filePath) === next) {
+      fileLocks.delete(filePath)
+    }
+  }
+}
+
 // Base directory
 export function getDataDir(): string {
   return process.env.TALENTCLAW_DIR || path.join(os.homedir(), ".talentclaw")
@@ -96,6 +115,7 @@ export async function createJob(
   const validated = JobFrontmatterSchema.parse(frontmatter)
   const fileContent = matter.stringify(content, validated)
   await fs.writeFile(filePath, fileContent, "utf-8")
+  invalidateWorkspaceCache()
 }
 
 export async function updateJobStatus(
@@ -103,10 +123,12 @@ export async function updateJobStatus(
   status: string,
 ): Promise<void> {
   const filePath = safePath("jobs", slug)
-  const raw = await fs.readFile(filePath, "utf-8")
-  const { data, content } = matter(raw)
-  data.status = status
-  await fs.writeFile(filePath, matter.stringify(content, data), "utf-8")
+  await withFileLock(filePath, async () => {
+    const raw = await fs.readFile(filePath, "utf-8")
+    const { data, content } = matter(raw)
+    data.status = status
+    await fs.writeFile(filePath, matter.stringify(content, data), "utf-8")
+  })
 }
 
 // --- Applications ---
@@ -361,22 +383,25 @@ export async function updateProfile(
   data: Partial<ProfileFrontmatter>,
 ): Promise<void> {
   const filePath = path.join(getDataDir(), "profile.md")
-  let existingFrontmatter: Record<string, unknown> = {}
-  let existingContent = ""
+  await withFileLock(filePath, async () => {
+    let existingFrontmatter: Record<string, unknown> = {}
+    let existingContent = ""
 
-  try {
-    const raw = await fs.readFile(filePath, "utf-8")
-    const parsed = matter(raw)
-    existingFrontmatter = parsed.data
-    existingContent = parsed.content
-  } catch {
-    // profile.md doesn't exist yet — start fresh
-    await ensureDir(path.dirname(filePath))
-  }
+    try {
+      const raw = await fs.readFile(filePath, "utf-8")
+      const parsed = matter(raw)
+      existingFrontmatter = parsed.data
+      existingContent = parsed.content
+    } catch {
+      // profile.md doesn't exist yet — start fresh
+      await ensureDir(path.dirname(filePath))
+    }
 
-  const merged = { ...existingFrontmatter, ...data, updated_at: new Date().toISOString() }
-  const validated = ProfileFrontmatterSchema.parse(merged)
-  await fs.writeFile(filePath, matter.stringify(existingContent, validated), "utf-8")
+    const merged = { ...existingFrontmatter, ...data, updated_at: new Date().toISOString() }
+    const validated = ProfileFrontmatterSchema.parse(merged)
+    await fs.writeFile(filePath, matter.stringify(existingContent, validated), "utf-8")
+  })
+  invalidateWorkspaceCache()
 }
 
 // --- Delete Job ---
@@ -389,6 +414,7 @@ export async function deleteJob(slug: string): Promise<void> {
     throw new Error(`Job not found: ${slug}`)
   }
   await fs.unlink(filePath)
+  invalidateWorkspaceCache()
 }
 
 // --- Applications CRUD ---
@@ -403,6 +429,7 @@ export async function createApplication(
   const validated = ApplicationFrontmatterSchema.parse(frontmatter)
   const fileContent = matter.stringify(content, validated)
   await fs.writeFile(filePath, fileContent, "utf-8")
+  invalidateWorkspaceCache()
 }
 
 export async function updateApplication(
@@ -410,11 +437,13 @@ export async function updateApplication(
   data: Partial<Record<string, unknown>>,
 ): Promise<void> {
   const filePath = safePath("applications", slug)
-  const raw = await fs.readFile(filePath, "utf-8")
-  const { data: existing, content } = matter(raw)
-  const merged = { ...existing, ...data }
-  const validated = ApplicationFrontmatterSchema.parse(merged)
-  await fs.writeFile(filePath, matter.stringify(content, validated), "utf-8")
+  await withFileLock(filePath, async () => {
+    const raw = await fs.readFile(filePath, "utf-8")
+    const { data: existing, content } = matter(raw)
+    const merged = { ...existing, ...data }
+    const validated = ApplicationFrontmatterSchema.parse(merged)
+    await fs.writeFile(filePath, matter.stringify(content, validated), "utf-8")
+  })
 }
 
 // --- Threads / Messages ---
@@ -542,5 +571,6 @@ export async function createMessage(
   } catch {
     // thread.md doesn't exist yet — skip update
   }
+  invalidateWorkspaceCache()
 }
 

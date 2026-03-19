@@ -50,8 +50,8 @@ function FeedbackBanner({ status, message }: { status: "success" | "error"; mess
     <div
       className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm mb-6 ${
         status === "success"
-          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-          : "bg-red-50 text-red-700 border border-red-200"
+          ? "bg-accent/8 text-accent border border-accent/20"
+          : "bg-danger/8 text-danger border border-danger/20"
       }`}
     >
       {status === "success" ? (
@@ -382,7 +382,7 @@ function ExperienceTab({
             </span>
             <button
               onClick={() => removeEntry(i)}
-              className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-red-50 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-danger/8 transition-colors cursor-pointer"
               title="Remove"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -524,7 +524,7 @@ function EducationTab({
             </span>
             <button
               onClick={() => removeEntry(i)}
-              className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-red-50 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-danger/8 transition-colors cursor-pointer"
               title="Remove"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -640,7 +640,7 @@ function GoalsTab({
             </span>
             <button
               onClick={() => removeEntry(i)}
-              className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-red-50 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-danger/8 transition-colors cursor-pointer"
               title="Remove"
             >
               <Trash2 className="w-3.5 h-3.5" />

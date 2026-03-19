@@ -91,7 +91,7 @@ export function JobForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {serverError && (
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm bg-red-50 text-red-700 border border-red-200">
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm bg-danger/8 text-danger border border-danger/20">
           <AlertCircle className="w-4 h-4 shrink-0" />
           {serverError}
         </div>

@@ -17,6 +17,7 @@ export class DuplicateRunError extends Error {
 }
 
 const RUN_CLEANUP_DELAY = 5 * 60 * 1000 // 5 minutes after completion
+const MAX_EVENT_BUFFER = 200
 
 type ActiveRun = {
   sessionId: string
@@ -58,6 +59,9 @@ async function ensureClient(): Promise<GatewayClient> {
  */
 function emitEvent(run: ActiveRun, event: SseEvent): void {
   run.eventBuffer.push(event)
+  if (run.eventBuffer.length > MAX_EVENT_BUFFER) {
+    run.eventBuffer.shift()
+  }
   for (const cb of run.subscribers) {
     try {
       cb(event)
@@ -246,6 +250,13 @@ export async function startRun(sessionId: string, message: string): Promise<void
     const unsub = gw.subscribe(eventName, (payload) => {
       // Only process if run is still active
       if (run.status !== "running") return
+
+      // Guard: only forward events scoped to this session/run
+      const data = payload as Record<string, unknown> | undefined
+      if (data) {
+        if (typeof data.sessionId === "string" && data.sessionId !== sessionId) return
+        if (typeof data.runId === "string" && data.runId !== sessionId) return
+      }
 
       const sseEvent = mapGatewayEvent(eventName, payload)
       if (!sseEvent) return
