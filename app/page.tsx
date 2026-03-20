@@ -12,6 +12,9 @@ export default async function RootPage() {
 
   return (
     <>
+      <div className="absolute top-4 left-5">
+        <span className="px-2.5 py-1 rounded-full text-[0.65rem] font-medium uppercase tracking-wider bg-emerald-600/10 text-emerald-600">Beta</span>
+      </div>
       <Hero />
       <HubShowcase />
       <Features />
