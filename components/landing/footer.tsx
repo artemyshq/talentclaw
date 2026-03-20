@@ -9,12 +9,12 @@ export function Footer() {
       </div>
       <ul className="flex gap-6 list-none">
         <li>
-          <a href="#" className="text-[0.8rem] text-text-muted hover:text-text-primary transition-colors">
+          <a href="/privacy" className="text-[0.8rem] text-text-muted hover:text-text-primary transition-colors">
             Privacy
           </a>
         </li>
         <li>
-          <a href="#" className="text-[0.8rem] text-text-muted hover:text-text-primary transition-colors">
+          <a href="/terms" className="text-[0.8rem] text-text-muted hover:text-text-primary transition-colors">
             Terms
           </a>
         </li>
