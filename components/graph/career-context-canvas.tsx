@@ -111,7 +111,13 @@ export default function CareerContextCanvas({ data }: { data: CareerGraphData })
       return { source, target }
     }).filter(e => e.source && e.target)
 
-    const mode: 'light' | 'dark' = window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    function detectMode(): 'light' | 'dark' {
+      const root = document.documentElement
+      if (root.classList.contains('dark')) return 'dark'
+      if (root.classList.contains('light')) return 'light'
+      return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    }
+    const mode: 'light' | 'dark' = detectMode()
 
     // Run physics to settle layout — all computation happens here, not in render loop
     let cf = 1.0
@@ -207,15 +213,19 @@ export default function CareerContextCanvas({ data }: { data: CareerGraphData })
     const observer = new ResizeObserver(resize)
     observer.observe(container)
 
-    // Theme change
+    // Theme change — watch both system preference and class-based toggle
     const mql = window.matchMedia('(prefers-color-scheme: dark)')
     function onThemeChange() {
       if (stateRef.current) {
-        stateRef.current.mode = mql.matches ? 'dark' : 'light'
+        stateRef.current.mode = detectMode()
         redraw()
       }
     }
     mql.addEventListener('change', onThemeChange)
+
+    // Watch for class-based theme changes (e.g. ThemeToggle adding .dark/.light)
+    const classObserver = new MutationObserver(onThemeChange)
+    classObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
 
     // Hover only — no drag, pan, or zoom
     function hitTest(mx: number, my: number): LayoutNode | null {
@@ -259,6 +269,7 @@ export default function CareerContextCanvas({ data }: { data: CareerGraphData })
 
     return () => {
       observer.disconnect()
+      classObserver.disconnect()
       mql.removeEventListener('change', onThemeChange)
       canvas.removeEventListener('mousemove', onMouseMove)
       canvas.removeEventListener('mouseleave', onMouseLeave)
