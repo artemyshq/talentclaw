@@ -1,43 +1,58 @@
 // ---------------------------------------------------------------------------
 // Career Hub — realistic SVG illustration for the landing page
-// Faithfully represents the actual dashboard: sidebar, profile card,
-// career graph constellation, upcoming actions, and activity feed.
+// Faithfully represents the actual dashboard layout:
+//   1. Full-width Profile Card (greeting, momentum ring, pipeline pills,
+//      briefing stats, compact actions, agent insights)
+//   2. Full-width Career Context Graph (d3-force constellation)
+//   3. 2-column bottom row: Activity Feed (left) + Upcoming Actions (right)
 // ---------------------------------------------------------------------------
 
 const FONT_SERIF = '"Instrument Serif", Georgia, serif'
-const FONT_SANS = '"Avenir Next", system-ui, sans-serif'
-const FONT_MONO = '"SF Mono", monospace'
+const FONT_SANS = '"DM Sans", system-ui, sans-serif'
+const FONT_MONO = '"JetBrains Mono", monospace'
 
-// -- Career graph data (looks like a real d3-force layout) ------------------
+// -- Layout constants --------------------------------------------------------
+
+const SIDEBAR_W = 178
+const CX = SIDEBAR_W + 24 // content left edge (202)
+const CR = 936 // content right edge
+const CW = CR - CX // content width (734)
+
+const PROFILE = { x: CX, y: 56, w: CW, h: 200 }
+const GRAPH = { x: CX, y: 266, w: CW, h: 204 }
+const FEED = { x: CX, y: 480, w: 358, h: 136 }
+const ACTIONS = { x: CX + 374, y: 480, w: 360, h: 136 }
+
+// -- Career graph data (wide aspect ratio) -----------------------------------
 
 const graphNodes = [
-  // Person (center)
-  { id: "alex", x: 412, y: 385, r: 16, label: "Alex Chen", color: "#059669" },
-  // Companies (blue, upper-right)
-  { id: "stripe", x: 524, y: 292, r: 10, label: "Stripe", color: "#3b82f6" },
-  { id: "figma", x: 558, y: 362, r: 9, label: "Figma", color: "#3b82f6" },
-  { id: "plaid", x: 508, y: 342, r: 8, label: "Plaid", color: "#3b82f6" },
+  // Person (center) — card center ≈ y=368
+  { id: "alex", x: 569, y: 361, r: 14, label: "Alex Chen", color: "#059669" },
+  // Companies (blue, upper-right cluster)
+  { id: "stripe", x: 710, y: 323, r: 9, label: "Stripe", color: "#3b82f6" },
+  { id: "figma", x: 745, y: 364, r: 8, label: "Figma", color: "#3b82f6" },
+  { id: "plaid", x: 692, y: 353, r: 7, label: "Plaid", color: "#3b82f6" },
   // Roles (purple, right)
-  { id: "staffeng", x: 548, y: 435, r: 9, label: "Staff Engineer", color: "#8b5cf6" },
-  { id: "srfront", x: 498, y: 472, r: 8, label: "Sr. Frontend", color: "#8b5cf6" },
-  { id: "techlead", x: 468, y: 305, r: 8, label: "Tech Lead", color: "#8b5cf6" },
-  // Skills (amber, upper-left)
-  { id: "react", x: 308, y: 296, r: 10, label: "React", color: "#f59e0b" },
-  { id: "ts", x: 278, y: 346, r: 9, label: "TypeScript", color: "#f59e0b" },
-  { id: "graphql", x: 348, y: 266, r: 8, label: "GraphQL", color: "#f59e0b" },
-  { id: "dessys", x: 252, y: 288, r: 8, label: "Design Systems", color: "#f59e0b" },
+  { id: "staffeng", x: 738, y: 400, r: 8, label: "Staff Engineer", color: "#8b5cf6" },
+  { id: "srfront", x: 682, y: 410, r: 7, label: "Sr. Frontend", color: "#8b5cf6" },
+  { id: "techlead", x: 660, y: 313, r: 7, label: "Tech Lead", color: "#8b5cf6" },
+  // Skills (amber, left cluster)
+  { id: "react", x: 420, y: 331, r: 9, label: "React", color: "#f59e0b" },
+  { id: "ts", x: 385, y: 364, r: 8, label: "TypeScript", color: "#f59e0b" },
+  { id: "graphql", x: 455, y: 306, r: 7, label: "GraphQL", color: "#f59e0b" },
+  { id: "dessys", x: 350, y: 336, r: 7, label: "Design Systems", color: "#f59e0b" },
   // Projects (pink, lower-left)
-  { id: "payments", x: 300, y: 466, r: 8, label: "Payments SDK", color: "#ec4899" },
-  { id: "destok", x: 340, y: 505, r: 7, label: "Design Tokens", color: "#ec4899" },
-  { id: "apigw", x: 262, y: 488, r: 7, label: "API Gateway", color: "#ec4899" },
-  // Education (cyan, top)
-  { id: "stanford", x: 428, y: 256, r: 9, label: "Stanford CS", color: "#06b6d4" },
+  { id: "payments", x: 408, y: 406, r: 7, label: "Payments SDK", color: "#ec4899" },
+  { id: "destok", x: 452, y: 419, r: 6, label: "Design Tokens", color: "#ec4899" },
+  { id: "apigw", x: 365, y: 413, r: 6, label: "API Gateway", color: "#ec4899" },
+  // Education (cyan, top center)
+  { id: "stanford", x: 585, y: 299, r: 8, label: "Stanford CS", color: "#06b6d4" },
   // Industries (orange, bottom)
-  { id: "fintech", x: 380, y: 525, r: 8, label: "Fintech", color: "#f97316" },
-  { id: "devtools", x: 478, y: 515, r: 8, label: "Dev Tools", color: "#f97316" },
+  { id: "fintech", x: 515, y: 425, r: 7, label: "Fintech", color: "#f97316" },
+  { id: "devtools", x: 635, y: 422, r: 7, label: "Dev Tools", color: "#f97316" },
 ]
 
-const graphEdges = [
+const graphEdges: [string, string][] = [
   // Alex → companies
   ["alex", "stripe"], ["alex", "figma"], ["alex", "plaid"],
   // Alex → skills
@@ -61,7 +76,7 @@ const graphEdges = [
 
 const nodeMap = new Map(graphNodes.map((n) => [n.id, n]))
 
-// -- Pipeline pills ---------------------------------------------------------
+// -- Pipeline pills ----------------------------------------------------------
 
 const pills = [
   { label: "Discovered 5", w: 72, bg: "#f1f5f9", border: "#cbd5e1", text: "#475569" },
@@ -71,7 +86,7 @@ const pills = [
   { label: "Offer 0", w: 40, bg: "#F0F5F2", border: "rgba(0,0,0,0.06)", text: "#a8a29e" },
 ]
 
-// -- Component --------------------------------------------------------------
+// -- Component ---------------------------------------------------------------
 
 interface CareerHubIllustrationProps {
   className?: string
@@ -81,16 +96,16 @@ export function CareerHubIllustration({
   className = "",
 }: CareerHubIllustrationProps) {
   // Compute pill x positions
-  let pillX = 228
+  let pillX = PROFILE.x + 24
   const pillPositions = pills.map((p) => {
     const x = pillX
-    pillX += p.w + 14 // pill width + gap + arrow space
+    pillX += p.w + 14
     return x
   })
 
   return (
     <svg
-      viewBox="0 0 960 620"
+      viewBox="0 0 960 632"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
@@ -116,8 +131,8 @@ export function CareerHubIllustration({
       {/* ================================================================== */}
       {/* WINDOW FRAME                                                       */}
       {/* ================================================================== */}
-      <rect x="0" y="0" width="960" height="620" rx="12" fill="#FAFDFB" filter="url(#window-shadow)" />
-      <rect x="0" y="0" width="960" height="620" rx="12" fill="none" stroke="#ddd9d6" strokeWidth="0.75" />
+      <rect x="0" y="0" width="960" height="632" rx="12" fill="#FAFDFB" filter="url(#window-shadow)" />
+      <rect x="0" y="0" width="960" height="632" rx="12" fill="none" stroke="#ddd9d6" strokeWidth="0.75" />
 
       {/* Title bar */}
       <rect x="0" y="0" width="960" height="34" rx="12" fill="#F0F0EE" />
@@ -131,14 +146,13 @@ export function CareerHubIllustration({
       {/* ================================================================== */}
       {/* SIDEBAR                                                            */}
       {/* ================================================================== */}
-      <rect x="0" y="34" width="178" height="586" fill="#F5F7F6" />
-      {/* Bottom-left corner rounding */}
-      <rect x="0" y="604" width="12" height="16" rx="12" fill="#F5F7F6" />
-      <line x1="178" y1="34" x2="178" y2="620" stroke="rgba(0,0,0,0.07)" strokeWidth="0.5" />
+      <rect x="0" y="34" width={SIDEBAR_W} height="598" fill="#F5F7F6" />
+      <rect x="0" y="616" width="12" height="16" rx="12" fill="#F5F7F6" />
+      <line x1={SIDEBAR_W} y1="34" x2={SIDEBAR_W} y2="632" stroke="rgba(0,0,0,0.07)" strokeWidth="0.5" />
 
       {/* Brand bar */}
-      <line x1="0" y1="90" x2="178" y2="90" stroke="rgba(0,0,0,0.07)" strokeWidth="0.5" />
-      {/* Crab logo — scaled down from the actual component */}
+      <line x1="0" y1="90" x2={SIDEBAR_W} y2="90" stroke="rgba(0,0,0,0.07)" strokeWidth="0.5" />
+      {/* Crab logo */}
       <g transform="translate(18,49) scale(0.27)">
         <line x1="26" y1="56" x2="20" y2="74" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" />
         <line x1="38" y1="58" x2="34" y2="76" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" />
@@ -161,7 +175,7 @@ export function CareerHubIllustration({
         talentclaw
       </text>
 
-      {/* VIEWS section label */}
+      {/* VIEWS section */}
       <text x="20" y="112" fontFamily={FONT_SANS} fontSize="10" fontWeight="500" fill="#a8a29e" letterSpacing="0.08em">
         VIEWS
       </text>
@@ -169,7 +183,6 @@ export function CareerHubIllustration({
       {/* Career Hub — active */}
       <rect x="12" y="122" width="154" height="32" rx="8" fill="rgba(5,150,105,0.08)" />
       <line x1="12" y1="126" x2="12" y2="150" stroke="#059669" strokeWidth="2" strokeLinecap="round" />
-      {/* Home icon */}
       <g transform="translate(24,131)">
         <path d="M7 1L13 6.5V13H8.5V9H5.5V13H1V6.5L7 1Z" stroke="#059669" strokeWidth="1.2" fill="none" strokeLinejoin="round" />
       </g>
@@ -207,7 +220,7 @@ export function CareerHubIllustration({
       {/* Separator */}
       <line x1="12" y1="232" x2="166" y2="232" stroke="rgba(0,0,0,0.06)" strokeWidth="0.5" />
 
-      {/* FILES section label */}
+      {/* FILES section */}
       <text x="20" y="254" fontFamily={FONT_SANS} fontSize="10" fontWeight="500" fill="#a8a29e" letterSpacing="0.08em">
         FILES
       </text>
@@ -239,63 +252,72 @@ export function CareerHubIllustration({
       ))}
 
       {/* ================================================================== */}
-      {/* MAIN CONTENT AREA                                                  */}
+      {/* MAIN CONTENT — stacked full-width cards                            */}
       {/* ================================================================== */}
 
-      {/* ── Profile Card ─────────────────────────────────────────────────── */}
-      <rect x="202" y="56" width="420" height="118" rx="14" fill="white" stroke="rgba(0,0,0,0.05)" strokeWidth="0.75" filter="url(#card-shadow)" />
+      {/* ── Profile Card (full width) ──────────────────────────────────── */}
+      <rect
+        x={PROFILE.x} y={PROFILE.y} width={PROFILE.w} height={PROFILE.h}
+        rx="14" fill="white" stroke="rgba(0,0,0,0.05)" strokeWidth="0.75"
+        filter="url(#card-shadow)"
+      />
 
       {/* Greeting */}
-      <text x="226" y="88" fontFamily={FONT_SERIF} fontSize="18" fontWeight="700" fill="#1c1917">
+      <text x={PROFILE.x + 24} y={PROFILE.y + 30} fontFamily={FONT_SERIF} fontSize="18" fontWeight="700" fill="#1c1917">
         Good morning, Alex
       </text>
 
-      {/* "View board →" link */}
-      <text x="598" y="86" fontFamily={FONT_SANS} fontSize="11" fill="#059669" textAnchor="end">
-        {"View board →"}
-      </text>
+      {/* Momentum Ring (top-right, inset so labels stay inside card) */}
+      <g transform={`translate(${CR - 120},${PROFILE.y + 16})`}>
+        {/* Track */}
+        <circle cx="16" cy="16" r="14" fill="none" strokeWidth="2.5" stroke="#f0f5f2" />
+        {/* Progress arc — 72% */}
+        <circle
+          cx="16" cy="16" r="14" fill="none" strokeWidth="2.5" stroke="#059669"
+          strokeLinecap="round"
+          strokeDasharray={`${2 * Math.PI * 14}`}
+          strokeDashoffset={`${2 * Math.PI * 14 * (1 - 0.72)}`}
+          transform="rotate(-90 16 16)"
+        />
+        {/* Score */}
+        <text x="16" y="19" fontFamily={FONT_SANS} fontSize="9" fontWeight="600" fill="#1c1917" textAnchor="middle">
+          72
+        </text>
+        {/* Labels */}
+        <text x="38" y="13" fontFamily={FONT_SANS} fontSize="9" fontWeight="600" fill="#059669">
+          {"↑"}
+        </text>
+        <text x="46" y="13" fontFamily={FONT_SANS} fontSize="8" fill="#a8a29e">
+          Momentum
+        </text>
+        <text x="38" y="24" fontFamily={FONT_SANS} fontSize="8" fill="#a8a29e">
+          Active week
+        </text>
+      </g>
 
       {/* Headline */}
-      <text x="226" y="108" fontFamily={FONT_SANS} fontSize="12" fill="#57534e">
+      <text x={PROFILE.x + 24} y={PROFILE.y + 50} fontFamily={FONT_SANS} fontSize="12" fill="#57534e">
         Senior Software Engineer · Building developer tools
       </text>
 
       {/* Pipeline funnel pills */}
       {pills.map((p, i) => {
         const px = pillPositions[i]
+        const py = PROFILE.y + 68
         return (
           <g key={p.label}>
             {i > 0 && (
               <text
-                x={px - 9}
-                y="145"
-                fontFamily={FONT_SANS}
-                fontSize="9"
-                fill="#a8a29e"
-                opacity="0.4"
-                textAnchor="middle"
+                x={px - 9} y={py + 14}
+                fontFamily={FONT_SANS} fontSize="9" fill="#a8a29e" opacity="0.4" textAnchor="middle"
               >
                 →
               </text>
             )}
-            <rect
-              x={px}
-              y="131"
-              width={p.w}
-              height="22"
-              rx="11"
-              fill={p.bg}
-              stroke={p.border}
-              strokeWidth="0.5"
-            />
+            <rect x={px} y={py} width={p.w} height="22" rx="11" fill={p.bg} stroke={p.border} strokeWidth="0.5" />
             <text
-              x={px + p.w / 2}
-              y="145"
-              fontFamily={FONT_SANS}
-              fontSize="10"
-              fontWeight="500"
-              fill={p.text}
-              textAnchor="middle"
+              x={px + p.w / 2} y={py + 14}
+              fontFamily={FONT_SANS} fontSize="10" fontWeight="500" fill={p.text} textAnchor="middle"
             >
               {p.label}
             </text>
@@ -303,8 +325,82 @@ export function CareerHubIllustration({
         )
       })}
 
-      {/* ── Career Graph Card ────────────────────────────────────────────── */}
-      <rect x="202" y="198" width="420" height="400" rx="14" fill="white" stroke="rgba(0,0,0,0.05)" strokeWidth="0.75" filter="url(#card-shadow)" />
+      {/* ── Separator ──────────────────────────────────────────────────── */}
+      <line
+        x1={PROFILE.x + 24} y1={PROFILE.y + 102}
+        x2={CR - 24} y2={PROFILE.y + 102}
+        stroke="rgba(0,0,0,0.05)" strokeWidth="0.5"
+      />
+
+      {/* ── Briefing stats row ─────────────────────────────────────────── */}
+
+      {/* ↑ new jobs */}
+      <g transform={`translate(${PROFILE.x + 24},${PROFILE.y + 114})`}>
+        <path d="M5 9L7.5 3L10 9" stroke="#059669" strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <text x="16" y="9" fontFamily={FONT_SANS} fontSize="12" fontWeight="600" fill="#1c1917">3</text>
+        <text x="27" y="9" fontFamily={FONT_SANS} fontSize="10" fill="#a8a29e">new jobs</text>
+      </g>
+
+      {/* Bot / agent actions */}
+      <g transform={`translate(${PROFILE.x + 114},${PROFILE.y + 114})`}>
+        <rect x="1" y="1" width="10" height="8" rx="2" stroke="#8b5cf6" strokeWidth="1" fill="none" />
+        <circle cx="4.5" cy="5" r="1" fill="#8b5cf6" />
+        <circle cx="8.5" cy="5" r="1" fill="#8b5cf6" />
+        <text x="16" y="9" fontFamily={FONT_SANS} fontSize="12" fontWeight="600" fill="#1c1917">2</text>
+        <text x="27" y="9" fontFamily={FONT_SANS} fontSize="10" fill="#a8a29e">agent actions</text>
+      </g>
+
+      {/* Profile completeness bar */}
+      <g transform={`translate(${PROFILE.x + 240},${PROFILE.y + 114})`}>
+        <rect x="0" y="3" width="60" height="5" rx="2.5" fill="#f0f5f2" />
+        <rect x="0" y="3" width="43" height="5" rx="2.5" fill="#059669" />
+        <text x="68" y="9" fontFamily={FONT_SANS} fontSize="10" fill="#a8a29e">Profile 72%</text>
+      </g>
+
+      {/* ── Compact upcoming actions ───────────────────────────────────── */}
+      <g transform={`translate(${PROFILE.x + 24},${PROFILE.y + 140})`}>
+        {/* Action 1 */}
+        <rect x="0" y="0" width="9" height="9" rx="1.5" stroke="#a8a29e" strokeWidth="0.8" fill="none" />
+        <line x1="0" y1="3" x2="9" y2="3" stroke="#a8a29e" strokeWidth="0.6" />
+        <text x="13" y="8" fontFamily={FONT_SANS} fontSize="10" fill="#57534e">Follow up on application</text>
+        <text x="144" y="8" fontFamily={FONT_SANS} fontSize="10" fill="#a8a29e">Mar 14</text>
+
+        {/* Action 2 */}
+        <rect x="198" y="0" width="9" height="9" rx="1.5" stroke="#a8a29e" strokeWidth="0.8" fill="none" />
+        <line x1="198" y1="3" x2="207" y2="3" stroke="#a8a29e" strokeWidth="0.6" />
+        <text x="211" y="8" fontFamily={FONT_SANS} fontSize="10" fill="#57534e">Submit coding challenge</text>
+        <text x="342" y="8" fontFamily={FONT_SANS} fontSize="10" fill="#a8a29e">Mar 18</text>
+      </g>
+
+      {/* ── Agent insights separator ───────────────────────────────────── */}
+      <line
+        x1={PROFILE.x + 24} y1={PROFILE.y + 160}
+        x2={CR - 24} y2={PROFILE.y + 160}
+        stroke="rgba(0,0,0,0.05)" strokeWidth="0.5"
+      />
+
+      {/* ── "What your agent learned" ──────────────────────────────────── */}
+      <g transform={`translate(${PROFILE.x + 24},${PROFILE.y + 170})`}>
+        {/* Lightbulb icon */}
+        <circle cx="4" cy="3.5" r="3.5" fill="rgba(245,158,11,0.12)" />
+        <circle cx="4" cy="2.5" r="2" stroke="#f59e0b" strokeWidth="0.8" fill="none" />
+        <line x1="4" y1="5" x2="4" y2="6.5" stroke="#f59e0b" strokeWidth="0.7" />
+        <text x="12" y="6" fontFamily={FONT_SANS} fontSize="8" fontWeight="500" fill="#a8a29e" letterSpacing="0.06em">
+          WHAT YOUR AGENT LEARNED
+        </text>
+        <text x="0" y="18" fontFamily={FONT_SANS} fontSize="10" fill="#57534e">
+          38% of your applications have progressed to interviews. Companies that responded well: Stripe, Figma.
+        </text>
+      </g>
+
+      {/* ================================================================== */}
+      {/* CAREER CONTEXT GRAPH (full width)                                  */}
+      {/* ================================================================== */}
+      <rect
+        x={GRAPH.x} y={GRAPH.y} width={GRAPH.w} height={GRAPH.h}
+        rx="14" fill="white" stroke="rgba(0,0,0,0.05)" strokeWidth="0.75"
+        filter="url(#card-shadow)"
+      />
 
       {/* Graph edges */}
       {graphEdges.map(([srcId, tgtId], i) => {
@@ -314,12 +410,8 @@ export function CareerHubIllustration({
         return (
           <line
             key={i}
-            x1={s.x}
-            y1={s.y}
-            x2={t.x}
-            y2={t.y}
-            stroke="rgba(0,0,0,0.07)"
-            strokeWidth="0.8"
+            x1={s.x} y1={s.y} x2={t.x} y2={t.y}
+            stroke="rgba(0,0,0,0.07)" strokeWidth="0.8"
           />
         )
       })}
@@ -329,38 +421,24 @@ export function CareerHubIllustration({
         const isPerson = n.id === "alex"
         return (
           <g key={n.id}>
-            {/* Node circle */}
             <circle
-              cx={n.x}
-              cy={n.y}
-              r={n.r}
-              fill={n.color}
-              opacity="0.85"
+              cx={n.x} cy={n.y} r={n.r}
+              fill={n.color} opacity="0.85"
               filter={isPerson ? "url(#node-glow)" : undefined}
             />
-            {/* Subtle border ring */}
             <circle
-              cx={n.x}
-              cy={n.y}
-              r={n.r}
-              fill="none"
-              stroke={n.color}
-              strokeWidth="0.5"
-              opacity="0.25"
+              cx={n.x} cy={n.y} r={n.r}
+              fill="none" stroke={n.color} strokeWidth="0.5" opacity="0.25"
             />
-            {/* Center dot for person node */}
             {isPerson && (
-              <circle cx={n.x} cy={n.y} r={5} fill="white" opacity="0.9" />
+              <circle cx={n.x} cy={n.y} r={4.5} fill="white" opacity="0.9" />
             )}
-            {/* Label */}
             <text
-              x={n.x}
-              y={n.y + n.r + 12}
+              x={n.x} y={n.y + n.r + 11}
               fontFamily={FONT_SANS}
-              fontSize={isPerson ? "11" : "10"}
+              fontSize={isPerson ? "10" : "9"}
               fontWeight={isPerson ? "600" : "400"}
-              fill="rgba(28,25,23,0.6)"
-              textAnchor="middle"
+              fill="rgba(28,25,23,0.6)" textAnchor="middle"
             >
               {n.label}
             </text>
@@ -370,189 +448,135 @@ export function CareerHubIllustration({
 
       {/* Zoom controls (bottom-right of graph card) */}
       {[
-        { label: "+", y: 548 },
-        { label: "\u2212", y: 564 },
-        { label: "\u21B4", y: 580 },
+        { label: "+", dy: -54 },
+        { label: "\u2212", dy: -38 },
+        { label: "\u21B4", dy: -22 },
       ].map((btn, i) => (
         <g key={i}>
           <rect
-            x={btn.label === "+" ? 592 : 592}
-            y={btn.y}
-            width="20"
-            height="14"
-            rx="3"
-            fill="white"
-            stroke="rgba(0,0,0,0.08)"
-            strokeWidth="0.5"
+            x={CR - 34} y={GRAPH.y + GRAPH.h + btn.dy}
+            width="20" height="14" rx="3"
+            fill="white" stroke="rgba(0,0,0,0.08)" strokeWidth="0.5"
           />
           <text
-            x={602}
-            y={btn.y + 10.5}
-            fontFamily={FONT_SANS}
-            fontSize="10"
-            fill="#a8a29e"
-            textAnchor="middle"
+            x={CR - 24} y={GRAPH.y + GRAPH.h + btn.dy + 10.5}
+            fontFamily={FONT_SANS} fontSize="10" fill="#a8a29e" textAnchor="middle"
           >
             {btn.label}
           </text>
         </g>
       ))}
 
-      {/* ── Upcoming Actions Card ────────────────────────────────────────── */}
-      <rect x="646" y="56" width="292" height="170" rx="14" fill="white" stroke="rgba(0,0,0,0.05)" strokeWidth="0.75" filter="url(#card-shadow)" />
+      {/* ================================================================== */}
+      {/* BOTTOM ROW — Activity Feed (left) + Upcoming Actions (right)       */}
+      {/* ================================================================== */}
 
-      <text x="670" y="82" fontFamily={FONT_SANS} fontSize="13" fontWeight="600" fill="#1c1917">
-        Upcoming Actions
-      </text>
+      {/* ── Activity Feed ──────────────────────────────────────────────── */}
+      <rect
+        x={FEED.x} y={FEED.y} width={FEED.w} height={FEED.h}
+        rx="14" fill="white" stroke="rgba(0,0,0,0.05)" strokeWidth="0.75"
+        filter="url(#card-shadow)"
+      />
 
-      {/* Action items */}
-      {[
-        {
-          dot: "#d97706",
-          title: "Follow up on application",
-          sub: "Acme Corp · 2026-03-14",
-          urgent: true,
-        },
-        {
-          dot: "#059669",
-          title: "Submit coding challenge",
-          sub: "Figma · 2026-03-18",
-          urgent: false,
-        },
-        {
-          dot: "#059669",
-          title: "Prepare for interview",
-          sub: "Linear · 2026-03-22",
-          urgent: false,
-        },
-      ].map((action, i) => {
-        const y = 108 + i * 36
-        return (
-          <g key={i}>
-            <circle cx={674} cy={y + 6} r={3.5} fill={action.dot} />
-            <text x={688} y={y + 5} fontFamily={FONT_SANS} fontSize="12" fontWeight="500" fill="#1c1917">
-              {action.title}
-            </text>
-            <text x={688} y={y + 19} fontFamily={FONT_SANS} fontSize="10" fill="#a8a29e">
-              {action.sub}
-              {action.urgent && (
-                <tspan fill="#dc2626" fontWeight="500">
-                  {" "}
-                  Overdue
-                </tspan>
-              )}
-            </text>
-          </g>
-        )
-      })}
-
-      {/* ── Activity Feed Card ───────────────────────────────────────────── */}
-      <rect x="646" y="250" width="292" height="348" rx="14" fill="white" stroke="rgba(0,0,0,0.05)" strokeWidth="0.75" filter="url(#card-shadow)" />
-
-      <text x="670" y="278" fontFamily={FONT_SANS} fontSize="13" fontWeight="600" fill="#1c1917">
+      <text x={FEED.x + 20} y={FEED.y + 24} fontFamily={FONT_SANS} fontSize="12" fontWeight="600" fill="#1c1917">
         Recent Activity
       </text>
-      <text x="776" y="278" fontFamily={FONT_MONO} fontSize="9" fill="#a8a29e" opacity="0.6">
+      <text x={FEED.x + 120} y={FEED.y + 24} fontFamily={FONT_MONO} fontSize="8" fill="#a8a29e" opacity="0.6">
         activity.log
       </text>
 
-      {/* Activity entries */}
+      {/* Activity entries (compact — 3 shown) */}
       {[
-        {
-          iconBg: "rgba(5,150,105,0.08)",
-          iconColor: "#059669",
-          iconType: "search",
-          title: "Discovered 3 new matches",
-          slug: "jobs/",
-          time: "2h ago",
-        },
-        {
-          iconBg: "rgba(139,92,246,0.1)",
-          iconColor: "#8b5cf6",
-          iconType: "send",
-          title: "Applied to Staff Engineer",
-          slug: "stripe-staff-engineer",
-          time: "5h ago",
-        },
-        {
-          iconBg: "rgba(16,185,129,0.1)",
-          iconColor: "#10b981",
-          iconType: "message",
-          title: "Message from Figma recruiter",
-          slug: "messages/figma-recruiter",
-          time: "Yesterday",
-        },
-        {
-          iconBg: "rgba(59,130,246,0.1)",
-          iconColor: "#3b82f6",
-          iconType: "bookmark",
-          title: "Saved Product Engineer",
-          slug: "vercel-product-engineer",
-          time: "2d ago",
-        },
-        {
-          iconBg: "rgba(245,158,11,0.1)",
-          iconColor: "#f59e0b",
-          iconType: "star",
-          title: "Interview scheduled",
-          slug: "linear-sr-frontend",
-          time: "3d ago",
-        },
+        { iconBg: "rgba(5,150,105,0.08)", iconColor: "#059669", iconType: "search", title: "Discovered 3 new matches", slug: "jobs/", time: "2h ago" },
+        { iconBg: "rgba(139,92,246,0.1)", iconColor: "#8b5cf6", iconType: "send", title: "Applied to Staff Engineer", slug: "stripe-staff-engineer", time: "5h ago" },
+        { iconBg: "rgba(16,185,129,0.1)", iconColor: "#10b981", iconType: "message", title: "Message from Figma", slug: "messages/figma-recruiter", time: "Yesterday" },
       ].map((entry, i) => {
-        const y = 300 + i * 52
+        const ey = FEED.y + 38 + i * 26
+        const feedRight = FEED.x + FEED.w - 20
         return (
           <g key={i}>
-            {/* Separator line (not on first) */}
             {i > 0 && (
-              <line x1={670} y1={y - 6} x2={924} y2={y - 6} stroke="rgba(0,0,0,0.04)" strokeWidth="0.5" />
+              <line x1={FEED.x + 20} y1={ey - 5} x2={feedRight} y2={ey - 5} stroke="rgba(0,0,0,0.04)" strokeWidth="0.5" />
             )}
             {/* Icon square */}
-            <rect x={670} y={y} width={24} height={24} rx={6} fill={entry.iconBg} />
+            <rect x={FEED.x + 20} y={ey} width={20} height={20} rx={5} fill={entry.iconBg} />
             {/* Mini icon */}
-            <g transform={`translate(${676},${y + 6})`}>
+            <g transform={`translate(${FEED.x + 25},${ey + 5})`}>
               {entry.iconType === "search" && (
                 <>
-                  <circle cx="5" cy="5" r="3.5" stroke={entry.iconColor} strokeWidth="1.3" fill="none" />
-                  <line x1="7.5" y1="7.5" x2="10.5" y2="10.5" stroke={entry.iconColor} strokeWidth="1.3" strokeLinecap="round" />
+                  <circle cx="4" cy="4" r="3" stroke={entry.iconColor} strokeWidth="1.1" fill="none" />
+                  <line x1="6.2" y1="6.2" x2="9" y2="9" stroke={entry.iconColor} strokeWidth="1.1" strokeLinecap="round" />
                 </>
               )}
               {entry.iconType === "send" && (
-                <path d="M1 11L11 6L1 1L3 6L1 11Z" stroke={entry.iconColor} strokeWidth="1" fill="none" strokeLinejoin="round" />
+                <path d="M1 9L9 5L1 1L2.5 5L1 9Z" stroke={entry.iconColor} strokeWidth="0.9" fill="none" strokeLinejoin="round" />
               )}
               {entry.iconType === "message" && (
                 <>
-                  <rect x="0.5" y="0.5" width="11" height="8" rx="1.5" stroke={entry.iconColor} strokeWidth="1.2" fill="none" />
-                  <path d="M3 8.5L1.5 11.5L5 8.5" fill={entry.iconColor} opacity="0.6" />
+                  <rect x="0.5" y="0.5" width="9" height="7" rx="1.5" stroke={entry.iconColor} strokeWidth="1" fill="none" />
+                  <path d="M2.5 7L1 9.5L4 7" fill={entry.iconColor} opacity="0.6" />
                 </>
-              )}
-              {entry.iconType === "bookmark" && (
-                <path d="M2.5 1H9.5V11L6 8.5L2.5 11V1Z" stroke={entry.iconColor} strokeWidth="1.2" fill="none" />
-              )}
-              {entry.iconType === "star" && (
-                <path d="M6 1L7.4 4.2L11 4.6L8.3 7L9 10.5L6 8.8L3 10.5L3.7 7L1 4.6L4.6 4.2Z" fill={entry.iconColor} opacity="0.8" />
               )}
             </g>
             {/* Title */}
-            <text x={702} y={y + 10} fontFamily={FONT_SANS} fontSize="12" fontWeight="500" fill="#1c1917">
+            <text x={FEED.x + 46} y={ey + 9} fontFamily={FONT_SANS} fontSize="10" fontWeight="500" fill="#1c1917">
               {entry.title}
             </text>
             {/* Slug */}
-            <text x={702} y={y + 23} fontFamily={FONT_SANS} fontSize="10" fill="#a8a29e">
+            <text x={FEED.x + 46} y={ey + 19} fontFamily={FONT_SANS} fontSize="8.5" fill="#a8a29e">
               {entry.slug}
             </text>
             {/* Time */}
-            <text x={924} y={y + 10} fontFamily={FONT_SANS} fontSize="10" fill="#a8a29e" textAnchor="end">
+            <text x={feedRight} y={ey + 9} fontFamily={FONT_SANS} fontSize="8.5" fill="#a8a29e" textAnchor="end">
               {entry.time}
             </text>
           </g>
         )
       })}
 
-      {/* Footer line */}
-      <line x1={670} y1={560} x2={924} y2={560} stroke="rgba(0,0,0,0.04)" strokeWidth="0.5" />
-      <text x={670} y={578} fontFamily={FONT_SANS} fontSize="10" fill="#a8a29e">
+      {/* Footer */}
+      <line
+        x1={FEED.x + 20} y1={FEED.y + FEED.h - 22}
+        x2={FEED.x + FEED.w - 20} y2={FEED.y + FEED.h - 22}
+        stroke="rgba(0,0,0,0.04)" strokeWidth="0.5"
+      />
+      <text x={FEED.x + 20} y={FEED.y + FEED.h - 8} fontFamily={FONT_SANS} fontSize="9" fill="#a8a29e">
         Showing last 5 entries
       </text>
+
+      {/* ── Upcoming Actions ───────────────────────────────────────────── */}
+      <rect
+        x={ACTIONS.x} y={ACTIONS.y} width={ACTIONS.w} height={ACTIONS.h}
+        rx="14" fill="white" stroke="rgba(0,0,0,0.05)" strokeWidth="0.75"
+        filter="url(#card-shadow)"
+      />
+
+      <text x={ACTIONS.x + 20} y={ACTIONS.y + 24} fontFamily={FONT_SANS} fontSize="12" fontWeight="600" fill="#1c1917">
+        Upcoming Actions
+      </text>
+
+      {/* Action items */}
+      {[
+        { dot: "#d97706", title: "Follow up on application", sub: "Acme Corp · 2026-03-14", urgent: true },
+        { dot: "#059669", title: "Submit coding challenge", sub: "Figma · 2026-03-18", urgent: false },
+        { dot: "#059669", title: "Prepare for interview", sub: "Linear · 2026-03-22", urgent: false },
+      ].map((action, i) => {
+        const ay = ACTIONS.y + 46 + i * 30
+        return (
+          <g key={i}>
+            <circle cx={ACTIONS.x + 24} cy={ay + 5} r={3} fill={action.dot} />
+            <text x={ACTIONS.x + 34} y={ay + 4} fontFamily={FONT_SANS} fontSize="10" fontWeight="500" fill="#1c1917">
+              {action.title}
+            </text>
+            <text x={ACTIONS.x + 34} y={ay + 16} fontFamily={FONT_SANS} fontSize="9" fill="#a8a29e">
+              {action.sub}
+              {action.urgent && (
+                <tspan fill="#dc2626" fontWeight="500"> Overdue</tspan>
+              )}
+            </text>
+          </g>
+        )
+      })}
     </svg>
   )
 }

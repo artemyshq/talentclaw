@@ -10,6 +10,7 @@ export function Nav() {
           <CrabLogo className="w-8 h-8 text-emerald-600" />
           <span className="text-xl font-semibold tracking-tight">talentclaw</span>
           <span className="text-sm text-text-muted font-prose italic hidden sm:inline">by Artemys</span>
+          <span className="ml-2 px-2 py-0.5 rounded-full text-[0.65rem] font-medium uppercase tracking-wider bg-emerald-600/10 text-emerald-600">Beta</span>
         </Link>
 
       </div>
