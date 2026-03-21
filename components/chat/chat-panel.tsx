@@ -38,7 +38,7 @@ export function ChatPanel() {
   return (
     <div
       className={`
-        fixed top-0 right-0 h-full w-full sm:w-[400px] z-40
+        fixed top-0 right-0 h-full w-full sm:w-[400px] z-50
         bg-surface-raised border-l border-border-subtle
         shadow-[-4px_0_24px_rgba(0,0,0,0.08)]
         flex flex-col
