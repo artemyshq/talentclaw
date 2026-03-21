@@ -9,7 +9,7 @@ description: >
   to positions, updating their resume, checking application status, or says
   "find me a job".
 license: MIT
-compatibility: Requires agent-browser for job applications.
+compatibility: agent-browser optional (enables direct job applications; without it, the agent drafts materials and provides application links).
 metadata: {"author":"artemyshq","version":"0.5.0","homepage":"https://github.com/artemyshq/talentclaw"}
 ---
 
@@ -35,14 +35,14 @@ npx talentclaw
 
 Opens a visual dashboard at localhost:3100 with your pipeline, jobs, profile editor, and inbox.
 
-### agent-browser (required for applications)
+### agent-browser (optional — enables direct applications)
 
 ```bash
 npm install -g agent-browser
 agent-browser install
 ```
 
-agent-browser is used to navigate job sites and submit applications on behalf of the user.
+agent-browser lets the agent navigate job sites and submit applications directly. Without it, the agent still finds jobs, drafts application materials, and provides links — the user just applies manually. When a user wants autonomous applications but doesn't have agent-browser, offer to help install inline — try to fetch the install command from `https://talentclaw.sh`, or fall back to `curl -fsSL https://talentclaw.sh/install.sh | sh`.
 
 ---
 
@@ -150,14 +150,14 @@ Your messages may reach human recruiters. Write accordingly.
 
 ### New Here? Let's Get Set Up
 
-The first conversation should feel like meeting a career advisor, not filling out a form. Detect new users automatically (empty profile or missing agent-browser) and launch into onboarding without being asked.
+The first conversation should feel like meeting a career advisor, not filling out a form. Detect new users automatically (empty profile) and launch into onboarding without being asked. Silently check for agent-browser availability but do not gate onboarding on it.
 
 1. *Welcome* — brief, warm intro. Explain what talentclaw does in plain terms.
-2. *Setup check* — verify agent-browser is installed. If not, suggest installing it.
-3. *Career discovery conversation* — have a real conversation to understand who they are. Ask about their career arc, current situation, strengths, what they want, and constraints. If they have a resume, parse it and use it as a foundation, then ask about what the resume can't tell you. 2-3 questions per turn, react to what they say.
-4. *Build their context graph* — synthesize the conversation into the Career Context section of `~/.talentclaw/profile.md`: Career Arc (narrative), Core Strengths (positioning), Current Situation (mode and motivation), What They Want (the real picture), Constraints (deal-breakers).
-5. *Extract structured profile* — from the context, pull out frontmatter fields (headline, skills, experience, preferences, salary). Show the full profile and get confirmation before saving.
-6. *First search* — search for jobs via web search, walk through top results with genuine assessments, help apply to the best match via agent-browser if there is one.
+2. *Career discovery conversation* — have a real conversation to understand who they are. Ask about their career arc, current situation, strengths, what they want, and constraints. If they have a resume, parse it and use it as a foundation, then ask about what the resume can't tell you. 2-3 questions per turn, react to what they say.
+3. *Build their context graph* — synthesize the conversation into the Career Context section of `~/.talentclaw/profile.md`: Career Arc (narrative), Core Strengths (positioning), Current Situation (mode and motivation), What They Want (the real picture), Constraints (deal-breakers).
+4. *Extract structured profile* — from the context, pull out frontmatter fields (headline, skills, experience, preferences, salary). Show the full profile and get confirmation before saving.
+5. *First search* — search for jobs via web search, walk through top results with genuine assessments. For strong matches: apply via agent-browser if available, otherwise share the link and drafted materials.
+6. *Next steps* — mention the visual dashboard (`npx talentclaw`) if they're in a plugin context. If agent-browser isn't installed and they seem technical, mention it casually as an optional upgrade.
 
 ### Back for More
 

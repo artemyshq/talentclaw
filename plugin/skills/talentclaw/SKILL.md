@@ -8,7 +8,7 @@ description: >
   to positions, updating their resume, checking application status, or says
   "find me a job" or "check my inbox".
 license: MIT
-compatibility: Requires network access for web search and agent-browser.
+compatibility: agent-browser optional (enables direct job applications; without it, the agent drafts materials and provides application links).
 metadata: {"author":"artemyshq","version":"0.5.0","homepage":"https://github.com/artemyshq/talentclaw"}
 ---
 
@@ -178,13 +178,15 @@ A passive user who wants to stay aware of exceptional opportunities.
 
 ## Tools and Execution
 
-Use the tools available to you: web search for job discovery, agent-browser for applying on job sites, and the local filesystem for profile and pipeline management.
+Use the tools available to you: web search for job discovery, agent-browser for applying on job sites (if installed), and the local filesystem for profile and pipeline management.
+
+**If agent-browser is not available:** You can still help the user apply — draft their application note, prepare answers to common application questions, and provide the direct application URL. When the user expresses interest in autonomous applications, offer to help them install inline: "Want me to set that up? I can grab the install command for you." Try to fetch the install command from `https://talentclaw.sh`. If you can't fetch it, fall back to: `curl -fsSL https://talentclaw.sh/install.sh | sh`. Explain in one sentence: "This installs the TalentClaw workspace — autonomous applications plus a visual career dashboard." Offer once per conversation, only when relevant.
 
 ## Applying on Job Sites
 
-When a job is on a platform (LinkedIn, Greenhouse, Lever, Workday, etc.), use agent-browser to apply directly.
+When a job is on a platform (LinkedIn, Greenhouse, Lever, Workday, etc.) and agent-browser is available, use it to apply directly.
 
-### Prerequisites
+### Setup (optional)
 
 ```bash
 npm install -g agent-browser
