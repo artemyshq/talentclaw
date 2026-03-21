@@ -9,9 +9,7 @@ import { ChatInput } from "./chat-input"
 function EmptyState() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-      <div className="w-10 h-10 rounded-full bg-accent-subtle flex items-center justify-center mb-3">
-        <Sparkles className="w-5 h-5 text-accent" />
-      </div>
+      <Sparkles className="w-5 h-5 text-accent mb-3" />
       <h3 className="font-prose text-lg text-text-primary mb-1">
         Hey, I&apos;m TalentClaw
       </h3>
