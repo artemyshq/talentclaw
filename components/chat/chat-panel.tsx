@@ -43,13 +43,12 @@ export function ChatPanel({ displayName = "" }: { displayName?: string }) {
         bg-surface-raised border-l border-border-subtle
         shadow-[-4px_0_24px_rgba(0,0,0,0.08)]
 
-        fixed top-0 right-0 bottom-0 w-full z-[60]
-        transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
-        ${isOpen ? "translate-x-0" : "translate-x-full"}
+        max-sm:fixed max-sm:top-0 max-sm:right-0 max-sm:bottom-0 max-sm:w-full max-sm:z-[60]
+        max-sm:transition-transform max-sm:duration-300 max-sm:ease-[cubic-bezier(0.16,1,0.3,1)]
+        ${isOpen ? "max-sm:translate-x-0" : "max-sm:translate-x-full"}
 
-        sm:relative sm:top-auto sm:right-auto sm:bottom-auto sm:z-auto
-        sm:h-full sm:flex-shrink-0 sm:overflow-hidden sm:translate-x-0
-        sm:transition-[width] sm:duration-300
+        relative h-full flex-shrink-0 overflow-hidden
+        transition-[width] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
         ${isOpen ? "sm:w-[400px]" : "sm:w-0"}
       `}
       role="dialog"
