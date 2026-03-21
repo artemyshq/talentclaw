@@ -1,12 +1,19 @@
 "use client"
 
-import type { ReactNode } from "react"
+import { type ReactNode, useEffect } from "react"
 import { ChatProvider, useChatContext } from "./chat-provider"
 import { ChatPanel } from "./chat-panel"
 import { ChatToggle } from "./chat-toggle"
+import { useSidebar } from "@/components/workspace/sidebar-wrapper"
 
 function ChatLayout({ children }: { children: ReactNode }) {
   const { isOpen, setIsOpen, isAvailable, displayName } = useChatContext()
+  const { setCollapsed } = useSidebar()
+
+  // Collapse sidebar when chat opens, restore when it closes
+  useEffect(() => {
+    setCollapsed(isOpen)
+  }, [isOpen, setCollapsed])
 
   return (
     <div className="flex h-screen overflow-hidden">

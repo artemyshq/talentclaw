@@ -40,23 +40,19 @@ export function ChatPanel({ displayName = "" }: { displayName?: string }) {
   return (
     <div
       className={`
-        bg-surface-raised border-l border-border-subtle
-        shadow-[-4px_0_24px_rgba(0,0,0,0.08)]
-
-        max-sm:fixed max-sm:top-0 max-sm:right-0 max-sm:bottom-0 max-sm:w-full max-sm:z-[60]
-        max-sm:transition-transform max-sm:duration-300 max-sm:ease-[cubic-bezier(0.16,1,0.3,1)]
-        ${isOpen ? "max-sm:translate-x-0" : "max-sm:translate-x-full"}
-
-        relative h-full flex-shrink-0 overflow-hidden
+        h-full flex-shrink-0 overflow-hidden
         transition-[width] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
-        ${isOpen ? "sm:w-[400px]" : "sm:w-0"}
+        ${isOpen ? "w-full sm:w-[400px]" : "w-0"}
       `}
-      role="dialog"
-      aria-label="Chat with TalentClaw"
-      aria-hidden={!isOpen}
     >
-      {/* Inner content pinned at 400px so it doesn't reflow during width transition */}
-      <div className="w-full sm:w-[400px] h-full flex flex-col">
+      <div
+        className="w-full sm:w-[400px] h-full flex flex-col
+          bg-surface-raised border-l border-border-subtle
+          shadow-[-4px_0_24px_rgba(0,0,0,0.08)]"
+        role="dialog"
+        aria-label="Chat with TalentClaw"
+        aria-hidden={!isOpen}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
           <div className="flex items-center gap-2">
