@@ -1,7 +1,7 @@
 "use client"
 
+import Markdown from "react-markdown"
 import type { ChatMessage } from "@/lib/agent/types"
-import { ToolCallBadge } from "./tool-call-badge"
 import { formatRelativeTime } from "@/lib/ui-utils"
 
 function TypingIndicator() {
@@ -20,7 +20,7 @@ function TypingIndicator() {
 
 export function ChatMessageBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === "user"
-  const isEmpty = !message.content && (!message.toolCalls || message.toolCalls.length === 0)
+  const hasContent = !!message.content
   const time = formatRelativeTime(new Date(message.createdAt).toISOString())
 
   return (
@@ -42,21 +42,12 @@ export function ChatMessageBubble({ message }: { message: ChatMessage }) {
           }
         `}
       >
-        {isEmpty ? (
-          <TypingIndicator />
+        {hasContent ? (
+          <div className="chat-prose">
+            <Markdown>{message.content}</Markdown>
+          </div>
         ) : (
-          <>
-            {message.content && (
-              <p className="whitespace-pre-wrap break-words">{message.content}</p>
-            )}
-            {message.toolCalls && message.toolCalls.length > 0 && (
-              <div className="flex flex-col gap-0.5 mt-1">
-                {message.toolCalls.map((tc, i) => (
-                  <ToolCallBadge key={`${tc.name}-${i}`} toolCall={tc} />
-                ))}
-              </div>
-            )}
-          </>
+          <TypingIndicator />
         )}
       </div>
     </div>
