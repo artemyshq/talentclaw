@@ -40,63 +40,71 @@ export function ChatPanel({ displayName = "" }: { displayName?: string }) {
   return (
     <div
       className={`
-        fixed top-0 right-0 h-full w-full sm:w-[400px] z-50
         bg-surface-raised border-l border-border-subtle
         shadow-[-4px_0_24px_rgba(0,0,0,0.08)]
-        flex flex-col
-        chat-panel-enter
+
+        fixed top-0 right-0 bottom-0 w-full z-[60]
+        transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
         ${isOpen ? "translate-x-0" : "translate-x-full"}
+
+        sm:relative sm:top-auto sm:right-auto sm:bottom-auto sm:z-auto
+        sm:h-full sm:flex-shrink-0 sm:overflow-hidden sm:translate-x-0
+        sm:transition-[width] sm:duration-300
+        ${isOpen ? "sm:w-[400px]" : "sm:w-0"}
       `}
       role="dialog"
       aria-label="Chat with TalentClaw"
       aria-hidden={!isOpen}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
-        <div className="flex items-center gap-2">
-          <CrabLogo className="w-5 h-5 text-accent" />
-          <h2 className="text-sm font-semibold text-text-primary">TalentClaw</h2>
+      {/* Inner content pinned at 400px so it doesn't reflow during width transition */}
+      <div className="w-full sm:w-[400px] h-full flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
+          <div className="flex items-center gap-2">
+            <CrabLogo className="w-5 h-5 text-accent" />
+            <h2 className="text-sm font-semibold text-text-primary">TalentClaw</h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted
+              hover:text-text-primary hover:bg-surface-overlay transition-colors
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            aria-label="Close chat panel"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsOpen(false)}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted
-            hover:text-text-primary hover:bg-surface-overlay transition-colors
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          aria-label="Close chat panel"
+
+        {/* Messages */}
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto chat-scrollbar px-4 py-4 flex flex-col gap-4"
         >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Messages */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto chat-scrollbar px-4 py-4 flex flex-col gap-4"
-      >
-        {messages.length === 0 ? (
-          <EmptyState displayName={displayName} />
-        ) : (
-          messages.map((msg) => (
-            <ChatMessageBubble key={msg.id} message={msg} />
-          ))
-        )}
-      </div>
-
-      {/* Error banner */}
-      {error && (
-        <div className="mx-4 mb-2 px-3 py-2 rounded-lg bg-danger/8 text-danger text-xs">
-          {error}
+          {messages.length === 0 ? (
+            <EmptyState displayName={displayName} />
+          ) : (
+            messages.map((msg) => (
+              <ChatMessageBubble key={msg.id} message={msg} />
+            ))
+          )}
         </div>
-      )}
 
-      {/* Input */}
-      <div className="px-4 pb-4 pt-2 border-t border-border-subtle">
-        <ChatInput
-          onSend={sendMessage}
-          disabled={isStreaming}
-          showSuggestions={messages.length === 0}
-        />
+        {/* Error banner */}
+        {error && (
+          <div className="mx-4 mb-2 px-3 py-2 rounded-lg bg-danger/8 text-danger text-xs">
+            {error}
+          </div>
+        )}
+
+        {/* Input */}
+        <div className="px-4 pb-4 pt-2 border-t border-border-subtle">
+          <ChatInput
+            onSend={sendMessage}
+            disabled={isStreaming}
+            showSuggestions={messages.length === 0}
+          />
+        </div>
       </div>
     </div>
   )

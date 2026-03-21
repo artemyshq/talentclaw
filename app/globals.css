@@ -121,10 +121,7 @@ html {
   color: var(--color-text-secondary);
 }
 
-/* Chat panel slide transition */
-.chat-panel-enter {
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
+/* Chat panel width transition is handled inline via Tailwind */
 
 /* Thin scrollbar for chat message list */
 .chat-scrollbar::-webkit-scrollbar {
