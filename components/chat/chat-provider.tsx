@@ -14,11 +14,12 @@ type ChatContextValue = {
   sendMessage: (text: string) => void
   sendPrefilled: (text: string) => void
   clearMessages: () => void
+  displayName: string
 }
 
 const ChatContext = createContext<ChatContextValue | null>(null)
 
-export function ChatProvider({ children }: { children: ReactNode }) {
+export function ChatProvider({ children, displayName = "" }: { children: ReactNode; displayName?: string }) {
   const [isOpen, setIsOpen] = useState(false)
   const chat = useChat()
 
@@ -34,7 +35,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   )
 
   return (
-    <ChatContext.Provider value={{ isOpen, setIsOpen, sendPrefilled, ...chat }}>
+    <ChatContext.Provider value={{ isOpen, setIsOpen, sendPrefilled, displayName, ...chat }}>
       {children}
     </ChatContext.Provider>
   )

@@ -1,27 +1,29 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { X, Sparkles } from "lucide-react"
+import { X } from "lucide-react"
+import { CrabLogo } from "@/components/crab-logo"
 import { useChatContext } from "./chat-provider"
 import { ChatMessageBubble } from "./chat-message"
 import { ChatInput } from "./chat-input"
 
-function EmptyState() {
+function EmptyState({ displayName }: { displayName: string }) {
+  const firstName = displayName.split(" ")[0]
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-      <Sparkles className="w-5 h-5 text-accent mb-3" />
-      <h3 className="font-prose text-lg text-text-primary mb-1">
-        Hey, I&apos;m TalentClaw
+      <CrabLogo className="w-10 h-10 text-accent mb-4" />
+      <h3 className="font-prose text-xl text-text-primary mb-1">
+        {firstName ? `Hey, ${firstName}!` : "Hey there!"}
       </h3>
-      <p className="text-xs text-text-secondary leading-relaxed max-w-[260px]">
-        I can search for jobs, manage your pipeline, update your profile, and
-        draft applications.
+      <p className="text-sm text-text-secondary leading-relaxed max-w-[260px]">
+        How can I help?
       </p>
     </div>
   )
 }
 
-export function ChatPanel() {
+export function ChatPanel({ displayName = "" }: { displayName?: string }) {
   const { isOpen, setIsOpen, messages, isStreaming, isAvailable, error, sendMessage } =
     useChatContext()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -52,7 +54,7 @@ export function ChatPanel() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-accent" />
+          <CrabLogo className="w-5 h-5 text-accent" />
           <h2 className="text-sm font-semibold text-text-primary">TalentClaw</h2>
         </div>
         <button
@@ -73,7 +75,7 @@ export function ChatPanel() {
         className="flex-1 overflow-y-auto chat-scrollbar px-4 py-4 flex flex-col gap-4"
       >
         {messages.length === 0 ? (
-          <EmptyState />
+          <EmptyState displayName={displayName} />
         ) : (
           messages.map((msg) => (
             <ChatMessageBubble key={msg.id} message={msg} />

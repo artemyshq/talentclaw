@@ -5,7 +5,7 @@ import {
 import { Sidebar } from "@/components/workspace/sidebar"
 import { TopBar } from "@/components/workspace/top-bar"
 import { ChatShell } from "@/components/chat/chat-shell"
-import { listJobs, getWorkspaceTree } from "@/lib/fs-data"
+import { listJobs, getWorkspaceTree, getProfile } from "@/lib/fs-data"
 
 export default async function WorkspaceLayout({
   children,
@@ -14,12 +14,17 @@ export default async function WorkspaceLayout({
 }) {
   let jobs: Awaited<ReturnType<typeof listJobs>> = []
   let tree: Awaited<ReturnType<typeof getWorkspaceTree>>["tree"] = []
+  let displayName = ""
 
   try {
-    ;[jobs, { tree }] = await Promise.all([
+    const [jobsResult, treeResult, profile] = await Promise.all([
       listJobs(),
       getWorkspaceTree(),
+      getProfile(),
     ])
+    jobs = jobsResult
+    tree = treeResult.tree
+    displayName = profile.frontmatter.display_name ?? ""
   } catch {
     // Fall through with safe defaults so layout still renders
   }
@@ -32,7 +37,7 @@ export default async function WorkspaceLayout({
 
   return (
     <SidebarProvider>
-      <ChatShell>
+      <ChatShell displayName={displayName}>
         <div className="flex h-screen overflow-hidden bg-surface">
           <SidebarShell>
             <Sidebar

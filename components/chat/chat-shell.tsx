@@ -6,10 +6,10 @@ import { ChatPanel } from "./chat-panel"
 import { ChatToggle } from "./chat-toggle"
 
 function ChatOverlay() {
-  const { isOpen, setIsOpen, isAvailable } = useChatContext()
+  const { isOpen, setIsOpen, isAvailable, displayName } = useChatContext()
   return (
     <>
-      <ChatPanel />
+      <ChatPanel displayName={displayName} />
       <ChatToggle
         isOpen={isOpen}
         onToggle={() => setIsOpen(!isOpen)}
@@ -19,9 +19,9 @@ function ChatOverlay() {
   )
 }
 
-export function ChatShell({ children }: { children: ReactNode }) {
+export function ChatShell({ children, displayName = "" }: { children: ReactNode; displayName?: string }) {
   return (
-    <ChatProvider>
+    <ChatProvider displayName={displayName}>
       {children}
       <ChatOverlay />
     </ChatProvider>
