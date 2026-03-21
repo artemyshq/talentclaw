@@ -3,6 +3,7 @@
 // Claude Code has configured — subscription (Pro/Max), API key, or org.
 // ANTHROPIC_API_KEY is optional; the SDK inherits Claude Code's auth.
 
+import { execFileSync } from "node:child_process"
 import type { AgentConfig } from "./types"
 
 const DEFAULT_MODEL = "claude-sonnet-4-6"
@@ -14,11 +15,20 @@ export function getAgentConfig(): AgentConfig {
   }
 }
 
+// Cache the check — the binary won't appear/disappear during a server run
+let claudeAvailable: boolean | null = null
+
 export function isAgentConfigured(): boolean {
-  // The Agent SDK spawns Claude Code, which handles its own auth.
-  // If ANTHROPIC_API_KEY is set, it's used. Otherwise, Claude Code
-  // uses its subscription login (claude login). We consider the agent
-  // "configured" as long as Claude Code is likely available.
-  // A missing API key is fine — the SDK will use subscription auth.
-  return true
+  if (claudeAvailable !== null) return claudeAvailable
+
+  // The Agent SDK spawns Claude Code as a subprocess.
+  // If the binary isn't on PATH, the chat can't work.
+  try {
+    execFileSync("which", ["claude"], { stdio: "ignore" })
+    claudeAvailable = true
+  } catch {
+    claudeAvailable = false
+  }
+
+  return claudeAvailable
 }

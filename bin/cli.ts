@@ -106,39 +106,112 @@ function writeIfMissing(path: string, content: string): void {
 // ---------------------------------------------------------------------------
 
 interface DepStatus {
-  hasAgentBrowser: boolean;
-  hasApiKey: boolean;
   hasClaude: boolean;
+  hasClaudeAuth: boolean;
+  hasAgentBrowser: boolean;
+}
+
+function checkClaudeAuth(): boolean {
+  // API key is the most explicit auth signal
+  if (process.env.ANTHROPIC_API_KEY) return true;
+
+  // Check if Claude Code has been authenticated via `claude login`.
+  // The SDK spawns a Claude Code subprocess that inherits its auth,
+  // so we just need to verify the user has logged in at least once.
+  try {
+    const result = spawnSync("claude", ["auth", "status"], {
+      stdio: "pipe",
+      timeout: 5000,
+    });
+    // Exit 0 means authenticated
+    if (result.status === 0) return true;
+  } catch {
+    // Command may not exist in older versions — fall through
+  }
+
+  // Fallback: check if Claude config directory has auth-related files
+  const claudeDir = join(homedir(), ".claude");
+  return existsSync(join(claudeDir, "credentials.json"))
+    || existsSync(join(claudeDir, ".credentials"));
 }
 
 function checkDeps(autoInstall = false): DepStatus {
-  let hasAgentBrowser = which("agent-browser");
-  if (!hasAgentBrowser) {
-    if (autoInstall) {
-      const shouldInstall = promptYesNo(
-        "agent-browser lets TalentClaw apply to jobs on sites like Greenhouse and LinkedIn. Install it? (npm install -g agent-browser)"
-      );
-      if (shouldInstall) {
-        try {
-          execSync("npm install -g agent-browser", { stdio: "inherit" });
-          hasAgentBrowser = which("agent-browser");
-          if (hasAgentBrowser) {
-            console.log("  Setting up browser...");
-            execSync("agent-browser install", { stdio: "inherit" });
-          }
-        } catch {
-          console.log("  Failed to install. Install manually: npm install -g agent-browser");
+  const interactive = autoInstall || !!process.stdin.isTTY;
+
+  // --- Claude Code (required for AI chat) ---
+  let hasClaude = which("claude");
+
+  if (!hasClaude && interactive) {
+    console.log();
+    console.log("  Claude Code powers TalentClaw's AI chat assistant.");
+    console.log("  It requires a Claude Pro or Max subscription.");
+    console.log();
+    const shouldInstall = promptYesNo(
+      "Install Claude Code? (npm install -g @anthropic-ai/claude-code)"
+    );
+    if (shouldInstall) {
+      try {
+        console.log();
+        execSync("npm install -g @anthropic-ai/claude-code", { stdio: "inherit" });
+        hasClaude = which("claude");
+        if (hasClaude) {
+          console.log("\n  \x1b[32m[ok]\x1b[0m Claude Code installed");
         }
+      } catch {
+        console.log("\n  Install failed. Try manually: npm install -g @anthropic-ai/claude-code");
       }
-    } else {
-      console.log("! agent-browser not found — install with: npm install -g agent-browser");
     }
   }
 
-  const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
-  const hasClaude = which("claude");
+  // --- Auth (Claude login or API key) ---
+  let hasClaudeAuth = false;
 
-  return { hasAgentBrowser, hasApiKey, hasClaude };
+  if (hasClaude) {
+    hasClaudeAuth = checkClaudeAuth();
+
+    if (!hasClaudeAuth && interactive) {
+      console.log();
+      console.log("  Sign in to your Claude account to enable the AI assistant.");
+      console.log("  This opens your browser to authenticate with Anthropic.");
+      console.log();
+      const shouldLogin = promptYesNo("Sign in now?");
+      if (shouldLogin) {
+        try {
+          console.log();
+          spawnSync("claude", ["login"], { stdio: "inherit", timeout: 120000 });
+          hasClaudeAuth = checkClaudeAuth();
+          if (hasClaudeAuth) {
+            console.log("\n  \x1b[32m[ok]\x1b[0m Signed in to Claude");
+          }
+        } catch {
+          console.log("\n  Sign-in failed or timed out. Run 'claude login' later to enable chat.");
+        }
+      }
+    }
+  }
+
+  // --- agent-browser (optional — only prompt during setup) ---
+  let hasAgentBrowser = which("agent-browser");
+  if (!hasAgentBrowser && autoInstall) {
+    console.log();
+    const shouldInstall = promptYesNo(
+      "agent-browser lets TalentClaw apply to jobs on sites like Greenhouse and LinkedIn. Install it? (npm install -g agent-browser)"
+    );
+    if (shouldInstall) {
+      try {
+        execSync("npm install -g agent-browser", { stdio: "inherit" });
+        hasAgentBrowser = which("agent-browser");
+        if (hasAgentBrowser) {
+          console.log("  Setting up browser...");
+          execSync("agent-browser install", { stdio: "inherit" });
+        }
+      } catch {
+        console.log("  Failed to install. Install manually: npm install -g agent-browser");
+      }
+    }
+  }
+
+  return { hasClaude, hasClaudeAuth, hasAgentBrowser };
 }
 
 // ---------------------------------------------------------------------------
@@ -148,8 +221,23 @@ function checkDeps(autoInstall = false): DepStatus {
 function printChecklist(deps: DepStatus, webUrl?: string, webError?: string): void {
   console.log();
   check("Workspace", true, dataDir());
-  check("agent-browser", deps.hasAgentBrowser, deps.hasAgentBrowser ? "installed" : "npm install -g agent-browser");
-  check("Auth", deps.hasApiKey || deps.hasClaude, deps.hasApiKey ? "API key" : deps.hasClaude ? "Claude subscription" : "run: claude login");
+  check(
+    "Claude Code",
+    deps.hasClaude,
+    deps.hasClaude ? "installed" : "npm install -g @anthropic-ai/claude-code",
+  );
+  check(
+    "Auth",
+    deps.hasClaudeAuth,
+    deps.hasClaudeAuth
+      ? (process.env.ANTHROPIC_API_KEY ? "API key" : "Claude subscription")
+      : (deps.hasClaude ? "run: claude login" : "install Claude Code first"),
+  );
+  check(
+    "agent-browser",
+    deps.hasAgentBrowser,
+    deps.hasAgentBrowser ? "installed" : "optional — npm install -g agent-browser",
+  );
 
   if (webError) {
     check("Web UI", false, webError);
@@ -157,6 +245,11 @@ function printChecklist(deps: DepStatus, webUrl?: string, webError?: string): vo
     check("Web UI", true, webUrl);
   } else {
     check("Web UI", false, "starting...");
+  }
+
+  if (!deps.hasClaude || !deps.hasClaudeAuth) {
+    console.log();
+    console.log("  \x1b[33mNote:\x1b[0m AI chat requires Claude Code + sign-in. The dashboard works without it.");
   }
   console.log();
 }
