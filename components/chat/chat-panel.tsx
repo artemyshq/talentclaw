@@ -42,11 +42,11 @@ export function ChatPanel({ displayName = "" }: { displayName?: string }) {
       className={`
         h-full flex-shrink-0 overflow-hidden
         transition-[width] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
-        ${isOpen ? "w-full sm:w-[400px]" : "w-0"}
+        ${isOpen ? "max-sm:w-full w-[400px]" : "w-0"}
       `}
     >
       <div
-        className="w-full sm:w-[400px] h-full flex flex-col
+        className="max-sm:w-full w-[400px] h-full flex flex-col
           bg-surface-raised border-l border-border-subtle
           shadow-[-4px_0_24px_rgba(0,0,0,0.08)]"
         role="dialog"
