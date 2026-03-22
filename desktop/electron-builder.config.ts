@@ -3,7 +3,7 @@ import type { Configuration } from "electron-builder"
 const config: Configuration = {
   appId: "com.artemys.talentclaw",
   productName: "TalentClaw",
-  // Main process entry point (compiled by tsdown)
+  afterSign: "./desktop/notarize.ts",
   directories: {
     buildResources: "desktop/resources",
     output: "release",
@@ -15,6 +15,9 @@ const config: Configuration = {
     "skills/**/*",
     "persona/**/*",
     "public/**/*",
+  ],
+  extraResources: [
+    { from: "desktop/splash.html", to: "splash.html" },
   ],
   mac: {
     target: [

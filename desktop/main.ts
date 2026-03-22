@@ -3,13 +3,14 @@
 // Spawns the Next.js standalone server on a dynamic port, manages its
 // lifecycle, and presents the web UI inside a native macOS window.
 
-import { app, BrowserWindow, dialog, Menu, shell } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, Notification, shell } from "electron";
 import { createServer } from "net";
 import { spawn, type ChildProcess } from "child_process";
 import { join } from "path";
 import { existsSync } from "fs";
 import { randomBytes } from "crypto";
 import { checkClaudeBinary, downloadClaudeBinary, ensureClaudeAuth } from "./first-run";
+import { initAutoUpdater, checkForUpdatesManual, getUpdateState, quitAndInstall } from "./auto-updater";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -55,6 +56,47 @@ function findFreePort(): Promise<number> {
     });
     srv.on("error", reject);
   });
+}
+
+// ---------------------------------------------------------------------------
+// Splash screen
+// ---------------------------------------------------------------------------
+
+function getSplashPath(): string {
+  if (app.isPackaged) {
+    return join(process.resourcesPath, "splash.html");
+  }
+  return join(__dirname, "..", "desktop", "splash.html");
+}
+
+function sendSplashMessage(win: BrowserWindow, data: Record<string, unknown>): void {
+  win.webContents.executeJavaScript(
+    `window.postMessage(${JSON.stringify(data)}, "*")`
+  ).catch(() => {});
+}
+
+// ---------------------------------------------------------------------------
+// Error dialogs
+// ---------------------------------------------------------------------------
+
+async function showErrorWithRetry(
+  title: string,
+  message: string,
+  retryFn: () => Promise<void>,
+): Promise<boolean> {
+  const { response } = await dialog.showMessageBox({
+    type: "error",
+    title,
+    message,
+    buttons: ["Retry", "Quit"],
+    defaultId: 0,
+    cancelId: 1,
+  });
+  if (response === 0) {
+    await retryFn();
+    return true;
+  }
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -163,6 +205,15 @@ function scheduleRestart(): void {
 
   console.log(`[main] Server crashed. Restarting in ${delay}ms (attempt ${restartAttempt})...`);
 
+  // Non-blocking notification instead of dialog for auto-restarts
+  if (Notification.isSupported()) {
+    new Notification({
+      title: APP_NAME,
+      body: "Server restarted",
+      silent: true,
+    }).show();
+  }
+
   restartTimer = setTimeout(async () => {
     restartTimer = null;
     try {
@@ -242,6 +293,7 @@ function createMainWindow(): void {
     title: APP_NAME,
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 16, y: 18 },
+    backgroundColor: "#0f0f0f",
     webPreferences: {
       preload: join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -250,7 +302,8 @@ function createMainWindow(): void {
     },
   });
 
-  // Show window only when content is painted — avoids blank flash
+  // Load splash screen immediately and show the window
+  mainWindow.loadFile(getSplashPath());
   mainWindow.once("ready-to-show", () => {
     mainWindow?.show();
   });
@@ -278,8 +331,18 @@ function createMainWindow(): void {
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
+}
 
-  mainWindow.loadURL(getAppUrl());
+/** Navigate from splash to the app URL once server is ready. */
+function navigateToApp(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (!mainWindow) {
+      reject(new Error("No main window"));
+      return;
+    }
+    mainWindow.webContents.once("did-finish-load", () => resolve());
+    mainWindow.loadURL(getAppUrl()).catch(reject);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -296,12 +359,7 @@ function buildAppMenu(): void {
           label: "Check for Updates...",
           enabled: true,
           click: () => {
-            dialog.showMessageBox({
-              type: "info",
-              title: "Updates",
-              message: "Update checking is not yet implemented.",
-              buttons: ["OK"],
-            });
+            checkForUpdatesManual();
           },
         },
         { type: "separator" },
@@ -380,17 +438,23 @@ async function ensureClaudeDeps(): Promise<boolean> {
 
   if (!hasClaude) {
     // Attempt to download it
-    const downloaded = await downloadClaudeBinary();
-
-    if (!downloaded) {
-      dialog.showErrorBox(
+    try {
+      await downloadClaudeBinary();
+    } catch {
+      // Show retry dialog instead of blocking error box
+      const retried = await showErrorWithRetry(
         "Claude Code Required",
         "TalentClaw requires Claude Code to power its AI assistant.\n\n" +
           "Please install it manually:\n" +
           "  npm install -g @anthropic-ai/claude-code\n\n" +
-          "Then relaunch TalentClaw."
+          "Then click Retry.",
+        async () => {
+          const ok = await ensureClaudeDeps();
+          if (!ok) app.quit();
+        },
       );
-      return false;
+      if (!retried) return false;
+      return true;
     }
   }
 
@@ -405,10 +469,32 @@ async function ensureClaudeDeps(): Promise<boolean> {
 // ---------------------------------------------------------------------------
 
 function registerIpcHandlers(): void {
-  const { ipcMain } = require("electron");
-
   ipcMain.handle("get-server-url", () => getAppUrl());
   ipcMain.handle("get-auth-token", () => authToken);
+
+  // Auto-updater IPC
+  ipcMain.handle("check-for-updates", () => checkForUpdatesManual());
+  ipcMain.handle("get-update-state", () => getUpdateState());
+  ipcMain.handle("quit-and-install", () => quitAndInstall());
+
+  // Dock badge and bounce IPC
+  ipcMain.handle("set-dock-badge", (_event: any, text: string) => {
+    if (process.platform === "darwin") app.dock.setBadge(text);
+  });
+  ipcMain.handle("clear-dock-badge", () => {
+    if (process.platform === "darwin") app.dock.setBadge("");
+  });
+  ipcMain.handle("bounce-dock", () => {
+    if (process.platform === "darwin") app.dock.bounce("informational");
+  });
+
+  // Splash screen IPC — retry/quit from the splash error state
+  ipcMain.on("splash-retry", () => {
+    bootServer();
+  });
+  ipcMain.on("splash-quit", () => {
+    app.quit();
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -450,6 +536,77 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
 }
 
 // ---------------------------------------------------------------------------
+// Boot sequence — allocate port, start server, navigate to app
+// ---------------------------------------------------------------------------
+
+async function bootServer(): Promise<void> {
+  // Update splash status
+  if (mainWindow) {
+    sendSplashMessage(mainWindow, { type: "status", text: "Allocating port\u2026" });
+  }
+
+  // Allocate a free port for the backend
+  try {
+    serverPort = await findFreePort();
+  } catch (err) {
+    if (mainWindow) {
+      sendSplashMessage(mainWindow, {
+        type: "error",
+        title: "Startup Error",
+        message: `Failed to allocate a network port:\n${err}`,
+      });
+    }
+    return;
+  }
+
+  if (mainWindow) {
+    sendSplashMessage(mainWindow, { type: "status", text: "Starting server\u2026" });
+  }
+
+  // Start the Next.js standalone server
+  try {
+    await startBackendServer();
+  } catch (err) {
+    const errorMsg = String(err);
+    const isPortConflict = errorMsg.includes("already in use");
+
+    if (isPortConflict) {
+      // Port conflict — offer to try another port
+      const { response } = await dialog.showMessageBox({
+        type: "error",
+        title: "Port Conflict",
+        message: `Port ${serverPort} is already in use.`,
+        buttons: ["Try Another Port", "Quit"],
+        defaultId: 0,
+        cancelId: 1,
+      });
+      if (response === 0) {
+        return bootServer();
+      }
+      app.quit();
+      return;
+    }
+
+    // General server error — show in splash
+    if (mainWindow) {
+      sendSplashMessage(mainWindow, {
+        type: "error",
+        title: "Server Error",
+        message: `Failed to start the TalentClaw server:\n${err}`,
+      });
+    }
+    return;
+  }
+
+  // Server is ready — navigate from splash to app
+  try {
+    await navigateToApp();
+  } catch (err) {
+    console.error("[main] Failed to navigate to app:", err);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main entry
 // ---------------------------------------------------------------------------
 
@@ -463,34 +620,37 @@ app.whenReady().then(async () => {
   // Register IPC handlers for the preload bridge
   registerIpcHandlers();
 
+  // Create the window immediately — shows splash screen
+  createMainWindow();
+
   // First-run: ensure Claude Code is available
+  if (mainWindow) {
+    sendSplashMessage(mainWindow, { type: "status", text: "Checking dependencies\u2026" });
+  }
+
   const depsOk = await ensureClaudeDeps();
   if (!depsOk) {
     app.quit();
     return;
   }
 
-  // Allocate a free port for the backend
-  try {
-    serverPort = await findFreePort();
-  } catch (err) {
-    dialog.showErrorBox("Startup Error", `Failed to allocate a network port:\n${err}`);
-    app.quit();
-    return;
-  }
+  // Boot the server (port allocation + start + navigate)
+  await bootServer();
 
-  // Start the Next.js standalone server
-  try {
-    await startBackendServer();
-  } catch (err) {
-    dialog.showErrorBox(
-      "Server Error",
-      `Failed to start the TalentClaw server:\n\n${err}\n\nThe app will now quit.`
+  // Set up macOS dock menu (right-click on dock icon)
+  if (process.platform === "darwin") {
+    app.dock.setMenu(
+      Menu.buildFromTemplate([
+        { label: "Show Window", click: () => mainWindow?.show() },
+        { type: "separator" },
+        {
+          label: "New Chat",
+          click: () => mainWindow?.loadURL(`${getAppUrl()}/chat`),
+        },
+      ])
     );
-    app.quit();
-    return;
   }
 
-  // Create the main window
-  createMainWindow();
+  // Initialize auto-updater (checks after 15s, then every 4h)
+  initAutoUpdater();
 });

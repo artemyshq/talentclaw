@@ -14,4 +14,28 @@ contextBridge.exposeInMainWorld("talentclaw", {
 
   /** The host platform (darwin, win32, linux) */
   platform: process.platform,
+
+  /** Trigger a manual update check */
+  checkForUpdates: (): Promise<void> => ipcRenderer.invoke("check-for-updates"),
+
+  /** Returns the current auto-update state */
+  getUpdateState: (): Promise<string> => ipcRenderer.invoke("get-update-state"),
+
+  /** Install a downloaded update and restart */
+  quitAndInstall: (): Promise<void> => ipcRenderer.invoke("quit-and-install"),
+
+  /** Set the dock badge text (macOS only) */
+  setDockBadge: (text: string): Promise<void> => ipcRenderer.invoke("set-dock-badge", text),
+
+  /** Clear the dock badge (macOS only) */
+  clearDockBadge: (): Promise<void> => ipcRenderer.invoke("clear-dock-badge"),
+
+  /** Bounce the dock icon to get attention (macOS only) */
+  bounceDock: (): Promise<void> => ipcRenderer.invoke("bounce-dock"),
+
+  /** Splash screen: retry boot sequence */
+  splashRetry: (): void => ipcRenderer.send("splash-retry"),
+
+  /** Splash screen: quit the app */
+  splashQuit: (): void => ipcRenderer.send("splash-quit"),
 });
