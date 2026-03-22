@@ -716,6 +716,7 @@ export async function saveConversation(
   slug: string,
   title: string,
   messages: ConversationFile["messages"],
+  sessionId?: string,
 ): Promise<void> {
   const dir = path.join(getDataDir(), "conversations")
   await ensureDir(dir)
@@ -730,6 +731,7 @@ export async function saveConversation(
     created_at,
     updated_at: now,
     message_count: messages.length,
+    ...(sessionId && { session_id: sessionId }),
   }
 
   const content = matter.stringify(JSON.stringify(messages, null, 2), fm)

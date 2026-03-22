@@ -13,6 +13,8 @@ export function useChat() {
   const [error, setError] = useState<string | null>(null)
   const [conversations, setConversations] = useState<ConversationSummary[]>([])
   const sessionIdRef = useRef<string | null>(null)
+  // SDK session ID — tracks the Agent SDK's persistent session for resume
+  const sdkSessionIdRef = useRef<string | null>(null)
   // Use ref for slug to avoid stale closures in saveConversation
   const slugRef = useRef<string | null>(null)
   const [conversationSlug, setConversationSlug] = useState<string | null>(null)
@@ -74,7 +76,7 @@ export function useChat() {
         await fetch("/api/conversations", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, title, messages: toSave }),
+          body: JSON.stringify({ slug, title, messages: toSave, sessionId: sdkSessionIdRef.current }),
         })
         refreshConversations()
       } catch {
@@ -126,6 +128,7 @@ export function useChat() {
           body: JSON.stringify({
             message: trimmed,
             sessionId: sessionIdRef.current,
+            resumeSessionId: sdkSessionIdRef.current,
           }),
         })
 
@@ -163,6 +166,10 @@ export function useChat() {
             switch (event.type) {
               case "session":
                 sessionIdRef.current = event.sessionId
+                break
+
+              case "sdk_session":
+                sdkSessionIdRef.current = event.sdkSessionId
                 break
 
               case "text_delta":
@@ -276,6 +283,8 @@ export function useChat() {
       setConversationSlug(slug)
       setError(null)
       sessionIdRef.current = null
+      // Restore SDK session ID from frontmatter for conversation resume
+      sdkSessionIdRef.current = data.frontmatter?.session_id ?? null
     } catch {
       // Failed to load
     }
@@ -287,6 +296,7 @@ export function useChat() {
     slugRef.current = null
     setConversationSlug(null)
     sessionIdRef.current = null
+    sdkSessionIdRef.current = null
   }, [])
 
   return {

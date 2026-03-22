@@ -13,10 +13,10 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const body = await req.json()
-  const { slug, title, messages } = body
+  const { slug, title, messages, sessionId } = body
   if (!slug || !title || !Array.isArray(messages)) {
     return NextResponse.json({ error: "Missing slug, title, or messages" }, { status: 400 })
   }
-  await saveConversation(slug, title, messages)
+  await saveConversation(slug, title, messages, sessionId as string | undefined)
   return NextResponse.json({ ok: true })
 }

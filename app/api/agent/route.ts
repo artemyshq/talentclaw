@@ -4,14 +4,14 @@ import crypto from "node:crypto"
 import { startRun, isAgentConfigured, DuplicateRunError, buildSseResponse } from "@/lib/agent"
 
 export async function POST(req: Request) {
-  let body: { message?: unknown; sessionId?: unknown }
+  let body: { message?: unknown; sessionId?: unknown; resumeSessionId?: unknown }
   try {
     body = await req.json()
   } catch {
     return Response.json({ error: "Invalid JSON body" }, { status: 400 })
   }
 
-  const { message, sessionId: rawSessionId } = body
+  const { message, sessionId: rawSessionId, resumeSessionId } = body
 
   if (typeof message !== "string" || message.trim().length === 0) {
     return Response.json({ error: "message is required and must be a non-empty string" }, { status: 400 })
@@ -28,7 +28,10 @@ export async function POST(req: Request) {
 
   // Start the agent run
   try {
-    await startRun(sessionId, message.trim())
+    const resume = typeof resumeSessionId === "string" && resumeSessionId.length > 0
+      ? resumeSessionId
+      : undefined
+    await startRun(sessionId, message.trim(), resume)
   } catch (err) {
     if (err instanceof DuplicateRunError) {
       return Response.json({ error: err.message }, { status: 409 })

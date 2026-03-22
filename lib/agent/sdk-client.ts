@@ -41,7 +41,7 @@ async function loadSystemPrompt(): Promise<string> {
  */
 export async function runAgent(
   message: string,
-  options: { sessionId?: string },
+  options: { sessionId?: string; resumeSessionId?: string },
   onEvent: (event: SseEvent) => void,
   onComplete: () => void,
   onError: (error: string) => void,
@@ -63,7 +63,8 @@ export async function runAgent(
           model: config.model,
           cwd: home,
           includePartialMessages: true,
-          persistSession: false,
+          persistSession: true,
+          ...(options.resumeSessionId && { resume: options.resumeSessionId }),
           permissionMode: "bypassPermissions",
           allowDangerouslySkipPermissions: true,
           mcpServers: undefined,
@@ -72,9 +73,16 @@ export async function runAgent(
       })
 
       let gotResult = false
+      let emittedSdkSession = false
 
       for await (const msg of conversation) {
         if (abortController.signal.aborted) break
+
+        // Capture the SDK session ID from the first message that carries it
+        if (!emittedSdkSession && "session_id" in msg && (msg as { session_id?: string }).session_id) {
+          onEvent({ type: "sdk_session", sdkSessionId: (msg as { session_id: string }).session_id })
+          emittedSdkSession = true
+        }
 
         const events = mapSdkMessage(msg)
         for (const event of events) {

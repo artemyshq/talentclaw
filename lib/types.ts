@@ -256,6 +256,7 @@ export const ConversationFrontmatterSchema = z.object({
   created_at: z.string(),
   updated_at: z.string(),
   message_count: z.number().default(0),
+  session_id: z.string().optional(),
 })
 
 export type ConversationFrontmatter = z.infer<typeof ConversationFrontmatterSchema>

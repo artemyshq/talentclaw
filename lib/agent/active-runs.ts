@@ -98,7 +98,7 @@ function finishRun(run: ActiveRun, status: "complete" | "error", error?: string)
  * 2. Calls runAgent() to start the Claude Agent SDK query.
  * 3. Maps SDK events to SSE events and fans out to subscribers.
  */
-export async function startRun(sessionId: string, message: string): Promise<void> {
+export async function startRun(sessionId: string, message: string, resumeSessionId?: string): Promise<void> {
   // Prevent duplicate runs for the same session
   const existing = runs.get(sessionId)
   if (existing && existing.status === "running") {
@@ -125,7 +125,7 @@ export async function startRun(sessionId: string, message: string): Promise<void
   try {
     const { abort } = await runAgent(
       message,
-      { sessionId },
+      { sessionId, resumeSessionId },
       (event: SseEvent) => {
         if (run.status !== "running") return
 

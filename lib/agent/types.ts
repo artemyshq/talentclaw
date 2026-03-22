@@ -22,6 +22,7 @@ export type ChatMessage = {
 
 export type SseEvent =
   | { type: "session"; sessionId: string }
+  | { type: "sdk_session"; sdkSessionId: string }
   | { type: "text_delta"; content: string }
   | { type: "tool_use"; toolCallId: string; name: string; input: Record<string, unknown> }
   | { type: "tool_result"; toolCallId: string; name: string; output: string }
