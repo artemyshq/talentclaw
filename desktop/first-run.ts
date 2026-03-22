@@ -3,9 +3,10 @@
 // Returns structured results (no interactive prompts).
 
 import { execFileSync, spawn } from "node:child_process"
-import { chmodSync, existsSync, mkdirSync } from "node:fs"
+import { existsSync, mkdirSync, symlinkSync, unlinkSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
+import { hasClaudeCredentialFiles } from "../lib/claude-auth"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,25 +57,14 @@ function resolveBinaryPath(): string | null {
 /** Check if the binary at `claudePath` is authenticated. */
 function checkAuth(claudePath: string): boolean {
   try {
-    const result = execFileSync(claudePath, ["auth", "status"], {
+    execFileSync(claudePath, ["auth", "status"], {
       stdio: "pipe",
       timeout: 5000,
     })
-    // Some versions print status to stdout — exit 0 means authenticated
-    void result
     return true
   } catch {
     return false
   }
-}
-
-/** Fallback auth check via config files (older Claude Code versions). */
-function checkAuthFallback(): boolean {
-  const claudeDir = join(homedir(), ".claude")
-  return (
-    existsSync(join(claudeDir, "credentials.json")) ||
-    existsSync(join(claudeDir, ".credentials"))
-  )
 }
 
 // ---------------------------------------------------------------------------
@@ -100,7 +90,7 @@ export async function checkClaudeStatus(): Promise<ClaudeStatus> {
 
   if (!binaryPath) {
     // No binary — check fallback auth files in case user has credentials
-    const fallbackAuth = checkAuthFallback()
+    const fallbackAuth = hasClaudeCredentialFiles()
     return {
       hasBinary: false,
       binaryPath: null,
@@ -110,7 +100,7 @@ export async function checkClaudeStatus(): Promise<ClaudeStatus> {
   }
 
   // Binary exists — check auth via `claude auth status`
-  const hasAuth = checkAuth(binaryPath) || checkAuthFallback()
+  const hasAuth = checkAuth(binaryPath) || hasClaudeCredentialFiles()
 
   return {
     hasBinary: true,
@@ -187,7 +177,6 @@ export async function downloadClaudeBinary(
   }
 
   // Symlink into our local bin for reliable future lookups
-  const { symlinkSync, unlinkSync } = await import("node:fs")
   try {
     if (existsSync(LOCAL_CLAUDE_PATH)) {
       unlinkSync(LOCAL_CLAUDE_PATH)
@@ -251,7 +240,7 @@ export async function ensureClaudeAuth(claudePath?: string): Promise<boolean> {
       clearTimeout(timer)
 
       // Verify auth after login completes
-      const authed = checkAuth(claudePath) || checkAuthFallback()
+      const authed = checkAuth(claudePath) || hasClaudeCredentialFiles()
       resolve(authed)
     })
 

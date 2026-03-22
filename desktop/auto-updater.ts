@@ -1,14 +1,5 @@
-// desktop/auto-updater.ts — Auto-update state machine for TalentClaw
-//
-// Wraps electron-updater with a state machine, user-facing dialogs,
-// and scheduled background checks. Imported by main.ts.
-
 import { app, dialog } from "electron";
 import { autoUpdater, type UpdateInfo } from "electron-updater";
-
-// ---------------------------------------------------------------------------
-// State machine
-// ---------------------------------------------------------------------------
 
 export type UpdateState =
   | "idle"
@@ -20,29 +11,15 @@ export type UpdateState =
 
 let currentState: UpdateState = "idle";
 let isManualCheck = false;
-let downloadPercent = 0;
 let checkInterval: ReturnType<typeof setInterval> | null = null;
+let firstCheckTimer: ReturnType<typeof setTimeout> | null = null;
 
 const FIRST_CHECK_DELAY_MS = 15_000;
 const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1_000; // 4 hours
 
-// ---------------------------------------------------------------------------
-// Configuration
-// ---------------------------------------------------------------------------
-
-function configureAutoUpdater(): void {
-  autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = true;
-
-  // In development, don't actually check (no published builds to find)
-  if (!app.isPackaged) {
-    autoUpdater.forceDevUpdateConfig = true;
-  }
+function clearDockBadge(): void {
+  if (process.platform === "darwin") app.dock?.setBadge("");
 }
-
-// ---------------------------------------------------------------------------
-// Event handlers
-// ---------------------------------------------------------------------------
 
 function bindEvents(): void {
   autoUpdater.on("checking-for-update", () => {
@@ -70,28 +47,20 @@ function bindEvents(): void {
 
   autoUpdater.on("download-progress", (progress) => {
     currentState = "downloading";
-    downloadPercent = Math.round(progress.percent);
-    // Update dock badge with download progress
     if (process.platform === "darwin") {
-      app.dock?.setBadge(`${downloadPercent}%`);
+      app.dock?.setBadge(`${Math.round(progress.percent)}%`);
     }
   });
 
   autoUpdater.on("update-downloaded", () => {
     currentState = "downloaded";
-    // Clear dock badge
-    if (process.platform === "darwin") {
-      app.dock?.setBadge("");
-    }
+    clearDockBadge();
     promptInstall();
   });
 
   autoUpdater.on("error", (err) => {
     currentState = "error";
-    // Clear dock badge on error
-    if (process.platform === "darwin") {
-      app.dock?.setBadge("");
-    }
+    clearDockBadge();
     console.error("[auto-updater] Error:", err.message);
 
     if (isManualCheck) {
@@ -104,25 +73,17 @@ function bindEvents(): void {
         buttons: ["OK"],
       });
     }
-    // Reset to idle after a brief delay so the state doesn't stick on error
     setTimeout(() => {
-      if (currentState === "error") {
-        currentState = "idle";
-      }
+      if (currentState === "error") currentState = "idle";
     }, 5_000);
   });
 }
 
-// ---------------------------------------------------------------------------
-// User-facing dialogs
-// ---------------------------------------------------------------------------
-
 async function promptDownload(info: UpdateInfo): Promise<void> {
-  const version = info.version;
   const { response } = await dialog.showMessageBox({
     type: "info",
     title: "Update Available",
-    message: `Version ${version} is available.`,
+    message: `Version ${info.version} is available.`,
     detail: "Would you like to download it now?",
     buttons: ["Download", "Later"],
     defaultId: 0,
@@ -153,26 +114,21 @@ async function promptInstall(): Promise<void> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Exported API
-// ---------------------------------------------------------------------------
-
-/**
- * Initialize the auto-updater. Call once after app is ready.
- * Schedules an initial check after 15 seconds, then every 4 hours.
- */
+/** Initialize the auto-updater. Call once after app is ready. */
 export function initAutoUpdater(): void {
-  configureAutoUpdater();
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+  if (!app.isPackaged) autoUpdater.forceDevUpdateConfig = true;
+
   bindEvents();
 
-  // First check after a short delay (let the app finish starting)
-  setTimeout(() => {
+  firstCheckTimer = setTimeout(() => {
+    firstCheckTimer = null;
     autoUpdater.checkForUpdates().catch((err) => {
       console.error("[auto-updater] Scheduled check failed:", err.message);
     });
   }, FIRST_CHECK_DELAY_MS);
 
-  // Recurring checks every 4 hours
   checkInterval = setInterval(() => {
     if (currentState === "idle") {
       autoUpdater.checkForUpdates().catch((err) => {
@@ -182,10 +138,13 @@ export function initAutoUpdater(): void {
   }, CHECK_INTERVAL_MS);
 }
 
-/**
- * Trigger a manual update check (from the menu item).
- * Shows dialogs for both "update available" and "no update" results.
- */
+/** Clean up timers. Call on app quit. */
+export function teardownAutoUpdater(): void {
+  if (firstCheckTimer) { clearTimeout(firstCheckTimer); firstCheckTimer = null; }
+  if (checkInterval) { clearInterval(checkInterval); checkInterval = null; }
+}
+
+/** Trigger a manual update check from the menu. */
 export function checkForUpdatesManual(): void {
   isManualCheck = true;
   autoUpdater.checkForUpdates().catch((err) => {
@@ -194,16 +153,10 @@ export function checkForUpdatesManual(): void {
   });
 }
 
-/**
- * Returns the current state of the auto-updater.
- */
 export function getUpdateState(): UpdateState {
   return currentState;
 }
 
-/**
- * Quit the app and install the downloaded update.
- */
 export function quitAndInstall(): void {
   autoUpdater.quitAndInstall();
 }

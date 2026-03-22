@@ -1,44 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Apple, Check, Copy, Terminal, ArrowRight } from "lucide-react"
+import { Apple, Terminal, ArrowRight } from "lucide-react"
+import { CopyCommand } from "@/components/landing/copy-command"
 
 function isMacOS() {
   if (typeof navigator === "undefined") return false
-  return /Mac/i.test(navigator.platform || navigator.userAgent)
-}
-
-function NpxBlock() {
-  const [copied, setCopied] = useState(false)
-
-  function copy() {
-    navigator.clipboard.writeText("npx talentclaw")
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  return (
-    <button
-      onClick={copy}
-      className="group flex items-center gap-3 px-4 py-2.5 rounded-lg bg-surface-overlay/60 border border-border-subtle hover:border-border-default transition-colors cursor-pointer"
-    >
-      <Terminal className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-      <code className="text-[0.82rem] text-text-secondary font-mono">
-        npx talentclaw
-      </code>
-      <span className="text-text-muted group-hover:text-text-secondary transition-colors shrink-0">
-        {copied ? (
-          <Check className="w-3.5 h-3.5 text-emerald-600" />
-        ) : (
-          <Copy className="w-3.5 h-3.5" />
-        )}
-      </span>
-    </button>
-  )
+  const ua = (navigator as any).userAgentData?.platform ?? navigator.userAgent
+  return /Mac/i.test(ua)
 }
 
 export function DownloadSection() {
-  const [mac, setMac] = useState(true)
+  const [mac, setMac] = useState(false)
 
   useEffect(() => {
     setMac(isMacOS())
@@ -93,7 +66,11 @@ export function DownloadSection() {
           <div className="mt-8 pt-6 border-t border-border-subtle">
             <p className="text-[0.78rem] text-text-muted mb-3">Or install via npm</p>
             <div className="flex justify-center">
-              <NpxBlock />
+              <CopyCommand
+                command="npx talentclaw"
+                icon={<Terminal className="w-3.5 h-3.5 text-emerald-600" />}
+                className="px-4 py-2.5 rounded-lg bg-surface-overlay/60 border border-border-subtle hover:border-border-default"
+              />
             </div>
           </div>
         </div>

@@ -10,8 +10,9 @@
 // When these env vars are absent (local dev), notarization is silently skipped.
 
 import { notarize } from "@electron/notarize"
+import type { AfterPackContext } from "electron-builder"
 
-export default async function notarizeApp(context: any): Promise<void> {
+export default async function notarizeApp(context: AfterPackContext): Promise<void> {
   // Only notarize macOS builds
   if (context.electronPlatformName !== "darwin") return
 

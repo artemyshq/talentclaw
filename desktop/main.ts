@@ -10,7 +10,8 @@ import { join } from "path";
 import { existsSync } from "fs";
 import { randomBytes } from "crypto";
 import { checkClaudeBinary, downloadClaudeBinary, ensureClaudeAuth } from "./first-run";
-import { initAutoUpdater, checkForUpdatesManual, getUpdateState, quitAndInstall } from "./auto-updater";
+import { initAutoUpdater, checkForUpdatesManual, getUpdateState, quitAndInstall, teardownAutoUpdater } from "./auto-updater";
+import { isServerReady } from "../lib/server-constants";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -146,13 +147,7 @@ function startBackendServer(): Promise<void> {
     }, SERVER_READY_TIMEOUT_MS);
 
     child.stdout?.on("data", (data: Buffer) => {
-      const text = data.toString().toLowerCase();
-      if (
-        !settled &&
-        (text.includes("ready") ||
-          text.includes("listening") ||
-          text.includes("started server"))
-      ) {
+      if (!settled && isServerReady(data.toString())) {
         settled = true;
         clearTimeout(readyTimeout);
         restartAttempt = 0;
@@ -162,10 +157,16 @@ function startBackendServer(): Promise<void> {
 
     child.stderr?.on("data", (data: Buffer) => {
       const text = data.toString();
-      if (text.includes("EADDRINUSE") && !settled) {
-        settled = true;
-        clearTimeout(readyTimeout);
+      // EADDRINUSE must be caught even after the ready timeout fires,
+      // since the port conflict can surface after the 15s fallback resolves.
+      if (text.includes("EADDRINUSE")) {
+        if (!settled) {
+          settled = true;
+          clearTimeout(readyTimeout);
+        }
         reject(new Error(`Port ${serverPort} is already in use`));
+        child.kill("SIGTERM");
+        return;
       }
       // Log stderr for debugging in development
       if (!app.isPackaged) {
@@ -478,7 +479,7 @@ function registerIpcHandlers(): void {
   ipcMain.handle("quit-and-install", () => quitAndInstall());
 
   // Dock badge and bounce IPC
-  ipcMain.handle("set-dock-badge", (_event: any, text: string) => {
+  ipcMain.handle("set-dock-badge", (_event, text: string) => {
     if (process.platform === "darwin") app.dock.setBadge(text);
   });
   ipcMain.handle("clear-dock-badge", () => {
@@ -507,6 +508,7 @@ app.on("before-quit", async (e) => {
   if (!isQuitting) {
     isQuitting = true;
     e.preventDefault();
+    teardownAutoUpdater();
     await stopBackendServer();
     app.quit();
   }
@@ -623,8 +625,11 @@ app.whenReady().then(async () => {
   // Create the window immediately — shows splash screen
   createMainWindow();
 
-  // First-run: ensure Claude Code is available
+  // Wait for splash to load before sending messages to it
   if (mainWindow) {
+    await new Promise<void>((resolve) => {
+      mainWindow!.webContents.once("did-finish-load", () => resolve());
+    });
     sendSplashMessage(mainWindow, { type: "status", text: "Checking dependencies\u2026" });
   }
 

@@ -10,6 +10,8 @@ import {
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { isServerReady } from "../lib/server-constants";
+import { hasClaudeCredentialFiles } from "../lib/claude-auth";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -129,10 +131,7 @@ function checkClaudeAuth(): boolean {
     // Command may not exist in older versions — fall through
   }
 
-  // Fallback: check if Claude config directory has auth-related files
-  const claudeDir = join(homedir(), ".claude");
-  return existsSync(join(claudeDir, "credentials.json"))
-    || existsSync(join(claudeDir, ".credentials"));
+  return hasClaudeCredentialFiles();
 }
 
 function checkDeps(autoInstall = false): DepStatus {
@@ -282,8 +281,7 @@ function startServer(deps: DepStatus): void {
   let portInUse = false;
 
   child.stdout?.on("data", (data: Buffer) => {
-    const lower = data.toString().toLowerCase();
-    if (!ready && (lower.includes("ready") || lower.includes("listening") || lower.includes("started server"))) {
+    if (!ready && isServerReady(data.toString())) {
       ready = true;
       printChecklist(deps, "http://localhost:3100");
       openBrowser("http://localhost:3100");
