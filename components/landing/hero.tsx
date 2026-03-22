@@ -98,7 +98,7 @@ export function Hero() {
             <PluginInstall />
           </div>
           <p className="text-[0.75rem] text-text-muted mt-1">
-            Free &middot; No account required
+            Free &middot; Runs with Claude Pro &amp; Max
           </p>
         </div>
       </div>
