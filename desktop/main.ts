@@ -1,0 +1,496 @@
+// desktop/main.ts — Electron main process for TalentClaw macOS app
+//
+// Spawns the Next.js standalone server on a dynamic port, manages its
+// lifecycle, and presents the web UI inside a native macOS window.
+
+import { app, BrowserWindow, dialog, Menu, shell } from "electron";
+import { createServer } from "net";
+import { spawn, type ChildProcess } from "child_process";
+import { join } from "path";
+import { existsSync } from "fs";
+import { randomBytes } from "crypto";
+import { checkClaudeBinary, downloadClaudeBinary, ensureClaudeAuth } from "./first-run";
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const APP_NAME = "TalentClaw";
+const DEFAULT_WIDTH = 1200;
+const DEFAULT_HEIGHT = 800;
+const MIN_WIDTH = 800;
+const MIN_HEIGHT = 600;
+const SERVER_READY_TIMEOUT_MS = 15_000;
+const SHUTDOWN_GRACE_MS = 2_000;
+const MAX_RESTART_DELAY_MS = 10_000;
+const BASE_RESTART_DELAY_MS = 500;
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+
+let mainWindow: BrowserWindow | null = null;
+let serverProcess: ChildProcess | null = null;
+let serverPort: number = 0;
+let authToken: string = "";
+let isQuitting = false;
+let restartAttempt = 0;
+let restartTimer: ReturnType<typeof setTimeout> | null = null;
+
+// ---------------------------------------------------------------------------
+// Port allocation
+// ---------------------------------------------------------------------------
+
+function findFreePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const srv = createServer();
+    srv.listen(0, "127.0.0.1", () => {
+      const addr = srv.address();
+      if (addr && typeof addr === "object") {
+        const port = addr.port;
+        srv.close(() => resolve(port));
+      } else {
+        srv.close(() => reject(new Error("Failed to allocate port")));
+      }
+    });
+    srv.on("error", reject);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Server lifecycle
+// ---------------------------------------------------------------------------
+
+function getServerJsPath(): string {
+  // In a packaged app, resources are inside app.asar / Contents/Resources
+  const resourcesPath = process.resourcesPath ?? app.getAppPath();
+  return join(resourcesPath, ".next", "standalone", "server.js");
+}
+
+function startBackendServer(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const serverJs = getServerJsPath();
+
+    if (!existsSync(serverJs)) {
+      reject(new Error(`Server bundle not found: ${serverJs}`));
+      return;
+    }
+
+    // Spawn using Electron's bundled Node.js via ELECTRON_RUN_AS_NODE
+    const child = spawn(process.execPath, [serverJs], {
+      env: {
+        ...process.env,
+        ELECTRON_RUN_AS_NODE: "1",
+        PORT: String(serverPort),
+        HOSTNAME: "127.0.0.1",
+        TALENTCLAW_AUTH_TOKEN: authToken,
+        // Ensure Node.js mode — suppress Electron-specific behaviors
+        ELECTRON_NO_ASAR: "1",
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+      cwd: join(serverJs, ".."),
+    });
+
+    serverProcess = child;
+    let settled = false;
+
+    const readyTimeout = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        // Assume ready after timeout (same pattern as bin/cli.ts)
+        restartAttempt = 0;
+        resolve();
+      }
+    }, SERVER_READY_TIMEOUT_MS);
+
+    child.stdout?.on("data", (data: Buffer) => {
+      const text = data.toString().toLowerCase();
+      if (
+        !settled &&
+        (text.includes("ready") ||
+          text.includes("listening") ||
+          text.includes("started server"))
+      ) {
+        settled = true;
+        clearTimeout(readyTimeout);
+        restartAttempt = 0;
+        resolve();
+      }
+    });
+
+    child.stderr?.on("data", (data: Buffer) => {
+      const text = data.toString();
+      if (text.includes("EADDRINUSE") && !settled) {
+        settled = true;
+        clearTimeout(readyTimeout);
+        reject(new Error(`Port ${serverPort} is already in use`));
+      }
+      // Log stderr for debugging in development
+      if (!app.isPackaged) {
+        process.stderr.write(`[server stderr] ${text}`);
+      }
+    });
+
+    child.on("error", (err) => {
+      if (!settled) {
+        settled = true;
+        clearTimeout(readyTimeout);
+        reject(err);
+      }
+    });
+
+    child.on("exit", (code, signal) => {
+      serverProcess = null;
+
+      if (!settled) {
+        settled = true;
+        clearTimeout(readyTimeout);
+        reject(new Error(`Server exited prematurely (code=${code}, signal=${signal})`));
+        return;
+      }
+
+      // Auto-restart on unexpected exit (not during shutdown)
+      if (!isQuitting && code !== 0) {
+        scheduleRestart();
+      }
+    });
+  });
+}
+
+function scheduleRestart(): void {
+  const delay = Math.min(BASE_RESTART_DELAY_MS * 2 ** restartAttempt, MAX_RESTART_DELAY_MS);
+  restartAttempt++;
+
+  console.log(`[main] Server crashed. Restarting in ${delay}ms (attempt ${restartAttempt})...`);
+
+  restartTimer = setTimeout(async () => {
+    restartTimer = null;
+    try {
+      await startBackendServer();
+      // Reload the window to reconnect
+      mainWindow?.loadURL(getAppUrl());
+    } catch (err) {
+      console.error("[main] Restart failed:", err);
+      if (!isQuitting) {
+        scheduleRestart();
+      }
+    }
+  }, delay);
+}
+
+async function stopBackendServer(): Promise<void> {
+  if (restartTimer) {
+    clearTimeout(restartTimer);
+    restartTimer = null;
+  }
+
+  const child = serverProcess;
+  if (!child) return;
+
+  return new Promise<void>((resolve) => {
+    const forceKillTimeout = setTimeout(() => {
+      try {
+        child.kill("SIGKILL");
+      } catch {
+        // already dead
+      }
+      resolve();
+    }, SHUTDOWN_GRACE_MS);
+
+    child.once("exit", () => {
+      clearTimeout(forceKillTimeout);
+      resolve();
+    });
+
+    try {
+      child.kill("SIGTERM");
+    } catch {
+      clearTimeout(forceKillTimeout);
+      resolve();
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// URL helpers
+// ---------------------------------------------------------------------------
+
+function getAppUrl(): string {
+  return `http://127.0.0.1:${serverPort}`;
+}
+
+function isAppUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname === "127.0.0.1" && parsed.port === String(serverPort);
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Window
+// ---------------------------------------------------------------------------
+
+function createMainWindow(): void {
+  mainWindow = new BrowserWindow({
+    width: DEFAULT_WIDTH,
+    height: DEFAULT_HEIGHT,
+    minWidth: MIN_WIDTH,
+    minHeight: MIN_HEIGHT,
+    show: false,
+    title: APP_NAME,
+    titleBarStyle: "hiddenInset",
+    trafficLightPosition: { x: 16, y: 18 },
+    webPreferences: {
+      preload: join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  });
+
+  // Show window only when content is painted — avoids blank flash
+  mainWindow.once("ready-to-show", () => {
+    mainWindow?.show();
+  });
+
+  // Always show "TalentClaw" in the title bar
+  mainWindow.on("page-title-updated", (e) => {
+    e.preventDefault();
+  });
+
+  // Open external links in the system browser
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (!isAppUrl(url)) {
+      shell.openExternal(url);
+    }
+    return { action: "deny" };
+  });
+
+  mainWindow.webContents.on("will-navigate", (e, url) => {
+    if (!isAppUrl(url)) {
+      e.preventDefault();
+      shell.openExternal(url);
+    }
+  });
+
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
+
+  mainWindow.loadURL(getAppUrl());
+}
+
+// ---------------------------------------------------------------------------
+// Application menu (macOS)
+// ---------------------------------------------------------------------------
+
+function buildAppMenu(): void {
+  const template: Electron.MenuItemConstructorOptions[] = [
+    {
+      label: APP_NAME,
+      submenu: [
+        { role: "about", label: `About ${APP_NAME}` },
+        {
+          label: "Check for Updates...",
+          enabled: true,
+          click: () => {
+            dialog.showMessageBox({
+              type: "info",
+              title: "Updates",
+              message: "Update checking is not yet implemented.",
+              buttons: ["OK"],
+            });
+          },
+        },
+        { type: "separator" },
+        {
+          label: "Settings...",
+          accelerator: "Cmd+,",
+          click: () => {
+            mainWindow?.loadURL(`${getAppUrl()}/settings`);
+          },
+        },
+        { type: "separator" },
+        { role: "services" },
+        { type: "separator" },
+        { role: "hide", label: `Hide ${APP_NAME}` },
+        { role: "hideOthers" },
+        { role: "unhide" },
+        { type: "separator" },
+        { role: "quit", label: `Quit ${APP_NAME}` },
+      ],
+    },
+    {
+      label: "File",
+      submenu: [{ role: "close" }],
+    },
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        { role: "selectAll" },
+      ],
+    },
+    {
+      label: "View",
+      submenu: [
+        { role: "reload" },
+        { role: "forceReload" },
+        { role: "toggleDevTools" },
+        { type: "separator" },
+        { role: "resetZoom" },
+        { role: "zoomIn" },
+        { role: "zoomOut" },
+        { role: "togglefullscreen" },
+      ],
+    },
+    {
+      label: "Window",
+      submenu: [
+        { role: "minimize" },
+        { role: "zoom" },
+        { type: "separator" },
+        { role: "front" },
+      ],
+    },
+    {
+      label: "Help",
+      role: "help",
+      submenu: [],
+    },
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+// ---------------------------------------------------------------------------
+// First-run checks
+// ---------------------------------------------------------------------------
+
+async function ensureClaudeDeps(): Promise<boolean> {
+  // Check if Claude Code binary is available
+  const hasClaude = await checkClaudeBinary();
+
+  if (!hasClaude) {
+    // Attempt to download it
+    const downloaded = await downloadClaudeBinary();
+
+    if (!downloaded) {
+      dialog.showErrorBox(
+        "Claude Code Required",
+        "TalentClaw requires Claude Code to power its AI assistant.\n\n" +
+          "Please install it manually:\n" +
+          "  npm install -g @anthropic-ai/claude-code\n\n" +
+          "Then relaunch TalentClaw."
+      );
+      return false;
+    }
+  }
+
+  // Ensure the user is authenticated
+  await ensureClaudeAuth();
+
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// IPC handlers
+// ---------------------------------------------------------------------------
+
+function registerIpcHandlers(): void {
+  const { ipcMain } = require("electron");
+
+  ipcMain.handle("get-server-url", () => getAppUrl());
+  ipcMain.handle("get-auth-token", () => authToken);
+}
+
+// ---------------------------------------------------------------------------
+// App lifecycle
+// ---------------------------------------------------------------------------
+
+app.setName(APP_NAME);
+
+app.on("before-quit", async (e) => {
+  if (!isQuitting) {
+    isQuitting = true;
+    e.preventDefault();
+    await stopBackendServer();
+    app.quit();
+  }
+});
+
+// Standard macOS behavior: don't quit when all windows are closed
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
+});
+
+// Re-create window when dock icon is clicked (macOS)
+app.on("activate", () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createMainWindow();
+  }
+});
+
+// Clean shutdown on signals
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.on(signal, async () => {
+    isQuitting = true;
+    await stopBackendServer();
+    app.quit();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Main entry
+// ---------------------------------------------------------------------------
+
+app.whenReady().then(async () => {
+  // Generate auth token for server-client isolation
+  authToken = randomBytes(24).toString("hex");
+
+  // Build the macOS application menu
+  buildAppMenu();
+
+  // Register IPC handlers for the preload bridge
+  registerIpcHandlers();
+
+  // First-run: ensure Claude Code is available
+  const depsOk = await ensureClaudeDeps();
+  if (!depsOk) {
+    app.quit();
+    return;
+  }
+
+  // Allocate a free port for the backend
+  try {
+    serverPort = await findFreePort();
+  } catch (err) {
+    dialog.showErrorBox("Startup Error", `Failed to allocate a network port:\n${err}`);
+    app.quit();
+    return;
+  }
+
+  // Start the Next.js standalone server
+  try {
+    await startBackendServer();
+  } catch (err) {
+    dialog.showErrorBox(
+      "Server Error",
+      `Failed to start the TalentClaw server:\n\n${err}\n\nThe app will now quit.`
+    );
+    app.quit();
+    return;
+  }
+
+  // Create the main window
+  createMainWindow();
+});

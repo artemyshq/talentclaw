@@ -55,6 +55,8 @@ export async function runAgent(
   // Start the agent query in the background
   ;(async () => {
     try {
+      const claudePath = process.env.TALENTCLAW_CLAUDE_PATH || undefined
+
       const conversation = query({
         prompt: message,
         options: {
@@ -69,6 +71,7 @@ export async function runAgent(
           allowDangerouslySkipPermissions: true,
           mcpServers: undefined,
           env: process.env as Record<string, string>,
+          ...(claudePath && { pathToClaudeCodeExecutable: claudePath }),
         },
       })
 
