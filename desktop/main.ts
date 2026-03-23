@@ -105,9 +105,12 @@ async function showErrorWithRetry(
 // ---------------------------------------------------------------------------
 
 function getServerJsPath(): string {
-  // In a packaged app, resources are inside app.asar / Contents/Resources
-  const resourcesPath = process.resourcesPath ?? app.getAppPath();
-  return join(resourcesPath, ".next", "standalone", "server.js");
+  if (app.isPackaged) {
+    // Packaged: server.js is inside the app's asar/Resources
+    return join(process.resourcesPath, ".next", "standalone", "server.js");
+  }
+  // Dev: server.js is in the project root's .next/standalone/
+  return join(app.getAppPath(), ".next", "standalone", "server.js");
 }
 
 function startBackendServer(): Promise<void> {
