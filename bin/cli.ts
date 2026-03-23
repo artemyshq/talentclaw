@@ -189,23 +189,31 @@ function checkDeps(autoInstall = false): DepStatus {
     }
   }
 
-  // --- agent-browser (optional — only prompt during setup) ---
+  // --- agent-browser (optional — prompt when missing and interactive) ---
   let hasAgentBrowser = which("agent-browser");
-  if (!hasAgentBrowser && autoInstall) {
+  if (!hasAgentBrowser && interactive) {
+    console.log();
+    console.log("  agent-browser lets TalentClaw apply to jobs for you.");
+    console.log("  It controls a real browser to fill out applications on");
+    console.log("  Greenhouse, Lever, LinkedIn, and other job platforms.");
+    console.log("  Without it, TalentClaw can still search and track jobs,");
+    console.log("  but you'll need to submit applications manually.");
     console.log();
     const shouldInstall = promptYesNo(
-      "agent-browser lets TalentClaw apply to jobs on sites like Greenhouse and LinkedIn. Install it? (npm install -g agent-browser)"
+      "Install agent-browser? (npm install -g agent-browser)"
     );
     if (shouldInstall) {
       try {
+        console.log();
         execSync("npm install -g agent-browser", { stdio: "inherit" });
         hasAgentBrowser = which("agent-browser");
         if (hasAgentBrowser) {
           console.log("  Setting up browser...");
           execSync("agent-browser install", { stdio: "inherit" });
+          console.log("\n  \x1b[32m[ok]\x1b[0m agent-browser installed");
         }
       } catch {
-        console.log("  Failed to install. Install manually: npm install -g agent-browser");
+        console.log("\n  Install failed. Try manually: npm install -g agent-browser");
       }
     }
   }
