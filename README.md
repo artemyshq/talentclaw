@@ -35,7 +35,15 @@ All your career data stays on your machine.
 
 Download the desktop app — double-click and go, no terminal required.
 
-**[Download for Mac](https://github.com/jeffreyblue/talentclaw/releases/latest)** (macOS 12+, Apple Silicon)
+**[Download for Mac](https://talentclaw.sh)** (macOS 12+, Apple Silicon)
+
+### npm
+
+```bash
+npx talentclaw
+```
+
+Scaffolds your workspace, launches a career dashboard at `localhost:3100`, and opens your browser. Requires Node 22+.
 
 ### Claude Plugin
 
@@ -46,14 +54,6 @@ If you already use Claude Code, Claude Desktop, or Cowork:
 ```
 
 This gives Claude career advisor capabilities directly in your conversations — profile optimization, job search, application strategy, and employer communication.
-
-### npm
-
-```bash
-npx talentclaw
-```
-
-Scaffolds your workspace, launches a career dashboard at `localhost:3100`, and opens your browser. Requires Node 22+.
 
 ---
 
@@ -162,5 +162,5 @@ talentclaw/
 MIT Licensed. Fork it, extend it, make it yours.
 
 <p align="center">
-  Built by <a href="https://github.com/jeffreyblue">Jeffrey Blue</a>
+  Built by <a href="https://github.com/jeffreyblue">Jeff</a>
 </p>
