@@ -480,13 +480,13 @@ function registerIpcHandlers(): void {
 
   // Dock badge and bounce IPC
   ipcMain.handle("set-dock-badge", (_event, text: string) => {
-    if (process.platform === "darwin") app.dock.setBadge(text);
+    if (process.platform === "darwin") app.dock?.setBadge(text);
   });
   ipcMain.handle("clear-dock-badge", () => {
-    if (process.platform === "darwin") app.dock.setBadge("");
+    if (process.platform === "darwin") app.dock?.setBadge("");
   });
   ipcMain.handle("bounce-dock", () => {
-    if (process.platform === "darwin") app.dock.bounce("informational");
+    if (process.platform === "darwin") app.dock?.bounce("informational");
   });
 
   // Splash screen IPC — retry/quit from the splash error state
@@ -644,7 +644,7 @@ app.whenReady().then(async () => {
 
   // Set up macOS dock menu (right-click on dock icon)
   if (process.platform === "darwin") {
-    app.dock.setMenu(
+    app.dock?.setMenu(
       Menu.buildFromTemplate([
         { label: "Show Window", click: () => mainWindow?.show() },
         { type: "separator" },

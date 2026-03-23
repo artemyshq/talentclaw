@@ -3,6 +3,8 @@ import type { Configuration } from "electron-builder"
 const config: Configuration = {
   appId: "com.artemys.talentclaw",
   productName: "TalentClaw",
+  // electron-builder needs the main process entry point
+  extends: null,
   afterSign: "./desktop/notarize.ts",
   directories: {
     buildResources: "desktop/resources",
@@ -44,7 +46,7 @@ const config: Configuration = {
   },
   publish: {
     provider: "github",
-    owner: "artemyshq",
+    owner: "jeff-artemys",
     repo: "talentclaw",
   },
 }
