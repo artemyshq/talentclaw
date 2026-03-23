@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Background — macOS squircle with mint/emerald tint -->
+  <rect x="80" y="80" width="864" height="864" rx="190" fill="#f4fdf9" />
+  <!-- Subtle border -->
+  <rect x="80" y="80" width="864" height="864" rx="190" fill="none" stroke="rgba(5,150,105,0.15)" stroke-width="3" />
+
+  <!-- Crab logo — scaled to fill the icon -->
+  <g transform="translate(512 500) scale(7.2) translate(-44 -40)">
+    <!-- Legs -->
+    <line x1="26" y1="56" x2="20" y2="74" stroke="#059669" stroke-width="2.5" stroke-linecap="round" />
+    <line x1="38" y1="58" x2="34" y2="76" stroke="#059669" stroke-width="2.5" stroke-linecap="round" />
+    <line x1="50" y1="58" x2="54" y2="76" stroke="#059669" stroke-width="2.5" stroke-linecap="round" />
+    <line x1="62" y1="56" x2="68" y2="74" stroke="#059669" stroke-width="2.5" stroke-linecap="round" />
+    <!-- Arms -->
+    <line x1="10" y1="30" x2="2" y2="22" stroke="#059669" stroke-width="3.5" stroke-linecap="round" />
+    <line x1="78" y1="30" x2="86" y2="22" stroke="#059669" stroke-width="3.5" stroke-linecap="round" />
+    <!-- Pincers -->
+    <line x1="2" y1="22" x2="0" y2="14" stroke="#059669" stroke-width="2.5" stroke-linecap="round" />
+    <line x1="2" y1="22" x2="8" y2="16" stroke="#059669" stroke-width="2.5" stroke-linecap="round" />
+    <line x1="86" y1="22" x2="88" y2="14" stroke="#059669" stroke-width="2.5" stroke-linecap="round" />
+    <line x1="86" y1="22" x2="80" y2="16" stroke="#059669" stroke-width="2.5" stroke-linecap="round" />
+    <!-- Body -->
+    <rect x="10" y="14" width="68" height="46" rx="23" fill="#059669" />
+    <!-- Eyes -->
+    <rect x="28" y="26" width="10" height="9" rx="3" fill="white" />
+    <rect x="50" y="26" width="10" height="9" rx="3" fill="white" />
+    <rect x="30" y="27" width="7" height="7" rx="2" fill="#1a1a2e" />
+    <rect x="52" y="27" width="7" height="7" rx="2" fill="#1a1a2e" />
+    <!-- Mouth -->
+    <line x1="36" y1="44" x2="52" y2="44" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.85" />
+  </g>
+</svg>

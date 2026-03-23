@@ -3,7 +3,7 @@
 // Spawns the Next.js standalone server on a dynamic port, manages its
 // lifecycle, and presents the web UI inside a native macOS window.
 
-import { app, BrowserWindow, dialog, ipcMain, Menu, Notification, shell } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, Notification, shell } from "electron";
 import { createServer } from "net";
 import { spawn, type ChildProcess } from "child_process";
 import { join } from "path";
@@ -36,6 +36,7 @@ let serverProcess: ChildProcess | null = null;
 let serverPort: number = 0;
 let authToken: string = "";
 let isQuitting = false;
+let splashShownAt = 0;
 let restartAttempt = 0;
 let restartTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -305,7 +306,8 @@ function createMainWindow(): void {
     title: APP_NAME,
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 20, y: 14 },
-    backgroundColor: "#0f0f0f",
+    backgroundColor: "#fafdfb",
+    icon: join(__dirname, "..", "desktop", "resources", "icon.icns"),
     webPreferences: {
       preload: join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -317,6 +319,7 @@ function createMainWindow(): void {
   mainWindow.loadFile(getSplashPath());
   mainWindow.once("ready-to-show", () => {
     mainWindow?.show();
+    splashShownAt = Date.now();
   });
 
   // Always show "TalentClaw" in the title bar
@@ -611,7 +614,13 @@ async function bootServer(): Promise<void> {
     return;
   }
 
-  // Server is ready — navigate from splash to app
+  // Server is ready — hold splash for a minimum duration so it feels smooth
+  const MINIMUM_SPLASH_MS = 2000;
+  const elapsed = Date.now() - splashShownAt;
+  if (elapsed < MINIMUM_SPLASH_MS) {
+    await new Promise((r) => setTimeout(r, MINIMUM_SPLASH_MS - elapsed));
+  }
+
   try {
     await navigateToApp();
   } catch (err) {
@@ -624,6 +633,13 @@ async function bootServer(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 app.whenReady().then(async () => {
+  // Set Dock icon (macOS) — in dev mode the default Electron icon shows otherwise
+  if (process.platform === "darwin") {
+    const iconPath = join(__dirname, "..", "desktop", "resources", "icon.png");
+    if (existsSync(iconPath)) {
+      app.dock?.setIcon(nativeImage.createFromPath(iconPath));
+    }
+  }
   // In development, clear all caches so rebuilt pages load fresh.
   // clearCache() alone is insufficient — Chromium also caches compiled JS
   // bytecode and other storage that can persist stale CSS/JS across restarts.
