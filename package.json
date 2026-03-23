@@ -8,10 +8,10 @@
   "homepage": "https://talentclaw.sh",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/artemyshq/talentclaw.git"
+    "url": "git+https://github.com/jeffreyblue/talentclaw.git"
   },
   "bugs": {
-    "url": "https://github.com/artemyshq/talentclaw/issues"
+    "url": "https://github.com/jeffreyblue/talentclaw/issues"
   },
   "keywords": [
     "career",

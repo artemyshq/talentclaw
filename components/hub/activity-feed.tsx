@@ -78,7 +78,7 @@ export function ActivityFeed({ entries }: ActivityFeedProps) {
                   )}
                 </div>
 
-                <span className="text-xs text-text-muted shrink-0 whitespace-nowrap">
+                <span className="text-xs text-text-muted shrink-0 whitespace-nowrap" suppressHydrationWarning>
                   {formatRelativeTime(entry.ts)}
                 </span>
               </div>

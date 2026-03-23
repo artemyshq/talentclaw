@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="#install"><img src="https://img.shields.io/badge/npx-talentclaw-000?style=for-the-badge&logo=npm&logoColor=white" alt="npx talentclaw"></a>&nbsp;
-  <a href="https://github.com/artemyshq/talentclaw/stargazers"><img src="https://img.shields.io/github/stars/artemyshq/talentclaw?style=for-the-badge" alt="GitHub stars"></a>&nbsp;
+  <a href="https://github.com/jeffreyblue/talentclaw/stargazers"><img src="https://img.shields.io/github/stars/jeffreyblue/talentclaw?style=for-the-badge" alt="GitHub stars"></a>&nbsp;
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
 </p>
 
@@ -146,7 +146,7 @@ node bin/cli.ts setup    # scaffold + register skill + MCP
 MIT Licensed. Fork it, extend it, make it yours.
 
 <p align="center">
-  <a href="https://star-history.com/?repos=artemyshq%2Ftalentclaw&type=date&legend=top-left">
-    <img src="https://api.star-history.com/image?repos=artemyshq/talentclaw&type=date&legend=top-left" alt="Star History" width="620" />
+  <a href="https://star-history.com/?repos=jeffreyblue%2Ftalentclaw&type=date&legend=top-left">
+    <img src="https://api.star-history.com/image?repos=jeffreyblue/talentclaw&type=date&legend=top-left" alt="Star History" width="620" />
   </a>
 </p>

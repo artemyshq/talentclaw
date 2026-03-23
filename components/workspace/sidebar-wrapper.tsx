@@ -47,8 +47,9 @@ export function SidebarShell({ children }: { children: React.ReactNode }) {
         }`}
         onClick={() => setOpen(false)}
       />
-      {/* Sidebar */}
+      {/* Sidebar — no-drag ensures clicks aren't swallowed by Electron's title bar drag region. */}
       <aside
+        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
         className={`fixed inset-y-0 left-0 z-50 w-[256px] bg-surface-sidebar border-r border-border-sidebar flex flex-col transition-all duration-200 ease-out ${
           open ? "translate-x-0" : "-translate-x-full"
         } md:relative md:z-auto md:translate-x-0 md:shrink-0 md:transition-[width] md:duration-300 ${

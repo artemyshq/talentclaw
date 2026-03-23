@@ -621,6 +621,12 @@ async function bootServer(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 app.whenReady().then(async () => {
+  // In development, clear the HTTP cache so rebuilt pages load fresh
+  if (!app.isPackaged) {
+    const { session } = await import("electron");
+    await session.defaultSession.clearCache();
+  }
+
   // Generate auth token for server-client isolation
   authToken = randomBytes(24).toString("hex");
 

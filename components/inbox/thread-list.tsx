@@ -47,7 +47,7 @@ export function ThreadList({ threads }: ThreadListProps) {
                 >
                   {thread.frontmatter.participant}
                 </h3>
-                <span className="text-xs text-text-muted shrink-0 whitespace-nowrap">
+                <span className="text-xs text-text-muted shrink-0 whitespace-nowrap" suppressHydrationWarning>
                   {formatRelativeTime(thread.frontmatter.last_active)}
                 </span>
               </div>

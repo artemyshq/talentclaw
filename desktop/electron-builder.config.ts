@@ -46,7 +46,7 @@ const config: Configuration = {
   },
   publish: {
     provider: "github",
-    owner: "jeff-artemys",
+    owner: "jeffreyblue",
     repo: "talentclaw",
   },
 }

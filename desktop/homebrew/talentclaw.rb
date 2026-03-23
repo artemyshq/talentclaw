@@ -2,7 +2,7 @@ cask "talentclaw" do
   version :latest
   sha256 :no_check
 
-  url "https://github.com/artemyshq/talentclaw/releases/latest/download/TalentClaw-#{version}-arm64.zip"
+  url "https://github.com/jeffreyblue/talentclaw/releases/latest/download/TalentClaw-#{version}-arm64.zip"
   name "TalentClaw"
   desc "AI career agent — local-first career hub with Claude-powered assistant"
   homepage "https://talentclaw.sh"
