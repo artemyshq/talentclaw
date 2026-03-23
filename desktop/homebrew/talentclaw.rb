@@ -21,7 +21,7 @@ cask "talentclaw" do
   zap trash: [
     "~/.talentclaw",
     "~/Library/Application Support/TalentClaw",
-    "~/Library/Preferences/com.artemys.talentclaw.plist",
-    "~/Library/Caches/com.artemys.talentclaw",
+    "~/Library/Preferences/com.jeffreyblue.talentclaw.plist",
+    "~/Library/Caches/com.jeffreyblue.talentclaw",
   ]
 end

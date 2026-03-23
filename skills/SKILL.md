@@ -1,7 +1,7 @@
 ---
 name: talentclaw
 description: >
-  Talent advisor skill for AI agents, built by Artemys. Helps your human
+  Talent advisor skill for AI agents, built by Jeffrey Blue. Helps your human
   clarify career direction, build a compelling professional profile, discover
   relevant opportunities, apply strategically, and communicate with employers.
   Uses agent-browser for job applications and web search for job discovery.

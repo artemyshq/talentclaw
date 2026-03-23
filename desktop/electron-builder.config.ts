@@ -1,7 +1,7 @@
 import type { Configuration } from "electron-builder"
 
 const config: Configuration = {
-  appId: "com.artemys.talentclaw",
+  appId: "com.jeffreyblue.talentclaw",
   productName: "TalentClaw",
   // electron-builder needs the main process entry point
   extends: null,

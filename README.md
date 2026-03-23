@@ -162,5 +162,5 @@ talentclaw/
 MIT Licensed. Fork it, extend it, make it yours.
 
 <p align="center">
-  Built by <a href="https://artemys.ai">Artemys</a>
+  Built by <a href="https://github.com/jeffreyblue">Jeffrey Blue</a>
 </p>

@@ -1,8 +1,8 @@
 {
   "name": "talentclaw",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "talentclaw — your AI career agent. Local-first career hub + platform-agnostic agent skills.",
-  "author": "Artemys <hello@artemys.ai> (https://artemys.ai)",
+  "author": "Jeffrey Blue (https://github.com/jeffreyblue)",
   "license": "MIT",
   "type": "module",
   "homepage": "https://talentclaw.sh",

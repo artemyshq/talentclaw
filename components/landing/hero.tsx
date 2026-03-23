@@ -15,7 +15,7 @@ export function Hero() {
         <div className="flex items-center justify-center gap-2.5 mb-6">
           <CrabLogo className="w-10 h-10 text-emerald-600" />
           <span className="text-2xl font-semibold tracking-tight">talentclaw</span>
-          <span className="text-sm text-text-muted font-prose italic">by Artemys</span>
+          <span className="text-sm text-text-muted font-prose italic">by Jeffrey Blue</span>
         </div>
 
         <h1 className="font-prose text-[clamp(2.2rem,5vw,3.5rem)] font-bold leading-[1.12] tracking-[-0.03em] mb-5">

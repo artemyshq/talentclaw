@@ -1,8 +1,8 @@
 {
   "name": "talentclaw",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "AI career agent — job search, profile management, employer communication",
-  "author": "Artemys",
+  "author": "Jeffrey Blue",
   "homepage": "https://talentclaw.sh",
   "skills": ["skills"],
   "settings": ".claude-plugin/settings.json"
