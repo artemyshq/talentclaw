@@ -4,7 +4,6 @@ import { Hero } from "@/components/landing/hero"
 import { HubShowcase } from "@/components/landing/hub-showcase"
 import { Features } from "@/components/landing/features"
 import { Footer } from "@/components/landing/footer"
-import { DownloadSection } from "@/components/landing/download-section"
 export default async function RootPage() {
   const host = (await headers()).get("host") || ""
   if (host.includes(":3100")) {
@@ -19,7 +18,6 @@ export default async function RootPage() {
       <Hero />
       <HubShowcase />
       <Features />
-      <DownloadSection />
       <Footer />
     </>
   )

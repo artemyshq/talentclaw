@@ -1,4 +1,4 @@
-import { Terminal } from "lucide-react"
+import { Terminal, Apple } from "lucide-react"
 import { CrabLogo } from "@/components/crab-logo"
 import { CopyCommand } from "@/components/landing/copy-command"
 
@@ -15,7 +15,7 @@ export function Hero() {
         <div className="flex items-center justify-center gap-2.5 mb-6">
           <CrabLogo className="w-10 h-10 text-emerald-600" />
           <span className="text-2xl font-semibold tracking-tight">talentclaw</span>
-          <span className="text-sm text-text-muted font-prose italic">by Jeffrey Blue</span>
+
         </div>
 
         <h1 className="font-prose text-[clamp(2.2rem,5vw,3.5rem)] font-bold leading-[1.12] tracking-[-0.03em] mb-5">
@@ -37,13 +37,22 @@ export function Hero() {
                 className="relative px-5 py-3 hover:bg-surface/50"
               />
             </div>
-            <div className="rounded-xl border border-border-default bg-surface-raised overflow-hidden">
-              <CopyCommand
-                command="/plugin install talentclaw"
-                icon={<ClaudeLogo />}
-                className="relative px-5 py-3 hover:bg-surface/50"
-              />
-            </div>
+            <a
+              href="https://github.com/artemysone/talentclaw/releases/latest/download/TalentClaw-0.4.4-arm64.dmg"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl bg-accent text-white font-medium text-[0.9rem] hover:bg-accent-hover transition-colors"
+            >
+              <Apple className="w-4 h-4" />
+              Download for Mac
+            </a>
+          </div>
+          <div className="rounded-xl border border-border-default bg-surface-raised overflow-hidden">
+            <CopyCommand
+              command="/plugin install talentclaw"
+              icon={<ClaudeLogo />}
+              className="relative px-5 py-3 hover:bg-surface/50"
+            />
           </div>
           <p className="text-[0.75rem] text-text-muted mt-1">
             Free &middot; Runs with Claude Pro &amp; Max

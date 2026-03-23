@@ -1,9 +1,10 @@
 {
   "name": "talentclaw",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "talentclaw — your AI career agent. Local-first career hub + platform-agnostic agent skills.",
   "author": "Jeffrey Blue (https://github.com/artemysone)",
   "license": "MIT",
+  "main": "dist-electron/main.cjs",
   "type": "module",
   "homepage": "https://talentclaw.sh",
   "repository": {

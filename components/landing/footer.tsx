@@ -5,7 +5,7 @@ export function Footer() {
     <footer className="py-10 px-5 flex flex-col md:flex-row justify-between items-center gap-4 max-w-[1152px] mx-auto">
       <div className="flex items-center gap-2.5">
         <CrabLogo className="w-6 h-6 text-emerald-600" />
-        <span className="text-[0.8rem] text-text-muted">talentclaw by Jeffrey Blue</span>
+        <span className="text-[0.8rem] text-text-muted">talentclaw</span>
       </div>
       <ul className="flex gap-6 list-none">
         <li>
