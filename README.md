@@ -5,148 +5,162 @@
 <h1 align="center">talentclaw</h1>
 
 <p align="center">
-  <strong>Your AI career agent — skill + product</strong><br>
-  Local-first career hub with platform-agnostic agent skills.
+  <strong>Your AI career agent that searches, applies, and follows up.</strong>
 </p>
 
 <p align="center">
-  <a href="#install"><img src="https://img.shields.io/badge/npx-talentclaw-000?style=for-the-badge&logo=npm&logoColor=white" alt="npx talentclaw"></a>&nbsp;
+  <a href="#get-talentclaw"><img src="https://img.shields.io/badge/npx-talentclaw-000?style=for-the-badge&logo=npm&logoColor=white" alt="npx talentclaw"></a>&nbsp;
   <a href="https://github.com/jeffreyblue/talentclaw/stargazers"><img src="https://img.shields.io/github/stars/jeffreyblue/talentclaw?style=for-the-badge" alt="GitHub stars"></a>&nbsp;
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
 </p>
 
 <p align="center">
-  <a href="#install">Install</a> ·
-  <a href="#what-it-does">Features</a> ·
-  <a href="#architecture">Architecture</a> ·
-  <a href="#development">Development</a> ·
-  <a href="https://skills.sh">Skills Store</a>
+  <a href="#get-talentclaw">Install</a> ·
+  <a href="#what-talentclaw-does">Features</a> ·
+  <a href="#how-it-works">How It Works</a> ·
+  <a href="#development">Development</a>
 </p>
 
 ---
 
-talentclaw is an AI career agent that combines a **local-first career hub** with **platform-agnostic agent skills**. It helps individuals manage their job search pipeline, discover opportunities, and communicate with employers.
+TalentClaw finds jobs that match your skills, applies on your behalf, and manages your entire pipeline — profile, applications, interviews, offers. It's a career advisor that never sleeps, powered by Claude.
+
+All your career data stays on your machine.
 
 ---
 
-## 📦 Install
+## Get TalentClaw
 
-### Career Hub (full product)
+### Mac App
+
+Download the desktop app — double-click and go, no terminal required.
+
+**[Download for Mac](https://github.com/jeffreyblue/talentclaw/releases/latest)** (macOS 12+, Apple Silicon)
+
+### Claude Plugin
+
+If you already use Claude Code, Claude Desktop, or Cowork:
+
+```
+/plugin install talentclaw
+```
+
+This gives Claude career advisor capabilities directly in your conversations — profile optimization, job search, application strategy, and employer communication.
+
+### npm
 
 ```bash
-# Try it now (Node 22+ required)
 npx talentclaw
-
-# Or install permanently
-npm install -g talentclaw
-talentclaw
 ```
 
-The CLI is a TypeScript script. Scaffolds your workspace at `~/.talentclaw/`, registers the TalentClaw skill for Claude Code, and opens the career hub at `localhost:3100`.
+Scaffolds your workspace, launches a career dashboard at `localhost:3100`, and opens your browser. Requires Node 22+.
 
-### Claude Code Skill
+---
+
+## What TalentClaw Does
+
+### Career Dashboard
+
+See your profile strength, active pipeline, recent activity, and career map in one view. A real workspace for managing your search, not another job board.
+
+### Career Context Graph
+
+Your career profile lives as a connected map of your skills, experience, goals, and what you're looking for — stored as plain text files you can open, read, and edit yourself.
+
+### Pipeline & Tracking
+
+A visual pipeline to manage your job search end-to-end. Drag opportunities through stages — discovered, saved, applied, interviewing, offer — and see match scores against your profile.
+
+### Apply Anywhere
+
+TalentClaw's agent applies to jobs on your behalf across Greenhouse, Lever, LinkedIn, and other platforms. You review and approve — the agent handles the forms.
+
+### The Agent Works, You Decide
+
+TalentClaw researches companies, evaluates fit, and drafts applications. You review what it found and make the calls. It never applies without your explicit confirmation.
+
+### Yours, Locally
+
+Everything lives on your machine as plain files in `~/.talentclaw/`. No cloud databases, no data harvesting. Read them, back them up, or move them — they're yours.
+
+---
+
+## How It Works
+
+TalentClaw starts by getting to know you. Have a conversation about your career — where you've been, what you're good at, what you're looking for — and it builds a rich career profile. If you have a resume, it can work from that too.
+
+From there, it searches for opportunities using your profile as the filter. It evaluates fit, drafts targeted application notes, and can submit applications directly on job sites. When employers respond, it summarizes their messages and helps you reply.
+
+Three modes adapt to where you are:
+
+- **Active search** — daily searches, quick applications, inbox monitoring
+- **Passive** — weekly searches, only surfaces standout matches
+- **Monitoring** — keeps your profile fresh, watches for exceptional inbound only
+
+Your career data is stored as markdown files with YAML frontmatter — human-readable, git-friendly, and completely portable:
+
+```
+~/.talentclaw/
+├── profile.md           # Your career profile and context graph
+├── jobs/                # One file per opportunity
+├── applications/        # One file per application
+├── companies/           # Company research notes
+├── contacts/            # People in your network
+├── messages/            # Conversation threads with employers
+└── activity.log         # Activity feed
+```
+
+---
+
+## Development
+
+<details>
+<summary>For contributors</summary>
+
+### Stack
+
+- **Web:** Next.js 15, React 19, Tailwind CSS v4
+- **CLI:** TypeScript (`bin/cli.ts`)
+- **Desktop:** Electron
+- **Data:** Filesystem (markdown + YAML frontmatter)
+- **AI:** Claude Agent SDK
+
+### Commands
 
 ```bash
-npx talentclaw setup
+bun install              # install dependencies
+bun run dev              # web UI dev mode
+bun run build            # production build
+bun run test             # run tests
+
+node bin/cli.ts          # scaffold + start web UI
+node bin/cli.ts setup    # scaffold + register skill
+
+bun run dev:desktop      # desktop app dev mode
+bun run build:desktop    # desktop app production build
 ```
 
-Gives any AI agent career advisor capabilities — profile optimization, job search, application strategy, and employer communication.
-
----
-
-## ✨ What It Does
-
-### Career Hub
-
-- 📋 **Kanban pipeline** — drag-and-drop stages: Discovered, Saved, Applied, Interviewing, Offer, Accepted/Rejected
-- 🔍 **Job discovery** — search with filters for skills, location, remote, compensation
-- 📊 **Career dashboard** — application stats, activity feed, upcoming deadlines
-- 💾 **Local-first data** — markdown files at `~/.talentclaw/`, human-readable and git-friendly
-
-### Candidate Skill
-
-- 🧭 **Career strategy** — direction clarity, opportunity evaluation, seniority/compensation calibration
-- 👤 **Profile building** — optimize from scratch or from a resume
-- 🎯 **Job discovery** — smart search with match scoring
-- 📝 **Applications** — targeted application notes and pipeline management
-- 💬 **Employer messaging** — inbox, scheduling, follow-up
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                      talentclaw                         │
-│                                                         │
-│  ┌──────────────┐  ┌──────────┐  ┌───────────────────┐  │
-│  │  Career Hub  │  │   CLI    │  │   Agent Skills    │  │
-│  │  (Next.js)   │  │  (TS)   │  │ Candidate Skill   │  │
-│  └──────┬───────┘  └────┬─────┘  └────────┬──────────┘  │
-│         │               │                 │              │
-│         └───────────┬───┘─────────────────┘              │
-│                     │                                    │
-│            ┌────────┴────────┐                           │
-│            │ ~/.talentclaw/  │                           │
-│            │  (filesystem)   │                           │
-│            └─────────────────┘                           │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## 📂 Project Structure
+### Project Structure
 
 ```
 talentclaw/
-├── app/                         # Next.js pages and routes
-│   └── (workspace)/             # Dashboard, pipeline, jobs, file viewer
-├── components/                  # React components (kanban, hub, file-viewer, etc.)
-├── lib/                         # Data layer (types, filesystem I/O, utilities)
-├── bin/                         # CLI entry point (TypeScript)
-├── skills/                      # Agent skill definition + reference docs
-│   ├── SKILL.md                 # Skill definition
-│   ├── references/              # Career strategy, profiles, applications, tools
-│   └── scripts/setup.sh         # Setup wizard
-└── persona/                     # Agent persona (SOUL.md)
+├── app/                 # Next.js pages and routes
+├── components/          # React components
+├── lib/                 # Data layer (types, filesystem I/O, utilities)
+├── bin/                 # CLI entry point
+├── desktop/             # Electron app (main + preload)
+├── skills/              # Agent skill definition + reference docs
+└── persona/             # Agent persona
 ```
 
----
-
-## ⚙️ Prerequisites
-
-- **Node.js 22+** — for the web UI and npm-based installation
+</details>
 
 ---
 
-## 🛠️ Development
-
-```bash
-# Web UI
-bun install              # install dependencies
-bun run dev              # start web UI (dev mode)
-
-# CLI
-node bin/cli.ts          # scaffold + start web UI
-node bin/cli.ts setup    # scaffold + register skill + MCP
-```
-
----
-
-## 🌐 Ecosystem
-
-| Project | Description |
-|---------|-------------|
-| [Skills Store](https://skills.sh) | Platform-agnostic AI agent skills |
-
----
-
-## 📄 License
+## License
 
 MIT Licensed. Fork it, extend it, make it yours.
 
 <p align="center">
-  <a href="https://star-history.com/?repos=jeffreyblue%2Ftalentclaw&type=date&legend=top-left">
-    <img src="https://api.star-history.com/image?repos=jeffreyblue/talentclaw&type=date&legend=top-left" alt="Star History" width="620" />
-  </a>
+  Built by <a href="https://artemys.ai">Artemys</a>
 </p>
