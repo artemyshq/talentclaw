@@ -6,7 +6,7 @@
 import { execFileSync } from "node:child_process"
 import type { AgentConfig } from "./types"
 
-const DEFAULT_MODEL = "claude-sonnet-4-6"
+const DEFAULT_MODEL = "claude-opus-4-6"
 
 export function getAgentConfig(): AgentConfig {
   return {
