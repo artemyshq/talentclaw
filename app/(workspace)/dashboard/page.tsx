@@ -45,17 +45,22 @@ export default async function DashboardPage() {
   }
 
   // Upcoming actions from applications
+  const jobMap = new Map(jobs.map((j) => [j.slug, j]))
   const upcomingActions = applications
     .filter(
       (app) => app.frontmatter.next_step && app.frontmatter.next_step_date
     )
-    .map((app) => ({
-      title: app.frontmatter.next_step!,
-      company: app.slug,
-      date: app.frontmatter.next_step_date!,
-      urgent: isWithinDays(app.frontmatter.next_step_date!, 3),
-      overdue: isOverdue(app.frontmatter.next_step_date!),
-    }))
+    .map((app) => {
+      const job = jobMap.get(app.frontmatter.job)
+      return {
+        title: app.frontmatter.next_step!,
+        company: job?.frontmatter.company ?? app.slug,
+        role: job?.frontmatter.title,
+        date: app.frontmatter.next_step_date!,
+        urgent: isWithinDays(app.frontmatter.next_step_date!, 3),
+        overdue: isOverdue(app.frontmatter.next_step_date!),
+      }
+    })
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 5)
 
@@ -65,7 +70,6 @@ export default async function DashboardPage() {
   const momentum = computeMomentum(jobs, applications, activityLog)
 
   // Agent queue — applications with workflow_status "queued" or "review_required"
-  const jobMap = new Map(jobs.map((j) => [j.slug, j]))
   const queueItems = applications
     .filter((app) =>
       app.frontmatter.workflow_status === "queued" ||

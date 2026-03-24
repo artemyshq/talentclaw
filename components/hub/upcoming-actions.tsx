@@ -1,6 +1,9 @@
+import { formatBriefDate } from "@/lib/ui-utils"
+
 interface UpcomingAction {
   title: string
   company: string
+  role?: string
   date: string
   urgent: boolean
   overdue: boolean
@@ -38,7 +41,7 @@ export function UpcomingActions({ actions }: UpcomingActionsProps) {
                   {action.title}
                 </p>
                 <p className="text-xs text-text-muted">
-                  {action.company} &middot; {action.date}
+                  {[action.company, action.role, formatBriefDate(action.date)].filter(Boolean).join(" · ")}
                   {action.overdue && (
                     <span className="text-danger ml-1.5 font-medium">
                       Overdue
