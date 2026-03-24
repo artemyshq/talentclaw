@@ -2,6 +2,19 @@
 
 All notable changes to TalentClaw are documented here.
 
+## 0.4.7 — 2026-03-24
+
+### Fixed
+
+- **Chat message replay** — prevented message duplication and conversation replay when switching between chats.
+- **CLI Python detection** — onboarding now detects versioned Python binaries (`python3.13`, `python3.12`, `python3.11`) and the browser-use venv path, fixing setup on systems where `python3` points to an older version.
+
+### Changed
+
+- **Vendored skills removed** — removed bundled gstack skills; skills are now managed externally.
+- **Test coverage expanded** — added new test suites and fixed E2E timeout issues.
+- **Gitignore updated** — added `coverage/` and `.context/` to `.gitignore`.
+
 ## 0.4.6 — 2026-03-24
 
 ### New
