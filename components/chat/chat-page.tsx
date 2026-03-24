@@ -144,7 +144,7 @@ export function ChatPage({ displayName = "" }: { displayName?: string }) {
   // Auto-send pending message from sendPrefilled navigation
   useEffect(() => {
     if (pendingMessage) {
-      sendMessage(pendingMessage)
+      sendMessage(pendingMessage.prompt, pendingMessage.displayText)
       clearPending()
     }
   }, [pendingMessage, sendMessage, clearPending])

@@ -5,15 +5,17 @@ import { useRouter } from "next/navigation"
 import { useChat, type ConversationSummary } from "@/lib/agent/use-chat"
 import type { ChatMessage } from "@/lib/agent/types"
 
+type PendingMessage = { prompt: string; displayText?: string } | null
+
 type ChatContextValue = {
   messages: ChatMessage[]
   isStreaming: boolean
   isAvailable: boolean | null
   error: string | null
-  sendMessage: (text: string) => void
-  sendPrefilled: (text: string) => void
+  sendMessage: (text: string, displayText?: string) => void
+  sendPrefilled: (prompt: string, displayText?: string) => void
   clearMessages: () => void
-  pendingMessage: string | null
+  pendingMessage: PendingMessage
   clearPending: () => void
   displayName: string
   conversations: ConversationSummary[]
@@ -25,12 +27,12 @@ const ChatContext = createContext<ChatContextValue | null>(null)
 
 export function ChatProvider({ children, displayName = "" }: { children: ReactNode; displayName?: string }) {
   const router = useRouter()
-  const [pendingMessage, setPendingMessage] = useState<string | null>(null)
+  const [pendingMessage, setPendingMessage] = useState<PendingMessage>(null)
   const chat = useChat()
 
   const sendPrefilled = useCallback(
-    (text: string) => {
-      setPendingMessage(text)
+    (prompt: string, displayText?: string) => {
+      setPendingMessage({ prompt, displayText })
       router.push("/chat")
     },
     [router],

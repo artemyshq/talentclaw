@@ -5,7 +5,12 @@ import { Upload, FileText, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { CrabLogo } from "@/components/crab-logo"
 import { useChatContext } from "@/components/chat/chat-provider"
-import { RESUME_FILE_PROMPT, PARSE_RESUME_PROMPT } from "@/lib/agent-prompts"
+import {
+  RESUME_UPLOADED_PROMPT,
+  RESUME_UPLOADED_DISPLAY,
+  RESUME_PASTED_PROMPT,
+  RESUME_PASTED_DISPLAY,
+} from "@/lib/agent-prompts"
 
 const ACCEPTED_EXTENSIONS = [".pdf", ".docx", ".doc", ".txt"]
 const MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -92,7 +97,7 @@ export function OnboardingPage() {
         setUploadState("done")
 
         setTimeout(() => {
-          sendPrefilled(RESUME_FILE_PROMPT(data.path, data.extractedText))
+          sendPrefilled(RESUME_UPLOADED_PROMPT, RESUME_UPLOADED_DISPLAY)
         }, 600)
       } catch {
         setUploadState("error")
@@ -130,9 +135,26 @@ export function OnboardingPage() {
     [handleFile],
   )
 
-  const handlePasteSubmit = useCallback(() => {
-    if (!pasteText.trim()) return
-    sendPrefilled(PARSE_RESUME_PROMPT(pasteText.trim()))
+  const handlePasteSubmit = useCallback(async () => {
+    const text = pasteText.trim()
+    if (!text) return
+    try {
+      const res = await fetch("/api/upload/text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      })
+      if (!res.ok) {
+        setUploadState("error")
+        setErrorMessage("Failed to save resume text. Please try again.")
+        return
+      }
+    } catch {
+      setUploadState("error")
+      setErrorMessage("Failed to save resume text. Please try again.")
+      return
+    }
+    sendPrefilled(RESUME_PASTED_PROMPT, RESUME_PASTED_DISPLAY)
   }, [pasteText, sendPrefilled])
 
   const dropZoneStyles: Record<UploadState, string> = {

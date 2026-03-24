@@ -374,7 +374,7 @@ export function useChat() {
   }, [])
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, displayText?: string) => {
       const trimmed = text.trim()
       if (!trimmed) return
 
@@ -391,7 +391,7 @@ export function useChat() {
       const userMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: "user",
-        content: trimmed,
+        content: displayText || trimmed,
         createdAt: Date.now(),
       }
       const assistantMsg: ChatMessage = {

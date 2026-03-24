@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react"
 import { Upload, FileText, AlertCircle, Loader2 } from "lucide-react"
 import { useChatContext } from "@/components/chat/chat-provider"
-import { RESUME_FILE_PROMPT } from "@/lib/agent-prompts"
+import { RESUME_UPLOADED_PROMPT, RESUME_UPLOADED_DISPLAY } from "@/lib/agent-prompts"
 import Link from "next/link"
 
 type UploadState = "idle" | "dragging" | "uploading" | "success" | "error"
@@ -62,8 +62,8 @@ export function ResumeUpload() {
         }
 
         setState("success")
-        // Send the extracted text (or file path fallback) to the agent for parsing
-        sendPrefilled(RESUME_FILE_PROMPT(data.path, data.extractedText))
+        // Navigate to chat — agent reads the resume from base.md
+        sendPrefilled(RESUME_UPLOADED_PROMPT, RESUME_UPLOADED_DISPLAY)
       } catch {
         setState("error")
         setErrorMsg("Upload failed. Please try again.")
