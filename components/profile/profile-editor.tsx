@@ -1,11 +1,14 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Markdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import {
   User,
   Briefcase,
   GraduationCap,
   Target,
+  FileText,
   Plus,
   Trash2,
   Check,
@@ -17,15 +20,17 @@ import type { ProfileFile, Experience, Education, Goal } from "@/lib/types"
 
 interface ProfileEditorProps {
   profile: ProfileFile
+  resumeContent: string | null
 }
 
-type Tab = "basic" | "experience" | "education" | "goals"
+type Tab = "basic" | "experience" | "education" | "goals" | "resume"
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "basic", label: "Basic Info", icon: <User className="w-4 h-4" /> },
   { id: "experience", label: "Experience", icon: <Briefcase className="w-4 h-4" /> },
   { id: "education", label: "Education", icon: <GraduationCap className="w-4 h-4" /> },
   { id: "goals", label: "Goals", icon: <Target className="w-4 h-4" /> },
+  { id: "resume", label: "Resume", icon: <FileText className="w-4 h-4" /> },
 ]
 
 const REMOTE_OPTIONS = [
@@ -688,8 +693,31 @@ function GoalsTab({
   )
 }
 
+// --- Resume tab ---
+function ResumeTab({ content }: { content: string | null }) {
+  if (!content) {
+    return (
+      <div className="text-center py-12 bg-surface-raised rounded-xl border border-border-subtle">
+        <FileText className="w-8 h-8 text-text-muted mx-auto mb-3" />
+        <p className="text-sm text-text-secondary">No base resume found.</p>
+        <p className="text-xs text-text-muted mt-1">
+          Upload a resume from the hub to generate your base resume.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-surface-raised rounded-xl border border-border-subtle p-6 sm:p-8">
+      <div className="prose prose-sm max-w-none text-text-primary prose-headings:font-prose prose-headings:text-text-primary prose-h1:text-xl prose-h1:mb-4 prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-3 prose-h3:text-base prose-h3:mt-5 prose-h3:mb-2 prose-p:text-sm prose-p:leading-relaxed prose-p:text-text-secondary prose-li:text-sm prose-li:text-text-secondary prose-strong:text-text-primary prose-a:text-accent prose-a:no-underline hover:prose-a:underline prose-hr:border-border-subtle">
+        <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
+      </div>
+    </div>
+  )
+}
+
 // --- Main editor ---
-export function ProfileEditor({ profile }: ProfileEditorProps) {
+export function ProfileEditor({ profile, resumeContent }: ProfileEditorProps) {
   const [activeTab, setActiveTab] = useState<Tab>("basic")
   const [isPending, startTransition] = useTransition()
   const [feedback, setFeedback] = useState<{ status: "success" | "error"; message: string } | null>(
@@ -746,6 +774,9 @@ export function ProfileEditor({ profile }: ProfileEditorProps) {
       )}
       {activeTab === "goals" && (
         <GoalsTab profile={profile} onSave={handleSave} isPending={isPending} />
+      )}
+      {activeTab === "resume" && (
+        <ResumeTab content={resumeContent} />
       )}
     </div>
   )
