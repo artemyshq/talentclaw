@@ -25,6 +25,9 @@ cli/npm/*/bin/talentclaw
 *.db-wal
 *.db-shm
 
+# prototypes
+prototype-*.html
+
 # os
 .DS_Store
 Thumbs.db

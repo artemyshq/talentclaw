@@ -3,11 +3,11 @@
 // Spawns the Next.js standalone server on a dynamic port, manages its
 // lifecycle, and presents the web UI inside a native macOS window.
 
-import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, Notification, shell } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, nativeTheme, Notification, screen, shell } from "electron";
 import { createServer } from "net";
 import { spawn, type ChildProcess } from "child_process";
 import { join } from "path";
-import { existsSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 import { randomBytes } from "crypto";
 import { checkClaudeBinary, downloadClaudeBinary, ensureClaudeAuth } from "./first-run";
 import { initAutoUpdater, checkForUpdatesManual, getUpdateState, quitAndInstall, teardownAutoUpdater } from "./auto-updater";
@@ -26,6 +26,64 @@ const SERVER_READY_TIMEOUT_MS = 15_000;
 const SHUTDOWN_GRACE_MS = 2_000;
 const MAX_RESTART_DELAY_MS = 10_000;
 const BASE_RESTART_DELAY_MS = 500;
+const BG_LIGHT = "#fafdfb";
+const BG_DARK = "#0f0f0f";
+const OFFSCREEN_TOLERANCE_PX = 100;
+
+// ---------------------------------------------------------------------------
+// Window state persistence
+// ---------------------------------------------------------------------------
+
+interface WindowState {
+  x?: number;
+  y?: number;
+  width: number;
+  height: number;
+  isMaximized?: boolean;
+}
+
+function getWindowStatePath(): string {
+  return join(app.getPath("userData"), "window-state.json");
+}
+
+function loadWindowState(): WindowState {
+  try {
+    const data = readFileSync(getWindowStatePath(), "utf-8");
+    const state = JSON.parse(data) as WindowState;
+    const displays = screen.getAllDisplays();
+    const onScreen = displays.some((d: Electron.Display) => {
+      const { x, y, width, height } = d.bounds;
+      return (
+        (state.x ?? 0) >= x - OFFSCREEN_TOLERANCE_PX &&
+        (state.x ?? 0) < x + width + OFFSCREEN_TOLERANCE_PX &&
+        (state.y ?? 0) >= y - OFFSCREEN_TOLERANCE_PX &&
+        (state.y ?? 0) < y + height + OFFSCREEN_TOLERANCE_PX
+      );
+    });
+    if (!onScreen) return { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT };
+    return state;
+  } catch {
+    return { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT };
+  }
+}
+
+function saveWindowState(win: BrowserWindow): void {
+  if (win.isDestroyed()) return;
+  const isMaximized = win.isMaximized();
+  const bounds = isMaximized ? win.getNormalBounds() : win.getBounds();
+  const state: WindowState = {
+    x: bounds.x,
+    y: bounds.y,
+    width: bounds.width,
+    height: bounds.height,
+    isMaximized,
+  };
+  try {
+    writeFileSync(getWindowStatePath(), JSON.stringify(state));
+  } catch {
+    // Non-critical — silently ignore write failures
+  }
+}
 
 // ---------------------------------------------------------------------------
 // State
@@ -297,16 +355,21 @@ function isAppUrl(url: string): boolean {
 // ---------------------------------------------------------------------------
 
 function createMainWindow(): void {
+  const bgColor = nativeTheme.shouldUseDarkColors ? BG_DARK : BG_LIGHT;
+  const savedState = loadWindowState();
+
   mainWindow = new BrowserWindow({
-    width: DEFAULT_WIDTH,
-    height: DEFAULT_HEIGHT,
+    x: savedState.x,
+    y: savedState.y,
+    width: savedState.width,
+    height: savedState.height,
     minWidth: MIN_WIDTH,
     minHeight: MIN_HEIGHT,
     show: false,
     title: APP_NAME,
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 20, y: 14 },
-    backgroundColor: "#fafdfb",
+    backgroundColor: bgColor,
     icon: join(__dirname, "..", "desktop", "resources", "icon.icns"),
     webPreferences: {
       preload: join(__dirname, "preload.cjs"),
@@ -314,6 +377,8 @@ function createMainWindow(): void {
       nodeIntegration: false,
     },
   });
+
+  if (savedState.isMaximized) mainWindow.maximize();
 
   // Load splash screen immediately and show the window
   mainWindow.loadFile(getSplashPath());
@@ -340,6 +405,10 @@ function createMainWindow(): void {
       e.preventDefault();
       shell.openExternal(url);
     }
+  });
+
+  mainWindow.on("close", () => {
+    if (mainWindow) saveWindowState(mainWindow);
   });
 
   mainWindow.on("closed", () => {
@@ -375,14 +444,6 @@ function buildAppMenu(): void {
           enabled: true,
           click: () => {
             checkForUpdatesManual();
-          },
-        },
-        { type: "separator" },
-        {
-          label: "Settings...",
-          accelerator: "Cmd+,",
-          click: () => {
-            mainWindow?.loadURL(`${getAppUrl()}/settings`);
           },
         },
         { type: "separator" },
@@ -539,6 +600,12 @@ app.on("window-all-closed", () => {
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createMainWindow();
+    if (serverProcess && serverPort > 0) {
+      // Server still running — skip splash, go straight to app
+      mainWindow?.webContents.once("did-finish-load", () => navigateToApp());
+    } else {
+      bootServer();
+    }
   }
 });
 

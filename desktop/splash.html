@@ -141,6 +141,21 @@
   }
   .btn-secondary:hover { background: #e8ede9; }
 
+  @media (prefers-color-scheme: dark) {
+    body { background: #0f0f0f; color: #e7e5e4; }
+    .wordmark { color: #e7e5e4; }
+    .loader-dot { background: #34d399; }
+    .status { color: #78716c; }
+    .error-title { color: #e7e5e4; }
+    .error-message { color: #a8a29e; }
+    .btn-primary { background: #34d399; color: #0f0f0f; }
+    .btn-primary:hover { background: #6ee7b7; }
+    .btn-secondary { background: #1a1a1a; color: #a8a29e; border-color: rgba(255,255,255,0.06); }
+    .btn-secondary:hover { background: #222222; }
+    .logo line { stroke: #34d399; }
+    .logo rect[fill="#059669"] { fill: #34d399; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .splash-content { animation: none; }
     .logo { animation: none; }
