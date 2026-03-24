@@ -1,17 +1,32 @@
 // Markdown → PDF conversion using pdfkit (pure JS, no Chrome).
 // Produces clean, professional resume PDFs from markdown content.
 
+import path from "node:path"
+
 type TextSegment = { text: string; bold?: boolean; italic?: boolean; link?: string }
 
+const PAGE_MARGIN = 54
+const SUPPORTED_IMAGE_EXTS = new Set([".png", ".jpg", ".jpeg"])
+
+/** Resolve an image path relative to a base directory, returning null for unsupported formats. */
+function resolveImagePath(src: string, baseDir?: string): string | null {
+  const ext = path.extname(src).toLowerCase()
+  if (!SUPPORTED_IMAGE_EXTS.has(ext)) return null
+
+  const resolved = path.isAbsolute(src) ? src : baseDir ? path.resolve(baseDir, src) : null
+  return resolved
+}
+
 /** Convert markdown content to a PDF buffer. */
-export async function markdownToPdf(markdown: string): Promise<Buffer> {
+export async function markdownToPdf(markdown: string, options?: { baseDir?: string }): Promise<Buffer> {
   // Dynamic import to avoid webpack bundling issues with pdfkit's native deps
   const PDFDocument = (await import("pdfkit")).default
+  const baseDir = options?.baseDir
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: "LETTER",
-      margins: { top: 54, bottom: 54, left: 54, right: 54 },
+      margins: { top: PAGE_MARGIN, bottom: PAGE_MARGIN, left: PAGE_MARGIN, right: PAGE_MARGIN },
       info: { Title: "Resume", Producer: "talentclaw" },
     })
 
@@ -45,7 +60,7 @@ export async function markdownToPdf(markdown: string): Promise<Buffer> {
           doc.fontSize(20).font("Helvetica-Bold").text(text)
           // Thin rule under H1
           doc.moveDown(0.2)
-          doc.moveTo(doc.x, doc.y).lineTo(doc.page.width - 54, doc.y).lineWidth(0.5).stroke("#cccccc")
+          doc.moveTo(doc.x, doc.y).lineTo(doc.page.width - PAGE_MARGIN, doc.y).lineWidth(0.5).stroke("#cccccc")
           doc.moveDown(0.3)
         } else if (level === 2) {
           doc.fontSize(14).font("Helvetica-Bold").text(text)
@@ -59,10 +74,29 @@ export async function markdownToPdf(markdown: string): Promise<Buffer> {
         continue
       }
 
+      // Block-level image: ![alt](path)
+      const imageMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)\s*$/)
+      if (imageMatch) {
+        const imgPath = resolveImagePath(imageMatch[2], baseDir)
+        if (imgPath) {
+          try {
+            if (needsGap) doc.moveDown(0.3)
+            const maxWidth = doc.page.width - PAGE_MARGIN - PAGE_MARGIN
+            doc.image(imgPath, { fit: [maxWidth, 200] })
+            doc.moveDown(0.3)
+          } catch {
+            // Silently skip unreadable images — don't break the PDF
+          }
+        }
+        needsGap = true
+        i++
+        continue
+      }
+
       // Horizontal rule
       if (/^[-*_]{3,}\s*$/.test(line)) {
         if (needsGap) doc.moveDown(0.3)
-        doc.moveTo(doc.x, doc.y).lineTo(doc.page.width - 54, doc.y).lineWidth(0.5).stroke("#cccccc")
+        doc.moveTo(doc.x, doc.y).lineTo(doc.page.width - PAGE_MARGIN, doc.y).lineWidth(0.5).stroke("#cccccc")
         doc.moveDown(0.4)
         needsGap = true
         i++
@@ -78,9 +112,9 @@ export async function markdownToPdf(markdown: string): Promise<Buffer> {
         doc.fontSize(10.5).font("Helvetica")
 
         // Bullet character
-        doc.text("•", 54 + indent, doc.y, { continued: true, width: 12 })
+        doc.text("•", PAGE_MARGIN + indent, doc.y, { continued: true, width: 12 })
         doc.text(" ", { continued: true })
-        renderSegments(doc, segments, { width: doc.page.width - 54 - 54 - indent - 14 })
+        renderSegments(doc, segments, { width: doc.page.width - PAGE_MARGIN - PAGE_MARGIN - indent - 14 })
 
         needsGap = false
         i++
@@ -91,7 +125,7 @@ export async function markdownToPdf(markdown: string): Promise<Buffer> {
       if (needsGap) doc.moveDown(0.3)
       const segments = parseInlineMarkdown(line)
       doc.fontSize(10.5)
-      renderSegments(doc, segments, { width: doc.page.width - 54 - 54 })
+      renderSegments(doc, segments, { width: doc.page.width - PAGE_MARGIN - PAGE_MARGIN })
       needsGap = true
       i++
     }

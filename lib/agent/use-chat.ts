@@ -103,6 +103,8 @@ export function useChat() {
   const [conversationSlug, setConversationSlug] = useState<string | null>(null)
   const queuedMessageRef = useRef<string | null>(null)
   const isStreamingRef = useRef(false)
+  // Abort controller for the active SSE stream — aborted on conversation switch
+  const streamAbortRef = useRef<AbortController | null>(null)
   const revalidateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const saveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const finalSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -168,6 +170,16 @@ export function useChat() {
     localStorage.removeItem("talentclaw-active-session")
   }
 
+  /** Abort the active SSE stream (if any) so it stops pushing state updates */
+  function abortActiveStream() {
+    if (streamAbortRef.current) {
+      streamAbortRef.current.abort()
+      streamAbortRef.current = null
+      setIsStreaming(false)
+      isStreamingRef.current = false
+    }
+  }
+
   /** Update messages, keep ref in sync immediately, and mark dirty for auto-save */
   function updateMessages(updater: (prev: ChatMessage[]) => ChatMessage[]) {
     setMessages((prev) => {
@@ -194,9 +206,10 @@ export function useChat() {
     }
   }, [])
 
-  // Clean up all timers on unmount
+  // Clean up all timers and streams on unmount
   useEffect(() => {
     return () => {
+      abortActiveStream()
       cancelFinalSave()
       stopSaveTimer()
       if (revalidateTimerRef.current) clearTimeout(revalidateTimerRef.current)
@@ -388,6 +401,10 @@ export function useChat() {
       setIsStreaming(true)
       isStreamingRef.current = true
 
+      // Create an abort controller for this stream so navigation can cancel it
+      const streamAbort = new AbortController()
+      streamAbortRef.current = streamAbort
+
       const userMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: "user",
@@ -423,6 +440,9 @@ export function useChat() {
 
         const reader = res.body?.getReader()
         if (!reader) throw new Error("No response stream")
+
+        // Bridge AbortController into consumeSSEStream's signal interface
+        const cancelSignal = { get cancelled() { return streamAbort.signal.aborted } }
 
         const { streamEnded } = await consumeSSEStream(reader, {
           onSession: (id) => {
@@ -465,10 +485,15 @@ export function useChat() {
             setError(message)
             setIsStreaming(false)
           },
-        })
+        }, cancelSignal)
+
+        // If aborted mid-stream (user navigated away), skip cleanup — the
+        // new conversation's state is already active.
+        if (streamAbort.signal.aborted) return
 
         if (!streamEnded) setIsStreaming(false)
         isStreamingRef.current = false
+        streamAbortRef.current = null
         stopSaveTimer()
         clearActiveSession()
 
@@ -481,10 +506,14 @@ export function useChat() {
           setTimeout(() => sendMessage(queued), 50)
         }
       } catch (err) {
+        // If the stream was aborted (user navigated away), don't touch state
+        if (streamAbort.signal.aborted) return
+
         const msg = err instanceof Error ? err.message : "Something went wrong"
         setError(msg)
         setIsStreaming(false)
         isStreamingRef.current = false
+        streamAbortRef.current = null
         stopSaveTimer()
         clearActiveSession()
         updateMessages((prev) => {
@@ -501,6 +530,8 @@ export function useChat() {
 
   // Load a previous conversation
   const loadConversation = useCallback(async (slug: string) => {
+    // Abort any active stream so it stops pushing state into this conversation
+    abortActiveStream()
     // Cancel any pending saves from the previous conversation
     cancelFinalSave()
     stopSaveTimer()
@@ -523,8 +554,6 @@ export function useChat() {
       slugRef.current = slug
       setConversationSlug(slug)
       setError(null)
-      setIsStreaming(false)
-      isStreamingRef.current = false
       sessionIdRef.current = null
       clearActiveSession()
       // Restore SDK session ID from frontmatter for conversation resume
@@ -535,14 +564,14 @@ export function useChat() {
   }, [])
 
   const clearMessages = useCallback(() => {
+    // Abort any active stream before clearing state
+    abortActiveStream()
     cancelFinalSave()
     stopSaveTimer()
     setMessages([])
     messagesRef.current = []
     isDirtyRef.current = false
     setError(null)
-    setIsStreaming(false)
-    isStreamingRef.current = false
     slugRef.current = null
     setConversationSlug(null)
     sessionIdRef.current = null

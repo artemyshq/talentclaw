@@ -758,7 +758,8 @@ export async function exportVariantPdf(slug: string): Promise<string> {
   if (!variant) throw new Error(`Variant not found: ${slug}`)
 
   const { markdownToPdf } = await import("@/lib/pdf-gen")
-  const pdfBuffer = await markdownToPdf(variant.content)
+  const resumesDir = path.join(getDataDir(), "resumes")
+  const pdfBuffer = await markdownToPdf(variant.content, { baseDir: resumesDir })
 
   const exportsDir = path.join(getDataDir(), "resumes", "exports")
   await ensureDir(exportsDir)
