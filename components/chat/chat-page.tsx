@@ -202,7 +202,8 @@ function ActiveChatView({
     if (!el) return
 
     // New messages arrived — reset the user-scrolled flag and scroll to bottom
-    if (messages.length > prevMessageCountRef.current) {
+    const isNewMessage = messages.length > prevMessageCountRef.current
+    if (isNewMessage) {
       userScrolledUpRef.current = false
     }
     prevMessageCountRef.current = messages.length
@@ -216,6 +217,10 @@ function ActiveChatView({
       })
     }
 
+    // Immediate scroll on new messages (don't wait for mutation)
+    if (isNewMessage) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "instant" })
+    }
     scheduleScroll()
 
     const observer = new MutationObserver(scheduleScroll)
@@ -228,7 +233,7 @@ function ActiveChatView({
   }, [messages])
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
       {/* Header with conversation title + new chat */}
       <div className="flex items-center gap-2 px-5 py-3 shrink-0">
         <ConversationDropdown />
