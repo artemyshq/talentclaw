@@ -21,3 +21,6 @@ rm -rf \
   .next/standalone/bin \
   .next/standalone/scripts \
   .next/standalone/assets
+
+# Remove source maps — debug artifacts that inflate the package
+find .next/standalone -name '*.map' -delete 2>/dev/null || true
