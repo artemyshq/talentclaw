@@ -21,6 +21,7 @@ export default async function JobsPage() {
       matchScore: job.frontmatter.match_score ?? null,
       matchBreakdown: breakdown,
       postedDate: job.frontmatter.discovered_at || "",
+      url: job.frontmatter.url || "",
       source: job.frontmatter.source,
       status: job.frontmatter.status,
     }

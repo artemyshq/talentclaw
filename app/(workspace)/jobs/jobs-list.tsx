@@ -10,6 +10,7 @@ import {
   Building2,
   Bookmark,
   Plus,
+  ExternalLink,
 } from "lucide-react"
 import { SearchBar } from "@/components/query/search-bar"
 import { DeleteJobButton } from "@/components/jobs/delete-job-button"
@@ -30,6 +31,7 @@ interface JobListing {
   matchScore: number | null
   matchBreakdown?: MatchBreakdown | null
   postedDate: string
+  url: string
   source: string
   status: string
 }
@@ -154,17 +156,26 @@ export function JobsList({ jobs }: JobsListProps) {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {job.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="text-xs px-2 py-1 rounded-md bg-surface-overlay text-text-secondary border border-border-subtle"
-                    >
-                      {skill}
-                    </span>
-                  ))}
+                <div className="flex items-center gap-3 text-xs text-text-muted">
                   {job.postedDate && (
-                    <span className="text-xs text-text-muted ml-2">{job.postedDate}</span>
+                    <span>
+                      {new Date(job.postedDate).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  )}
+                  {job.url && (
+                    <a
+                      href={job.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-accent hover:text-accent-hover transition-colors"
+                    >
+                      View posting
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   )}
                 </div>
               </div>
