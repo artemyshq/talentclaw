@@ -190,14 +190,15 @@ function checkDeps(): DepStatus {
   }
 
   // --- Python 3.11+ (required for browser-use — auto-install) ---
-  if (!hasPython311()) {
+  let hasPython = hasPython311()
+  if (!hasPython) {
     console.log("  Installing Python...");
-    installPython();
+    hasPython = installPython();
   }
 
-  // --- browser-use (required — auto-install) ---
+  // --- browser-use (required — auto-install, needs Python) ---
   let hasBrowserUse = which("browser-use");
-  if (!hasBrowserUse) {
+  if (!hasBrowserUse && hasPython) {
     try {
       console.log("  Installing browser-use...");
       execSync("curl -fsSL https://browser-use.com/cli/install.sh | bash", { stdio: "pipe", timeout: 300000 });

@@ -157,15 +157,7 @@ export function JobsList({ jobs }: JobsListProps) {
                 </div>
 
                 <div className="flex items-center gap-3 text-xs text-text-muted">
-                  {job.postedDate && (
-                    <span>
-                      {new Date(job.postedDate).toLocaleDateString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </span>
-                  )}
+                  {job.postedDate && <span>{job.postedDate}</span>}
                   {job.url && (
                     <a
                       href={job.url}

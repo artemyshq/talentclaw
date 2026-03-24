@@ -106,15 +106,9 @@ export function useChat() {
   const revalidateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const saveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const reconnectAttemptedRef = useRef(false)
-  // Mirror messages in a ref for reading without the setMessages-as-reader anti-pattern
   const messagesRef = useRef<ChatMessage[]>([])
-  // Dirty tracking for auto-save
-  const lastSavedLenRef = useRef(0)
-
-  // Keep messagesRef in sync
-  useEffect(() => {
-    messagesRef.current = messages
-  }, [messages])
+  // Dirty flag for auto-save — set on any message mutation, cleared after save
+  const isDirtyRef = useRef(false)
 
   // Revalidate server-side caches and notify DataRefreshProvider
   const triggerRevalidate = useCallback(async () => {
@@ -144,16 +138,16 @@ export function useChat() {
 
   // --- Shared stream lifecycle helpers ---
 
-  const stopSaveTimer = useCallback(() => {
+  function stopSaveTimer() {
     if (saveTimerRef.current) {
       clearInterval(saveTimerRef.current)
       saveTimerRef.current = null
     }
-  }, [])
+  }
 
-  const clearActiveSession = useCallback(() => {
+  function clearActiveSession() {
     localStorage.removeItem("talentclaw-active-session")
-  }, [])
+  }
 
   // Check agent availability on mount
   useEffect(() => {
@@ -240,12 +234,12 @@ export function useChat() {
     const storedSessionId = localStorage.getItem("talentclaw-active-session")
     if (!storedSessionId) return
 
-    let cancelled = false
+    const signal = { cancelled: false }
 
     async function reconnect() {
       try {
         const res = await fetch(`/api/agent/stream?sessionId=${encodeURIComponent(storedSessionId!)}`)
-        if (!res.ok || cancelled) {
+        if (!res.ok || signal.cancelled) {
           clearActiveSession()
           return
         }
@@ -317,7 +311,7 @@ export function useChat() {
             setError(message)
             setIsStreaming(false)
           },
-        }, { cancelled: false })
+        }, signal)
 
         if (!streamEnded) setIsStreaming(false)
         isStreamingRef.current = false
@@ -340,7 +334,7 @@ export function useChat() {
     reconnect()
 
     return () => {
-      cancelled = true
+      signal.cancelled = true
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

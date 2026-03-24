@@ -4,12 +4,12 @@ import { PIPELINE_STAGES } from "./types"
 // Shared date formatting for file viewer headers
 export function formatDate(
   d: unknown,
-  options?: { includeTime?: boolean }
+  options?: { includeTime?: boolean; monthFormat?: "short" | "long" }
 ): string | null {
   if (typeof d !== "string") return null
   try {
     const opts: Intl.DateTimeFormatOptions = {
-      month: "short",
+      month: options?.monthFormat ?? "short",
       day: "numeric",
       year: "numeric",
     }

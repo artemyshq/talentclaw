@@ -1,5 +1,6 @@
 import { listJobs, getProfile } from "@/lib/fs-data"
 import { calculateMatchBreakdown } from "@/lib/match-scoring"
+import { formatDate, isSafeUrl } from "@/lib/ui-utils"
 import { JobsList } from "./jobs-list"
 
 export default async function JobsPage() {
@@ -20,8 +21,8 @@ export default async function JobsPage() {
       skills: job.frontmatter.tags || [],
       matchScore: job.frontmatter.match_score ?? null,
       matchBreakdown: breakdown,
-      postedDate: job.frontmatter.discovered_at || "",
-      url: job.frontmatter.url || "",
+      postedDate: formatDate(job.frontmatter.discovered_at, { monthFormat: "long" }) ?? "",
+      url: isSafeUrl(job.frontmatter.url || "") ? job.frontmatter.url! : "",
       source: job.frontmatter.source,
       status: job.frontmatter.status,
     }
