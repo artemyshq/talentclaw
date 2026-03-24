@@ -95,15 +95,16 @@ Restrained — emerald green accent on warm stone neutrals. Color is rare and me
 - Semantic colors shift to lighter variants for readability on dark backgrounds
 
 ### Pipeline Stage Colors
+Warm, muted palette — editorial feel, no repeated hues. Each stage is visually distinct.
 | Stage | Color | Hex |
 |-------|-------|-----|
-| Discovered | Slate | `#64748b` |
-| Saved | Blue | `#2563eb` |
-| Applied | Accent (Green) | `#059669` |
-| Interviewing | Violet | `#7c3aed` |
-| Offer | Emerald | `#10b981` |
-| Accepted | Green | `#16a34a` |
-| Rejected | Red | `#dc2626` |
+| Discovered | Warm Stone | `#78716c` |
+| Saved | Dusty Slate Blue | `#5a7ea6` |
+| Applied | Accent (Emerald) | `#059669` |
+| Interviewing | Muted Wisteria | `#8b6aaf` |
+| Offer | Deep Honey Gold | `#c2820e` |
+| Accepted | Warm Teal | `#1a8c80` |
+| Rejected | Dusty Clay Rose | `#b85c5c` |
 
 Each stage color is used at three intensities:
 - Background: 8% opacity (`rgba(color, 0.08)`)

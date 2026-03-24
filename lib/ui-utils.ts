@@ -25,13 +25,13 @@ export function formatDate(
 
 // Status badge colors shared across file viewer headers
 export const STATUS_COLORS: Record<PipelineStage, { bg: string; text: string }> = {
-  discovered: { bg: "bg-slate-100", text: "text-slate-700" },
-  saved: { bg: "bg-blue-100", text: "text-blue-700" },
-  applied: { bg: "bg-emerald-100", text: "text-emerald-700" },
-  interviewing: { bg: "bg-violet-100", text: "text-violet-700" },
-  offer: { bg: "bg-emerald-100", text: "text-emerald-700" },
-  accepted: { bg: "bg-green-100", text: "text-green-700" },
-  rejected: { bg: "bg-red-100", text: "text-red-700" },
+  discovered: { bg: "bg-[#78716c]/10", text: "text-[#78716c]" },
+  saved: { bg: "bg-[#5a7ea6]/10", text: "text-[#5a7ea6]" },
+  applied: { bg: "bg-accent-subtle", text: "text-accent" },
+  interviewing: { bg: "bg-[#8b6aaf]/10", text: "text-[#8b6aaf]" },
+  offer: { bg: "bg-[#c2820e]/10", text: "text-[#c2820e]" },
+  accepted: { bg: "bg-[#1a8c80]/10", text: "text-[#1a8c80]" },
+  rejected: { bg: "bg-[#b85c5c]/10", text: "text-[#b85c5c]" },
 }
 
 // XSS prevention: only allow http/https URLs
@@ -84,16 +84,28 @@ export const STAGE_LABELS: Record<string, string> = {
   rejected: "Rejected",
 }
 
+// Stage hex colors for inline styles (pill thermometers, etc.)
+// Warm, muted palette — editorial feel, no repeated hues
+export const STAGE_HEX: Record<string, string> = {
+  discovered: "#78716c",   // warm stone
+  saved: "#5a7ea6",        // dusty slate blue
+  applied: "#059669",      // brand emerald (accent)
+  interviewing: "#8b6aaf", // muted wisteria
+  offer: "#c2820e",        // deep honey gold
+  accepted: "#1a8c80",     // warm teal
+  rejected: "#b85c5c",     // dusty clay rose
+}
+
 // Stage visual theme — single source of truth for dot + border colors
 // Uses full Tailwind class strings (required for Tailwind v4 content scanning)
 export const STAGE_THEME: Record<string, { dot: string; border: string }> = {
-  discovered: { dot: "bg-slate-500", border: "border-l-slate-500" },
-  saved: { dot: "bg-blue-500", border: "border-l-blue-500" },
+  discovered: { dot: "bg-[#78716c]", border: "border-l-[#78716c]" },
+  saved: { dot: "bg-[#5a7ea6]", border: "border-l-[#5a7ea6]" },
   applied: { dot: "bg-accent", border: "border-l-accent" },
-  interviewing: { dot: "bg-violet-500", border: "border-l-violet-500" },
-  offer: { dot: "bg-emerald-500", border: "border-l-emerald-500" },
-  accepted: { dot: "bg-green-500", border: "border-l-green-500" },
-  rejected: { dot: "bg-red-500", border: "border-l-red-500" },
+  interviewing: { dot: "bg-[#8b6aaf]", border: "border-l-[#8b6aaf]" },
+  offer: { dot: "bg-[#c2820e]", border: "border-l-[#c2820e]" },
+  accepted: { dot: "bg-[#1a8c80]", border: "border-l-[#1a8c80]" },
+  rejected: { dot: "bg-[#b85c5c]", border: "border-l-[#b85c5c]" },
 }
 
 // Brief date formatting for briefing cards
@@ -119,13 +131,13 @@ export function getGreeting(): string {
 
 // Stage pill colors for pipeline funnel badges
 export const STAGE_PILL_COLORS: Record<string, string> = {
-  discovered: "bg-slate-500/15 text-slate-600 border-slate-200",
-  saved: "bg-blue-500/10 text-blue-600 border-blue-200",
+  discovered: "bg-[#78716c]/12 text-[#78716c] border-[#78716c]/20",
+  saved: "bg-[#5a7ea6]/10 text-[#5a7ea6] border-[#5a7ea6]/20",
   applied: "bg-accent-subtle text-accent border-accent/20",
-  interviewing: "bg-violet-500/10 text-violet-600 border-violet-200",
-  offer: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
-  accepted: "bg-green-500/10 text-green-600 border-green-200",
-  rejected: "bg-red-500/10 text-red-500 border-red-200",
+  interviewing: "bg-[#8b6aaf]/10 text-[#8b6aaf] border-[#8b6aaf]/20",
+  offer: "bg-[#c2820e]/10 text-[#c2820e] border-[#c2820e]/20",
+  accepted: "bg-[#1a8c80]/10 text-[#1a8c80] border-[#1a8c80]/20",
+  rejected: "bg-[#b85c5c]/10 text-[#b85c5c] border-[#b85c5c]/20",
 }
 
 // Pipeline stages excluding rejected (for funnel display)

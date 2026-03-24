@@ -16,12 +16,12 @@ import {
 import {
   SortableContext,
   arrayMove,
-  rectSortingStrategy,
+  verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { PipelineCard } from "./pipeline-card"
 import type { KanbanCardData } from "@/components/kanban/card"
 import { PIPELINE_STAGES } from "@/lib/types"
-import { STAGE_LABELS, STAGE_THEME } from "@/lib/ui-utils"
+import { STAGE_LABELS, STAGE_HEX } from "@/lib/ui-utils"
 import { moveJobToStage } from "@/app/actions"
 
 // ---------------------------------------------------------------------------
@@ -33,119 +33,101 @@ interface PipelineBoardProps {
 }
 
 // ---------------------------------------------------------------------------
-// Droppable stage section
+// Collapsed pill column
 // ---------------------------------------------------------------------------
 
-interface StageSectionProps {
+interface PillProps {
+  stage: string
+  count: number
+  maxCount: number
+  onClick: () => void
+}
+
+function StagePill({ stage, count, maxCount, onClick }: PillProps) {
+  const hex = STAGE_HEX[stage] || "#64748b"
+  const fillPct = maxCount > 0 ? Math.max(8, (count / maxCount) * 70) : 0
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-center h-full w-[44px] min-w-[44px] rounded-2xl bg-surface-raised border border-border-subtle relative overflow-hidden py-3 transition-all hover:border-border-default hover:shadow-sm cursor-pointer shrink-0"
+    >
+      {/* Thermometer fill from top */}
+      <div
+        className="absolute top-0 left-0 right-0 rounded-2xl transition-[height] duration-400"
+        style={{
+          height: count > 0 ? `${fillPct}%` : "0%",
+          background: `color-mix(in srgb, ${hex} 18%, white)`,
+          transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      />
+
+      {/* Count badge */}
+      <div
+        className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-[15px] font-bold text-white mb-2.5 relative z-[1] shrink-0"
+        style={{ background: hex }}
+      >
+        {count}
+      </div>
+
+      {/* Vertical label */}
+      <span
+        className="[writing-mode:vertical-rl] text-[11px] font-bold uppercase tracking-wider whitespace-nowrap relative z-[1]"
+        style={{ color: hex }}
+      >
+        {STAGE_LABELS[stage] || stage}
+      </span>
+    </button>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Expanded column (droppable)
+// ---------------------------------------------------------------------------
+
+interface ExpandedColumnProps {
   stage: string
   cards: KanbanCardData[]
 }
 
-function StageSection({ stage, cards }: StageSectionProps) {
+function ExpandedColumn({ stage, cards }: ExpandedColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage })
   const cardIds = useMemo(() => cards.map((c) => c.id), [cards])
 
   return (
     <div
-      id={`stage-${stage}`}
       ref={setNodeRef}
-      className={`border-l-2 rounded-2xl pl-4 pr-2 py-4 transition-colors ${
-        STAGE_THEME[stage]?.border || "border-l-slate-500"
-      } ${isOver ? "bg-accent/5" : ""}`}
+      className={`flex-1 min-w-[320px] flex flex-col px-4 ${
+        isOver ? "bg-accent/[0.03] rounded-2xl" : ""
+      }`}
     >
-      {/* Section header */}
-      <div className="flex items-center gap-2.5 mb-3">
-        <div
-          className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-            STAGE_THEME[stage]?.dot || "bg-slate-500"
-          }`}
-        />
-        <span className="text-sm font-medium text-text-primary">
-          {STAGE_LABELS[stage] || stage}
-        </span>
-        <span className="text-xs text-text-muted bg-surface-overlay px-2 py-0.5 rounded-full">
-          {cards.length}
+      {/* Centered stage label */}
+      <div className="text-center mb-5 pt-1">
+        <span className="text-[13px] font-bold uppercase tracking-wider text-text-secondary">
+          {(STAGE_LABELS[stage] || stage).toUpperCase()}
         </span>
       </div>
 
-      {/* Card grid */}
-      <SortableContext
-        items={cardIds}
-        strategy={rectSortingStrategy}
-      >
+      {/* Stacked card list */}
+      <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
         {cards.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className="flex flex-col gap-2">
             {cards.map((card) => (
               <PipelineCard key={card.id} card={card} stage={stage} />
             ))}
           </div>
         ) : (
-          <p className="text-sm text-text-muted pl-5">No items</p>
+          <div className="flex flex-col items-center justify-center flex-1 text-center py-10">
+            <p className="font-[family-name:var(--font-display)] text-lg text-text-secondary mb-1">
+              Nothing here yet
+            </p>
+            <p className="text-[13px] text-text-muted">
+              Jobs will appear as they move through your pipeline.
+            </p>
+          </div>
         )}
       </SortableContext>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Stage progress bar
-// ---------------------------------------------------------------------------
-
-interface StageBarProps {
-  stages: readonly string[]
-  columns: Record<string, KanbanCardData[]>
-}
-
-function StageBar({ stages, columns }: StageBarProps) {
-  const handleClick = (stage: string) => {
-    const el = document.getElementById(`stage-${stage}`)
-    el?.scrollIntoView({ behavior: "smooth", block: "start" })
-  }
-
-  return (
-    <div className="bg-surface-raised rounded-2xl border border-border-subtle px-5 py-4">
-      <div className="flex items-center">
-        {stages.map((stage, i) => {
-          const count = (columns[stage] || []).length
-          const hasJobs = count > 0
-
-          return (
-            <div key={stage} className="flex items-center">
-              {/* Stage node */}
-              <button
-                type="button"
-                onClick={() => handleClick(stage)}
-                className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors hover:bg-surface-overlay ${
-                  hasJobs ? "opacity-100" : "opacity-45"
-                }`}
-              >
-                <div
-                  className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                    STAGE_THEME[stage]?.dot || "bg-slate-500"
-                  }`}
-                />
-                <span
-                  className={`text-xs font-medium whitespace-nowrap ${
-                    hasJobs ? "text-text-primary" : "text-text-muted"
-                  }`}
-                >
-                  {STAGE_LABELS[stage] || stage}
-                </span>
-                {hasJobs && (
-                  <span className="text-[0.65rem] text-text-muted bg-surface-overlay px-1.5 py-0.5 rounded-full leading-none">
-                    {count}
-                  </span>
-                )}
-              </button>
-
-              {/* Connector line */}
-              {i < stages.length - 1 && (
-                <div className="w-4 h-px bg-border-subtle mx-0.5 shrink-0" />
-              )}
-            </div>
-          )
-        })}
-      </div>
     </div>
   )
 }
@@ -159,11 +141,23 @@ export function PipelineBoard({ initialData }: PipelineBoardProps) {
   const [columns, setColumns] =
     useState<Record<string, KanbanCardData[]>>(initialData)
   const [activeCard, setActiveCard] = useState<KanbanCardData | null>(null)
+  const [expandedStage, setExpandedStage] = useState<string>(() => {
+    // Default to first stage with cards, or "applied"
+    for (const stage of PIPELINE_STAGES) {
+      if ((initialData[stage] || []).length > 0) return stage
+    }
+    return "applied"
+  })
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
     })
+  )
+
+  const maxCount = useMemo(
+    () => Math.max(...PIPELINE_STAGES.map((s) => (columns[s] || []).length), 1),
+    [columns]
   )
 
   const findColumn = useCallback(
@@ -177,7 +171,7 @@ export function PipelineBoard({ initialData }: PipelineBoardProps) {
     [columns]
   )
 
-  // ---- Drag handlers (same logic as kanban board) ----
+  // ---- Drag handlers ----
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event
@@ -261,20 +255,24 @@ export function PipelineBoard({ initialData }: PipelineBoardProps) {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="space-y-6">
-        {/* Stage progress bar */}
-        <StageBar stages={PIPELINE_STAGES} columns={columns} />
-
-        {/* Vertical stage sections */}
-        <div className="space-y-4">
-          {PIPELINE_STAGES.map((stage) => (
-            <StageSection
+      <div className="flex gap-1.5 items-stretch min-h-[600px]">
+        {PIPELINE_STAGES.map((stage) =>
+          stage === expandedStage ? (
+            <ExpandedColumn
               key={stage}
               stage={stage}
               cards={columns[stage] || []}
             />
-          ))}
-        </div>
+          ) : (
+            <StagePill
+              key={stage}
+              stage={stage}
+              count={(columns[stage] || []).length}
+              maxCount={maxCount}
+              onClick={() => setExpandedStage(stage)}
+            />
+          )
+        )}
       </div>
 
       <DragOverlay>

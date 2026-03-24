@@ -14,6 +14,10 @@ export interface KanbanCardData {
   nextAction: string | null
   matchScore: number | null
   matchBreakdown?: MatchBreakdown | null
+  location?: string | null
+  remote?: string | null
+  compensation?: string | null
+  url?: string | null
 }
 
 interface KanbanCardProps {

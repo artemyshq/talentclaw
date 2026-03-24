@@ -2,6 +2,7 @@ import { PipelineBoard } from "@/components/pipeline/pipeline-board"
 import { PIPELINE_STAGES } from "@/lib/types"
 import { listJobs, getProfile } from "@/lib/fs-data"
 import { calculateMatchBreakdown } from "@/lib/match-scoring"
+import { formatCompensation } from "@/lib/ui-utils"
 import type { KanbanCardData } from "@/components/kanban/card"
 
 export default async function PipelinePage() {
@@ -15,23 +16,36 @@ export default async function PipelinePage() {
   for (const job of jobs) {
     const stage = job.frontmatter.status
     if (data[stage]) {
-      const breakdown = job.frontmatter.match_score != null
-        ? calculateMatchBreakdown(profile.frontmatter, job.frontmatter)
+      const fm = job.frontmatter
+      const breakdown = fm.match_score != null
+        ? calculateMatchBreakdown(profile.frontmatter, fm)
         : null
       data[stage].push({
         id: job.slug,
-        title: job.frontmatter.title,
-        company: job.frontmatter.company,
-        appliedDate: job.frontmatter.discovered_at || null,
+        title: fm.title,
+        company: fm.company,
+        appliedDate: fm.discovered_at || null,
         nextAction: null,
-        matchScore: job.frontmatter.match_score ?? null,
+        matchScore: fm.match_score ?? null,
         matchBreakdown: breakdown,
+        location: fm.location || null,
+        remote: fm.remote || null,
+        compensation: fm.compensation
+          ? formatCompensation({ min: fm.compensation.min, max: fm.compensation.max })
+          : null,
+        url: fm.url || null,
       })
     }
   }
 
   return (
     <div className="w-full max-w-[1080px] mx-auto px-8 py-8">
+      <div className="mb-8">
+        <h1 className="font-prose text-2xl text-text-primary">Pipeline</h1>
+        <p className="text-sm text-text-secondary mt-1">
+          Track your opportunities from discovery to offer.
+        </p>
+      </div>
       {jobs.length === 0 ? (
         <div className="text-center py-24">
           <p className="text-text-secondary text-sm">
