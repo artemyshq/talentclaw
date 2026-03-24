@@ -221,11 +221,12 @@ Use browser-use to apply directly on job sites:
 1. Read the user's profile from `~/.talentclaw/profile.md`
 2. Craft application answers using the profile and the Application Playbook
 3. Navigate to the job posting with `browser-use open <url>`
-4. Inspect the page to identify form elements: `browser-use state`
-5. Fill in the application form fields
-6. **Always pause before submitting** — show the user what you've filled in and get explicit confirmation
-7. Submit only after user approval
-8. Record the application in `~/.talentclaw/applications/` and append to `activity.log`
+4. **Detect the application method before proceeding.** Do NOT assume the platform you're on is where you'll apply. LinkedIn job posts often have an "Apply" button that redirects to an external ATS (Ashby, Greenhouse, Lever, Workday, etc.) instead of using LinkedIn Easy Apply. Inspect the apply button — if it links externally, follow the redirect to the actual application form. Only treat it as a LinkedIn application if the button says "Easy Apply."
+5. Inspect the page to identify form elements: `browser-use state`
+6. Fill in the application form fields
+7. **Always pause before submitting** — show the user what you've filled in and get explicit confirmation
+8. Submit only after user approval
+9. Record the application in `~/.talentclaw/applications/` and append to `activity.log`
 
 ### Local Data
 
@@ -246,28 +247,33 @@ browser-use doctor    # verify installation
 
 1. Read the user's profile from ~/.talentclaw/profile.md
 2. Craft application answers using the profile and the Application Playbook
-3. Navigate to the job posting and inspect form elements:
+3. Navigate to the job posting:
    ```
-   browser-use open "https://jobs.greenhouse.io/company/12345"
+   browser-use open "https://linkedin.com/jobs/view/12345"
    browser-use state
    ```
-4. Fill the application form using element indices from state:
+4. **Detect the actual application channel.** Check the apply button before filling anything. If the button says "Easy Apply," the form is on LinkedIn. If it says "Apply" and links to an external URL (Ashby, Greenhouse, Lever, Workday, company careers page, etc.), click it and follow the redirect to the real application form. Never assume the discovery platform is the application platform.
+5. Inspect form elements on the actual application page:
+   ```
+   browser-use state
+   ```
+6. Fill the application form using element indices from state:
    ```
    browser-use input 3 "Alex Chen"
    browser-use input 5 "alex@example.com"
    browser-use select 8 "8+ years"
    ```
-5. Upload resume if required:
+7. Upload resume if required:
    ```
    browser-use upload 12 ~/resume.pdf
    ```
-6. **ALWAYS pause before submitting** — show the user what you've filled in and get explicit confirmation
-7. Submit only after user approval:
+8. **ALWAYS pause before submitting** — show the user what you've filled in and get explicit confirmation
+9. Submit only after user approval:
    ```
    browser-use click 15
    ```
-8. Record the application in ~/.talentclaw/applications/
-9. Append to activity.log
+10. Record the application in ~/.talentclaw/applications/
+11. Append to activity.log
 
 ### Important Notes
 
