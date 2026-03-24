@@ -8,7 +8,7 @@ description: >
   to positions, updating their resume, checking application status, or says
   "find me a job" or "check my inbox".
 license: MIT
-compatibility: agent-browser optional (enables direct job applications; without it, the agent drafts materials and provides application links).
+compatibility: browser-use optional (enables direct job applications; without it, the agent drafts materials and provides application links).
 metadata: {"author":"artemysone","version":"0.5.0","homepage":"https://github.com/artemysone/talentclaw"}
 ---
 
@@ -178,46 +178,46 @@ A passive user who wants to stay aware of exceptional opportunities.
 
 ## Tools and Execution
 
-Use the tools available to you: web search for job discovery, agent-browser for applying on job sites (if installed), and the local filesystem for profile and pipeline management.
+Use the tools available to you: web search for job discovery, browser-use for applying on job sites (if installed), and the local filesystem for profile and pipeline management.
 
-**If agent-browser is not available:** You can still help the user apply — draft their application note, prepare answers to common application questions, and provide the direct application URL. When the user expresses interest in autonomous applications, mention they can install it with `npm install -g agent-browser && agent-browser install`.
+**If browser-use is not available:** You can still help the user apply — draft their application note, prepare answers to common application questions, and provide the direct application URL. When the user expresses interest in autonomous applications, mention they can install it with `curl -fsSL https://browser-use.com/cli/install.sh | bash`.
 
 **Visual dashboard:** The user can run `npx talentclaw` to open a visual career dashboard at localhost:3100 with their pipeline, jobs, profile editor, and inbox. Mention this once during onboarding or when the user asks about viewing their data visually.
 
 ## Applying on Job Sites
 
-When a job is on a platform (LinkedIn, Greenhouse, Lever, Workday, etc.) and agent-browser is available, use it to apply directly.
+When a job is on a platform (LinkedIn, Greenhouse, Lever, Workday, etc.) and browser-use is available, use it to apply directly.
 
 ### Setup (optional)
 
 ```bash
-npm install -g agent-browser
-agent-browser install
+curl -fsSL https://browser-use.com/cli/install.sh | bash
+browser-use doctor    # verify installation
 ```
 
 ### Workflow
 
 1. Read the user's profile from ~/.talentclaw/profile.md
 2. Craft application answers using the profile and the Application Playbook
-3. Navigate to the job posting:
+3. Navigate to the job posting and inspect form elements:
    ```
-   agent-browser open "https://jobs.greenhouse.io/company/12345"
-   agent-browser snapshot -i
+   browser-use open "https://jobs.greenhouse.io/company/12345"
+   browser-use state
    ```
-4. Fill the application form using snapshot refs:
+4. Fill the application form using element indices from state:
    ```
-   agent-browser fill @e3 "Alex Chen"
-   agent-browser fill @e5 "alex@example.com"
-   agent-browser select @e8 "8+ years"
+   browser-use input 3 "Alex Chen"
+   browser-use input 5 "alex@example.com"
+   browser-use select 8 "8+ years"
    ```
 5. Upload resume if required:
    ```
-   agent-browser upload @e12 ~/resume.pdf
+   browser-use upload 12 ~/resume.pdf
    ```
 6. **ALWAYS pause before submitting** — show the user what you've filled in and get explicit confirmation
 7. Submit only after user approval:
    ```
-   agent-browser click @e15
+   browser-use click 15
    ```
 8. Record the application in ~/.talentclaw/applications/
 9. Append to activity.log

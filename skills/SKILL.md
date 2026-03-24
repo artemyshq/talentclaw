@@ -4,12 +4,12 @@ description: >
   Talent advisor skill for AI agents, built by Jeffrey Blue. Helps your human
   clarify career direction, build a compelling professional profile, discover
   relevant opportunities, apply strategically, and communicate with employers.
-  Uses agent-browser for job applications and web search for job discovery.
+  Uses browser-use for job applications and web search for job discovery.
   Use when the user asks about job searching, career opportunities, applying
   to positions, updating their resume, checking application status, or says
   "find me a job".
 license: MIT
-compatibility: agent-browser optional (enables direct job applications; without it, the agent drafts materials and provides application links).
+compatibility: browser-use optional (enables direct job applications; without it, the agent drafts materials and provides application links).
 metadata: {"author":"artemysone","version":"0.5.0","homepage":"https://github.com/artemysone/talentclaw"}
 ---
 
@@ -35,14 +35,13 @@ npx talentclaw
 
 Opens a visual dashboard at localhost:3100 with your pipeline, jobs, profile editor, and inbox.
 
-### agent-browser (optional — enables direct applications)
+### browser-use (optional — enables direct applications)
 
 ```bash
-npm install -g agent-browser
-agent-browser install
+curl -fsSL https://browser-use.com/cli/install.sh | bash
 ```
 
-agent-browser lets the agent navigate job sites and submit applications directly. Without it, the agent still finds jobs, drafts application materials, and provides links — the user just applies manually.
+browser-use lets the agent navigate job sites and submit applications directly. Without it, the agent still finds jobs, drafts application materials, and provides links — the user just applies manually.
 
 ---
 
@@ -150,14 +149,14 @@ Your messages may reach human recruiters. Write accordingly.
 
 ### New Here? Let's Get Set Up
 
-The first conversation should feel like meeting a career advisor, not filling out a form. Detect new users automatically (empty profile) and launch into onboarding without being asked. Silently check for agent-browser availability but do not gate onboarding on it.
+The first conversation should feel like meeting a career advisor, not filling out a form. Detect new users automatically (empty profile) and launch into onboarding without being asked. Silently check for browser-use availability but do not gate onboarding on it.
 
 1. *Welcome* — brief, warm intro. Explain what talentclaw does in plain terms.
 2. *Career discovery conversation* — have a real conversation to understand who they are. Ask about their career arc, current situation, strengths, what they want, and constraints. If they have a resume, parse it and use it as a foundation, then ask about what the resume can't tell you. 2-3 questions per turn, react to what they say.
 3. *Build their context graph* — synthesize the conversation into the Career Context section of `~/.talentclaw/profile.md`: Career Arc (narrative), Core Strengths (positioning), Current Situation (mode and motivation), What They Want (the real picture), Constraints (deal-breakers).
 4. *Extract structured profile* — from the context, pull out frontmatter fields (headline, skills, experience, preferences, salary). Show the full profile and get confirmation before saving.
-5. *First search* — search for jobs via web search, walk through top results with genuine assessments. For strong matches: apply via agent-browser if available, otherwise share the link and drafted materials.
-6. *Next steps* — mention the visual dashboard (`npx talentclaw`) if they're in a plugin context. If agent-browser isn't installed, mention it casually as an optional upgrade for autonomous applications.
+5. *First search* — search for jobs via web search, walk through top results with genuine assessments. For strong matches: apply via browser-use if available, otherwise share the link and drafted materials.
+6. *Next steps* — mention the visual dashboard (`npx talentclaw`) if they're in a plugin context. If browser-use isn't installed, mention it casually as an optional upgrade for autonomous applications.
 
 ### Back for More
 
@@ -194,14 +193,14 @@ A passive user who wants to stay aware of exceptional opportunities.
 
 Use web search to find job listings on company career pages, job boards (LinkedIn, Indeed, Glassdoor), and ATS platforms (Greenhouse, Lever, Workday). Start narrow based on the user's profile, expand if needed.
 
-### Applications via agent-browser
+### Applications via browser-use
 
-Use agent-browser to apply directly on job sites:
+Use browser-use to apply directly on job sites:
 
 1. Read the user's profile from `~/.talentclaw/profile.md`
 2. Craft application answers using the profile and the Application Playbook
-3. Navigate to the job posting with `agent-browser open <url>`
-4. Take a snapshot to identify form elements: `agent-browser snapshot -i`
+3. Navigate to the job posting with `browser-use open <url>`
+4. Inspect the page to identify form elements: `browser-use state`
 5. Fill in the application form fields
 6. **Always pause before submitting** — show the user what you've filled in and get explicit confirmation
 7. Submit only after user approval
@@ -213,38 +212,38 @@ All career data is stored in `~/.talentclaw/` as markdown files with YAML frontm
 
 ## Applying on Job Sites
 
-Use agent-browser to apply on job sites (LinkedIn, Greenhouse, Lever, Workday, etc.).
+Use browser-use to apply on job sites (LinkedIn, Greenhouse, Lever, Workday, etc.).
 
 ### Prerequisites
 
 ```bash
-npm install -g agent-browser
-agent-browser install
+curl -fsSL https://browser-use.com/cli/install.sh | bash
+browser-use doctor    # verify installation
 ```
 
 ### Workflow
 
 1. Read the user's profile from ~/.talentclaw/profile.md
 2. Craft application answers using the profile and the Application Playbook
-3. Navigate to the job posting:
+3. Navigate to the job posting and inspect form elements:
    ```
-   agent-browser open "https://jobs.greenhouse.io/company/12345"
-   agent-browser snapshot -i
+   browser-use open "https://jobs.greenhouse.io/company/12345"
+   browser-use state
    ```
-4. Fill the application form using snapshot refs:
+4. Fill the application form using element indices from state:
    ```
-   agent-browser fill @e3 "Alex Chen"
-   agent-browser fill @e5 "alex@example.com"
-   agent-browser select @e8 "8+ years"
+   browser-use input 3 "Alex Chen"
+   browser-use input 5 "alex@example.com"
+   browser-use select 8 "8+ years"
    ```
 5. Upload resume if required:
    ```
-   agent-browser upload @e12 ~/resume.pdf
+   browser-use upload 12 ~/resume.pdf
    ```
 6. **ALWAYS pause before submitting** — show the user what you've filled in and get explicit confirmation
 7. Submit only after user approval:
    ```
-   agent-browser click @e15
+   browser-use click 15
    ```
 8. Record the application in ~/.talentclaw/applications/
 9. Append to activity.log
@@ -375,7 +374,7 @@ Append a line after every meaningful action: discovering a job, saving it, apply
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| `agent-browser: command not found` | Not installed | Run `npm install -g agent-browser && agent-browser install` |
+| `browser-use: command not found` | Not installed | Run `curl -fsSL https://browser-use.com/cli/install.sh \| bash` |
 | Profile empty | Haven't onboarded | Launch onboarding flow |
 | Form submission blocked | Anti-automation measures | Inform the user and suggest manual submission |
 

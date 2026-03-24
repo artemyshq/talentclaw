@@ -10,7 +10,7 @@ Next.js web UI + TypeScript CLI. The CLI handles bootstrapping and server manage
 - **Web:** Next.js 15, React 19, Tailwind CSS v4
 - **Data:** Filesystem (local-first, `~/.talentclaw/` markdown + YAML frontmatter)
 - **Runtime:** Bun + Node.js 22+ (for web UI dev and Next.js server)
-- **Network:** Web search + agent-browser (external tools, not project dependencies)
+- **Network:** Web search + browser-use (external tools, not project dependencies)
 
 ## Key Directories
 

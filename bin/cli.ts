@@ -42,20 +42,6 @@ function check(label: string, ok: boolean, detail: string): void {
   console.log(detail ? `  ${icon} ${label} — ${detail}` : `  ${icon} ${label}`);
 }
 
-function promptYesNo(question: string): boolean {
-  if (!process.stdin.isTTY) return false;
-  process.stdout.write(`  ${question} [Y/n] `);
-  try {
-    const result = spawnSync("bash", ["-c", "read -r ans && echo \"$ans\""], {
-      stdio: ["inherit", "pipe", "inherit"],
-      timeout: 30000,
-    });
-    const answer = result.stdout?.toString().trim().toLowerCase();
-    return answer === "" || answer === "y" || answer === "yes";
-  } catch {
-    return false;
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Templates (ported from scaffold.rs)
@@ -110,7 +96,7 @@ function writeIfMissing(path: string, content: string): void {
 interface DepStatus {
   hasClaude: boolean;
   hasClaudeAuth: boolean;
-  hasAgentBrowser: boolean;
+  hasBrowserUse: boolean;
 }
 
 function checkClaudeAuth(): boolean {
@@ -134,91 +120,98 @@ function checkClaudeAuth(): boolean {
   return hasClaudeCredentialFiles();
 }
 
-function checkDeps(autoInstall = false): DepStatus {
-  const interactive = autoInstall || !!process.stdin.isTTY;
+function hasPython311(): boolean {
+  // Check python3 first, then python
+  for (const cmd of ["python3", "python"]) {
+    try {
+      const out = execSync(`${cmd} -c "import sys; print(sys.version_info >= (3, 11))"`, {
+        stdio: "pipe",
+        timeout: 5000,
+      }).toString().trim();
+      if (out === "True") return true;
+    } catch {
+      // try next
+    }
+  }
+  return false;
+}
 
-  // --- Claude Code (required for AI chat) ---
-  let hasClaude = which("claude");
-
-  if (!hasClaude && interactive) {
-    console.log();
-    console.log("  Claude Code powers TalentClaw's AI chat assistant.");
-    console.log("  It requires a Claude Pro or Max subscription.");
-    console.log();
-    const shouldInstall = promptYesNo(
-      "Install Claude Code? (npm install -g @anthropic-ai/claude-code)"
-    );
-    if (shouldInstall) {
+function installPython(): boolean {
+  if (process.platform === "darwin") {
+    // macOS — use Homebrew
+    if (which("brew")) {
       try {
-        console.log();
-        execSync("npm install -g @anthropic-ai/claude-code", { stdio: "inherit" });
-        hasClaude = which("claude");
-        if (hasClaude) {
-          console.log("\n  \x1b[32m[ok]\x1b[0m Claude Code installed");
-        }
-      } catch {
-        console.log("\n  Install failed. Try manually: npm install -g @anthropic-ai/claude-code");
-      }
+        execSync("brew install python@3.13", { stdio: "pipe", timeout: 300000 });
+        return hasPython311();
+      } catch { /* fall through */ }
+    }
+  }
+  // Linux — try apt if available
+  if (process.platform === "linux" && which("apt-get")) {
+    try {
+      execSync("sudo apt-get update -qq && sudo apt-get install -y -qq python3 python3-pip", {
+        stdio: "pipe",
+        timeout: 300000,
+      });
+      return hasPython311();
+    } catch { /* fall through */ }
+  }
+  return false;
+}
+
+function checkDeps(): DepStatus {
+  console.log("  Setting up...\n");
+
+  // --- Claude Code (required — auto-install) ---
+  let hasClaude = which("claude");
+  if (!hasClaude) {
+    try {
+      console.log("  Installing Claude Code...");
+      execSync("npm install -g @anthropic-ai/claude-code", { stdio: "pipe" });
+      hasClaude = which("claude");
+    } catch {
+      // Will show as missing in checklist
     }
   }
 
-  // --- Auth (Claude login or API key) ---
+  // --- Auth (requires browser interaction — auto-launch) ---
   let hasClaudeAuth = false;
-
   if (hasClaude) {
     hasClaudeAuth = checkClaudeAuth();
-
-    if (!hasClaudeAuth && interactive) {
-      console.log();
-      console.log("  Sign in to your Claude account to enable the AI assistant.");
-      console.log("  This opens your browser to authenticate with Anthropic.");
-      console.log();
-      const shouldLogin = promptYesNo("Sign in now?");
-      if (shouldLogin) {
-        try {
-          console.log();
-          spawnSync("claude", ["login"], { stdio: "inherit", timeout: 120000 });
-          hasClaudeAuth = checkClaudeAuth();
-          if (hasClaudeAuth) {
-            console.log("\n  \x1b[32m[ok]\x1b[0m Signed in to Claude");
-          }
-        } catch {
-          console.log("\n  Sign-in failed or timed out. Run 'claude login' later to enable chat.");
-        }
-      }
-    }
-  }
-
-  // --- agent-browser (optional — prompt when missing and interactive) ---
-  let hasAgentBrowser = which("agent-browser");
-  if (!hasAgentBrowser && interactive) {
-    console.log();
-    console.log("  agent-browser lets TalentClaw apply to jobs for you.");
-    console.log("  It controls a real browser to fill out applications on");
-    console.log("  Greenhouse, Lever, LinkedIn, and other job platforms.");
-    console.log("  Without it, TalentClaw can still search and track jobs,");
-    console.log("  but you'll need to submit applications manually.");
-    console.log();
-    const shouldInstall = promptYesNo(
-      "Install agent-browser? (npm install -g agent-browser)"
-    );
-    if (shouldInstall) {
+    if (!hasClaudeAuth) {
       try {
-        console.log();
-        execSync("npm install -g agent-browser", { stdio: "inherit" });
-        hasAgentBrowser = which("agent-browser");
-        if (hasAgentBrowser) {
-          console.log("  Setting up browser...");
-          execSync("agent-browser install", { stdio: "inherit" });
-          console.log("\n  \x1b[32m[ok]\x1b[0m agent-browser installed");
-        }
+        console.log("  Opening browser to sign in to Claude...\n");
+        spawnSync("claude", ["login"], { stdio: "inherit", timeout: 120000 });
+        hasClaudeAuth = checkClaudeAuth();
       } catch {
-        console.log("\n  Install failed. Try manually: npm install -g agent-browser");
+        // Will show as missing in checklist
       }
     }
   }
 
-  return { hasClaude, hasClaudeAuth, hasAgentBrowser };
+  // --- Python 3.11+ (required for browser-use — auto-install) ---
+  if (!hasPython311()) {
+    console.log("  Installing Python...");
+    installPython();
+  }
+
+  // --- browser-use (required — auto-install) ---
+  let hasBrowserUse = which("browser-use");
+  if (!hasBrowserUse) {
+    try {
+      console.log("  Installing browser-use...");
+      execSync("curl -fsSL https://browser-use.com/cli/install.sh | bash", { stdio: "pipe", timeout: 300000 });
+      hasBrowserUse = which("browser-use");
+      if (hasBrowserUse) {
+        console.log("  Installing Chromium...");
+        execSync("browser-use install", { stdio: "pipe", timeout: 300000 });
+      }
+    } catch {
+      // Will show as missing in checklist
+    }
+  }
+
+  return { hasClaude, hasClaudeAuth, hasBrowserUse };
 }
 
 // ---------------------------------------------------------------------------
@@ -241,9 +234,9 @@ function printChecklist(deps: DepStatus, webUrl?: string, webError?: string): vo
       : (deps.hasClaude ? "run: claude login" : "install Claude Code first"),
   );
   check(
-    "agent-browser",
-    deps.hasAgentBrowser,
-    deps.hasAgentBrowser ? "installed" : "optional — npm install -g agent-browser",
+    "browser-use",
+    deps.hasBrowserUse,
+    deps.hasBrowserUse ? "installed" : "failed — run: curl -fsSL https://browser-use.com/cli/install.sh | bash",
   );
 
   if (webError) {
@@ -254,10 +247,6 @@ function printChecklist(deps: DepStatus, webUrl?: string, webError?: string): vo
     check("Web UI", false, "starting...");
   }
 
-  if (!deps.hasClaude || !deps.hasClaudeAuth) {
-    console.log();
-    console.log("  \x1b[33mNote:\x1b[0m AI chat requires Claude Code + sign-in. The dashboard works without it.");
-  }
   console.log();
 }
 
@@ -341,7 +330,7 @@ function setup(): void {
   console.log("  Workspace scaffolded: " + dataDir());
 
   // 2. Check deps with auto-install
-  const deps = checkDeps(true);
+  const deps = checkDeps();
 
   // 3. Symlink skill
   const claudeDir = join(homedir(), ".claude");
