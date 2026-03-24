@@ -694,6 +694,15 @@ function GoalsTab({
 }
 
 // --- Resume tab ---
+
+// Fix bold markers with trailing whitespace before the closing **.
+// CommonMark requires closing ** to be "right-flanking" (no preceding spaces).
+// Uploaded resumes often produce patterns like "**Title  **rest" — move the
+// spaces outside so the parser sees "**Title**  rest".
+function normalizeBoldMarkers(md: string): string {
+  return md.replace(/\*\*([^*]+?)\s{2,}\*\*/g, "**$1**  ")
+}
+
 function ResumeTab({ content }: { content: string | null }) {
   if (!content) {
     return (
@@ -710,7 +719,7 @@ function ResumeTab({ content }: { content: string | null }) {
   return (
     <div className="bg-surface-raised rounded-xl border border-border-subtle p-6 sm:p-8">
       <div className="prose prose-sm max-w-none text-text-primary prose-headings:font-prose prose-headings:text-text-primary prose-h1:text-xl prose-h1:mb-4 prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-3 prose-h3:text-base prose-h3:mt-5 prose-h3:mb-2 prose-p:text-sm prose-p:leading-relaxed prose-p:text-text-secondary prose-li:text-sm prose-li:text-text-secondary prose-strong:text-text-primary prose-a:text-accent prose-a:no-underline hover:prose-a:underline prose-hr:border-border-subtle">
-        <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
+        <Markdown remarkPlugins={[remarkGfm]}>{normalizeBoldMarkers(content)}</Markdown>
       </div>
     </div>
   )
