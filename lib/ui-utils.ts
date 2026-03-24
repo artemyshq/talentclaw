@@ -1,5 +1,5 @@
 import type { PipelineStage } from "./types"
-import { PIPELINE_STAGES } from "./types"
+import { PIPELINE_STAGES, PIPELINE_DISPLAY_STAGES } from "./types"
 
 // Shared date formatting for file viewer headers
 export function formatDate(
@@ -26,7 +26,7 @@ export function formatDate(
 // Status badge colors shared across file viewer headers
 export const STATUS_COLORS: Record<PipelineStage, { bg: string; text: string }> = {
   discovered: { bg: "bg-[#78716c]/10", text: "text-[#78716c]" },
-  saved: { bg: "bg-[#5a7ea6]/10", text: "text-[#5a7ea6]" },
+  saved: { bg: "bg-[#78716c]/10", text: "text-[#78716c]" },
   applied: { bg: "bg-accent-subtle", text: "text-accent" },
   interviewing: { bg: "bg-[#8b6aaf]/10", text: "text-[#8b6aaf]" },
   offer: { bg: "bg-[#c2820e]/10", text: "text-[#c2820e]" },
@@ -76,7 +76,7 @@ export function formatCompensation(
 // Human-readable pipeline stage labels
 export const STAGE_LABELS: Record<string, string> = {
   discovered: "Discovered",
-  saved: "Saved",
+  saved: "Discovered", // "saved" maps to discovered in display
   applied: "Applied",
   interviewing: "Interviewing",
   offer: "Offer",
@@ -88,7 +88,6 @@ export const STAGE_LABELS: Record<string, string> = {
 // Warm, muted palette — editorial feel, no repeated hues
 export const STAGE_HEX: Record<string, string> = {
   discovered: "#78716c",   // warm stone
-  saved: "#5a7ea6",        // dusty slate blue
   applied: "#059669",      // brand emerald (accent)
   interviewing: "#8b6aaf", // muted wisteria
   offer: "#c2820e",        // deep honey gold
@@ -96,17 +95,15 @@ export const STAGE_HEX: Record<string, string> = {
   rejected: "#b85c5c",     // dusty clay rose
 }
 
-// Stage visual theme — single source of truth for dot + border colors
-// Uses full Tailwind class strings (required for Tailwind v4 content scanning)
-export const STAGE_THEME: Record<string, { dot: string; border: string }> = {
-  discovered: { dot: "bg-[#78716c]", border: "border-l-[#78716c]" },
-  saved: { dot: "bg-[#5a7ea6]", border: "border-l-[#5a7ea6]" },
-  applied: { dot: "bg-accent", border: "border-l-accent" },
-  interviewing: { dot: "bg-[#8b6aaf]", border: "border-l-[#8b6aaf]" },
-  offer: { dot: "bg-[#c2820e]", border: "border-l-[#c2820e]" },
-  accepted: { dot: "bg-[#1a8c80]", border: "border-l-[#1a8c80]" },
-  rejected: { dot: "bg-[#b85c5c]", border: "border-l-[#b85c5c]" },
-}
+// Stage visual theme — derived from STAGE_HEX
+// "applied" uses semantic accent token; others use hex for Tailwind v4 content scanning
+export const STAGE_THEME: Record<string, { dot: string; border: string }> = Object.fromEntries(
+  Object.entries(STAGE_HEX).map(([stage, hex]) =>
+    stage === "applied"
+      ? [stage, { dot: "bg-accent", border: "border-l-accent" }]
+      : [stage, { dot: `bg-[${hex}]`, border: `border-l-[${hex}]` }]
+  )
+)
 
 // Brief date formatting for briefing cards
 export function formatBriefDate(dateStr: string): string {
@@ -129,19 +126,17 @@ export function getGreeting(): string {
   return "Good evening"
 }
 
-// Stage pill colors for pipeline funnel badges
-export const STAGE_PILL_COLORS: Record<string, string> = {
-  discovered: "bg-[#78716c]/12 text-[#78716c] border-[#78716c]/20",
-  saved: "bg-[#5a7ea6]/10 text-[#5a7ea6] border-[#5a7ea6]/20",
-  applied: "bg-accent-subtle text-accent border-accent/20",
-  interviewing: "bg-[#8b6aaf]/10 text-[#8b6aaf] border-[#8b6aaf]/20",
-  offer: "bg-[#c2820e]/10 text-[#c2820e] border-[#c2820e]/20",
-  accepted: "bg-[#1a8c80]/10 text-[#1a8c80] border-[#1a8c80]/20",
-  rejected: "bg-[#b85c5c]/10 text-[#b85c5c] border-[#b85c5c]/20",
-}
+// Stage pill colors for pipeline funnel badges — derived from STAGE_HEX
+export const STAGE_PILL_COLORS: Record<string, string> = Object.fromEntries(
+  Object.entries(STAGE_HEX).map(([stage, hex]) =>
+    stage === "applied"
+      ? [stage, "bg-accent-subtle text-accent border-accent/20"]
+      : [stage, `bg-[${hex}]/10 text-[${hex}] border-[${hex}]/20`]
+  )
+)
 
-// Pipeline stages excluding rejected (for funnel display)
-export const FUNNEL_STAGES = PIPELINE_STAGES.filter((s) => s !== "rejected")
+// Pipeline display stages excluding rejected (for funnel display)
+export const FUNNEL_STAGES = PIPELINE_DISPLAY_STAGES.filter((s) => s !== "rejected")
 
 // Match score badge color classes
 export function matchScoreClass(score: number): string {

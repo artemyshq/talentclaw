@@ -18,7 +18,6 @@ import { MatchTooltip } from "@/components/jobs/match-tooltip"
 
 interface PipelineCardProps {
   card: KanbanCardData
-  stage?: string
 }
 
 export function PipelineCard({ card }: PipelineCardProps) {

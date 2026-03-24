@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-// Pipeline stages
+// All valid pipeline stages (includes "saved" for backward compat with existing data)
 export const PIPELINE_STAGES = [
   "discovered",
   "saved",
@@ -14,6 +14,11 @@ export const PIPELINE_STAGES = [
 export type PipelineStage = (typeof PIPELINE_STAGES)[number]
 
 export const PipelineStageSchema = z.enum(PIPELINE_STAGES)
+
+// Display stages — "saved" is merged into "discovered" in the UI
+export const PIPELINE_DISPLAY_STAGES = PIPELINE_STAGES.filter(
+  (s): s is Exclude<PipelineStage, "saved"> => s !== "saved"
+)
 
 // Compensation
 export const CompensationSchema = z.object({

@@ -96,10 +96,10 @@ Restrained — emerald green accent on warm stone neutrals. Color is rare and me
 
 ### Pipeline Stage Colors
 Warm, muted palette — editorial feel, no repeated hues. Each stage is visually distinct.
+"Saved" is not a separate stage — saved jobs appear in "Discovered".
 | Stage | Color | Hex |
 |-------|-------|-----|
 | Discovered | Warm Stone | `#78716c` |
-| Saved | Dusty Slate Blue | `#5a7ea6` |
 | Applied | Accent (Emerald) | `#059669` |
 | Interviewing | Muted Wisteria | `#8b6aaf` |
 | Offer | Deep Honey Gold | `#c2820e` |

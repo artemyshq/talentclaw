@@ -20,7 +20,7 @@ import {
 } from "@dnd-kit/sortable"
 import { PipelineCard } from "./pipeline-card"
 import type { KanbanCardData } from "@/components/kanban/card"
-import { PIPELINE_STAGES } from "@/lib/types"
+import { PIPELINE_DISPLAY_STAGES } from "@/lib/types"
 import { STAGE_LABELS, STAGE_HEX } from "@/lib/ui-utils"
 import { moveJobToStage } from "@/app/actions"
 
@@ -39,19 +39,18 @@ interface PipelineBoardProps {
 interface PillProps {
   stage: string
   count: number
-  maxCount: number
   onClick: () => void
 }
 
-function StagePill({ stage, count, maxCount, onClick }: PillProps) {
+function StagePill({ stage, count, onClick }: PillProps) {
   const hex = STAGE_HEX[stage] || "#64748b"
-  const fillPct = maxCount > 0 ? Math.max(8, (count / maxCount) * 70) : 0
+  const fillPct = Math.min(count * 12, 90)
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col items-center h-full w-[44px] min-w-[44px] rounded-2xl bg-surface-raised border border-border-subtle relative overflow-hidden py-3 transition-all hover:border-border-default hover:shadow-sm cursor-pointer shrink-0"
+      className="flex flex-col items-center h-full min-h-[600px] w-[44px] min-w-[44px] rounded-2xl bg-surface-raised border border-border-subtle relative overflow-hidden py-3 transition-all hover:border-border-default hover:shadow-sm cursor-pointer shrink-0"
     >
       {/* Thermometer fill from top */}
       <div
@@ -114,7 +113,7 @@ function ExpandedColumn({ stage, cards }: ExpandedColumnProps) {
         {cards.length > 0 ? (
           <div className="flex flex-col gap-2">
             {cards.map((card) => (
-              <PipelineCard key={card.id} card={card} stage={stage} />
+              <PipelineCard key={card.id} card={card} />
             ))}
           </div>
         ) : (
@@ -143,7 +142,7 @@ export function PipelineBoard({ initialData }: PipelineBoardProps) {
   const [activeCard, setActiveCard] = useState<KanbanCardData | null>(null)
   const [expandedStage, setExpandedStage] = useState<string>(() => {
     // Default to first stage with cards, or "applied"
-    for (const stage of PIPELINE_STAGES) {
+    for (const stage of PIPELINE_DISPLAY_STAGES) {
       if ((initialData[stage] || []).length > 0) return stage
     }
     return "applied"
@@ -153,11 +152,6 @@ export function PipelineBoard({ initialData }: PipelineBoardProps) {
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
     })
-  )
-
-  const maxCount = useMemo(
-    () => Math.max(...PIPELINE_STAGES.map((s) => (columns[s] || []).length), 1),
-    [columns]
   )
 
   const findColumn = useCallback(
@@ -256,7 +250,7 @@ export function PipelineBoard({ initialData }: PipelineBoardProps) {
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-1.5 items-stretch min-h-[600px]">
-        {PIPELINE_STAGES.map((stage) =>
+        {PIPELINE_DISPLAY_STAGES.map((stage) =>
           stage === expandedStage ? (
             <ExpandedColumn
               key={stage}
@@ -268,7 +262,6 @@ export function PipelineBoard({ initialData }: PipelineBoardProps) {
               key={stage}
               stage={stage}
               count={(columns[stage] || []).length}
-              maxCount={maxCount}
               onClick={() => setExpandedStage(stage)}
             />
           )

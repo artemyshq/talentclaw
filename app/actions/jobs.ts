@@ -39,7 +39,7 @@ export async function saveJobToPipeline(
   slug: string,
 ): Promise<{ error?: string }> {
   try {
-    await updateJobStatus(slug, "saved")
+    await updateJobStatus(slug, "discovered")
     await appendActivity({
       type: "saved",
       slug,
