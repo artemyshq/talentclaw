@@ -3,24 +3,13 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import type { ChatMessage, ToolCallInfo } from "@/lib/agent/types"
-import { getToolLabel } from "./tool-call-badge"
+import type { ChatMessage } from "@/lib/agent/types"
 
-function getThinkingLabel(toolCalls?: ToolCallInfo[]): string {
-  if (!toolCalls || toolCalls.length === 0) return "Thinking..."
-  const running = [...toolCalls].reverse().find((tc) => tc.status === "running")
-  if (!running) return "Thinking..."
-  const label = getToolLabel(running.name, "running")
-  return `${label}...`
-}
-
-function TypingIndicator({ toolCalls }: { toolCalls?: ToolCallInfo[] }) {
-  const label = getThinkingLabel(toolCalls)
-
+function TypingIndicator() {
   return (
-    <div className="flex items-center py-1" aria-label={label}>
+    <div className="flex items-center py-1" aria-label="Thinking...">
       <span className="thinking-shimmer text-[15px] font-medium">
-        {label}
+        Thinking...
       </span>
     </div>
   )
@@ -133,7 +122,6 @@ export function ChatMessageBubble({
   isStreaming?: boolean
 }) {
   const isUser = message.role === "user"
-  const hasContent = !!message.content
   const isActivelyStreaming = isLastAssistant && isStreaming && !isUser
 
   const displayedContent = useTypewriter(message.content, isActivelyStreaming)
@@ -155,13 +143,13 @@ export function ChatMessageBubble({
 
   return (
     <div className="animate-[chat-appear_0.3s_ease-out]">
-      {hasContent ? (
+      {normalized ? (
         <div className={`chat-prose text-[15px] leading-[1.7] text-text-primary ${isActivelyStreaming ? "streaming" : ""}`}>
           <Markdown remarkPlugins={[remarkGfm]}>{normalized}</Markdown>
         </div>
-      ) : (
-        <TypingIndicator toolCalls={message.toolCalls} />
-      )}
+      ) : isActivelyStreaming ? (
+        <TypingIndicator />
+      ) : null}
     </div>
   )
 }
