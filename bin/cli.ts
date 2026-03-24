@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execFileSync, execSync, spawn, spawnSync } from "node:child_process";
+import { execSync, spawn, spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -12,6 +12,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isServerReady } from "../lib/server-constants";
 import { hasClaudeCredentialFiles } from "../lib/claude-auth";
+import { which, findPython311, hasBrowserUseBin } from "../lib/deps";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -26,15 +27,6 @@ export function dataDir(): string {
 
 function packageRoot(): string {
   return resolve(__dirname, "..");
-}
-
-function which(cmd: string): boolean {
-  try {
-    execFileSync("which", [cmd], { stdio: "ignore" });
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 function check(label: string, ok: boolean, detail: string): void {
@@ -120,29 +112,13 @@ function checkClaudeAuth(): boolean {
   return hasClaudeCredentialFiles();
 }
 
-function hasPython311(): boolean {
-  // Check python3 first, then python
-  for (const cmd of ["python3", "python"]) {
-    try {
-      const out = execSync(`${cmd} -c "import sys; print(sys.version_info >= (3, 11))"`, {
-        stdio: "pipe",
-        timeout: 5000,
-      }).toString().trim();
-      if (out === "True") return true;
-    } catch {
-      // try next
-    }
-  }
-  return false;
-}
-
-function installPython(): boolean {
+function installPython(): string | null {
   if (process.platform === "darwin") {
     // macOS — use Homebrew
     if (which("brew")) {
       try {
         execSync("brew install python@3.13", { stdio: "pipe", timeout: 300000 });
-        return hasPython311();
+        return "python3.13";
       } catch { /* fall through */ }
     }
   }
@@ -153,10 +129,10 @@ function installPython(): boolean {
         stdio: "pipe",
         timeout: 300000,
       });
-      return hasPython311();
+      return "python3";
     } catch { /* fall through */ }
   }
-  return false;
+  return null;
 }
 
 function checkDeps(): DepStatus {
@@ -190,19 +166,26 @@ function checkDeps(): DepStatus {
   }
 
   // --- Python 3.11+ (required for browser-use — auto-install) ---
-  let hasPython = hasPython311()
-  if (!hasPython) {
+  let pythonBin = findPython311();
+  if (!pythonBin) {
     console.log("  Installing Python...");
-    hasPython = installPython();
+    pythonBin = installPython();
   }
 
   // --- browser-use (required — auto-install, needs Python) ---
-  let hasBrowserUse = which("browser-use");
-  if (!hasBrowserUse && hasPython) {
+  let hasBrowserUse = hasBrowserUseBin();
+  if (!hasBrowserUse && pythonBin) {
     try {
       console.log("  Installing browser-use...");
-      execSync("curl -fsSL https://browser-use.com/cli/install.sh | bash", { stdio: "pipe", timeout: 300000 });
-      hasBrowserUse = which("browser-use");
+      // Use the discovered python3.x binary so the install script
+      // picks up 3.11+ even when the system python3 is older (e.g. macOS 3.9)
+      execSync(`curl -fsSL https://browser-use.com/cli/install.sh | PYTHON=${pythonBin} bash`, { stdio: "pipe", timeout: 300000 });
+      hasBrowserUse = hasBrowserUseBin();
+      if (!hasBrowserUse) {
+        // Fallback: install via pip directly with the correct python
+        execSync(`${pythonBin} -m pip install browser-use`, { stdio: "pipe", timeout: 300000 });
+        hasBrowserUse = hasBrowserUseBin();
+      }
       if (hasBrowserUse) {
         console.log("  Installing Chromium...");
         execSync("browser-use install", { stdio: "pipe", timeout: 300000 });
@@ -355,16 +338,21 @@ function setup(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Main
+// Main — only runs when executed directly, not when imported by tests
 // ---------------------------------------------------------------------------
 
-const command = process.argv[2];
+const isDirectExecution = process.argv[1] !== undefined &&
+  fileURLToPath(import.meta.url) === resolve(process.argv[1]);
 
-if (command === "setup") {
-  setup();
-} else {
-  console.log("\ntalentclaw — your AI career agent\n");
-  scaffold();
-  const deps = checkDeps();
-  startServer(deps);
+if (isDirectExecution) {
+  const command = process.argv[2];
+
+  if (command === "setup") {
+    setup();
+  } else {
+    console.log("\ntalentclaw — your AI career agent\n");
+    scaffold();
+    const deps = checkDeps();
+    startServer(deps);
+  }
 }
