@@ -105,6 +105,7 @@ export function useChat() {
   const isStreamingRef = useRef(false)
   const revalidateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const saveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const finalSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reconnectAttemptedRef = useRef(false)
   const messagesRef = useRef<ChatMessage[]>([])
   // Dirty flag for auto-save — set on any message mutation, cleared after save
@@ -145,6 +146,24 @@ export function useChat() {
     }
   }
 
+  function cancelFinalSave() {
+    if (finalSaveTimerRef.current) {
+      clearTimeout(finalSaveTimerRef.current)
+      finalSaveTimerRef.current = null
+    }
+  }
+
+  /** Defer the final conversation save so last state mutations flush first */
+  function scheduleFinalSave() {
+    const final = messagesRef.current
+    if (final.length === 0) return
+    cancelFinalSave()
+    finalSaveTimerRef.current = setTimeout(() => {
+      finalSaveTimerRef.current = null
+      saveConversation(final)
+    }, 100)
+  }
+
   function clearActiveSession() {
     localStorage.removeItem("talentclaw-active-session")
   }
@@ -172,6 +191,15 @@ export function useChat() {
       })
     return () => {
       cancelled = true
+    }
+  }, [])
+
+  // Clean up all timers on unmount
+  useEffect(() => {
+    return () => {
+      cancelFinalSave()
+      stopSaveTimer()
+      if (revalidateTimerRef.current) clearTimeout(revalidateTimerRef.current)
     }
   }, [])
 
@@ -328,11 +356,7 @@ export function useChat() {
         stopSaveTimer()
         clearActiveSession()
 
-        // Final save
-        const final = messagesRef.current
-        if (final.length > 0) {
-          setTimeout(() => saveConversation(final), 100)
-        }
+        scheduleFinalSave()
       } catch {
         clearActiveSession()
         setIsStreaming(false)
@@ -448,11 +472,7 @@ export function useChat() {
         stopSaveTimer()
         clearActiveSession()
 
-        // Final save
-        const final = messagesRef.current
-        if (final.length > 0) {
-          setTimeout(() => saveConversation(final), 100)
-        }
+        scheduleFinalSave()
 
         // Process queued message
         const queued = queuedMessageRef.current
@@ -481,6 +501,10 @@ export function useChat() {
 
   // Load a previous conversation
   const loadConversation = useCallback(async (slug: string) => {
+    // Cancel any pending saves from the previous conversation
+    cancelFinalSave()
+    stopSaveTimer()
+
     try {
       const res = await fetch(`/api/conversations/${slug}`)
       if (!res.ok) return
@@ -494,10 +518,15 @@ export function useChat() {
         })
       )
       setMessages(loaded)
+      messagesRef.current = loaded // Keep ref in sync to prevent stale saves
+      isDirtyRef.current = false
       slugRef.current = slug
       setConversationSlug(slug)
       setError(null)
+      setIsStreaming(false)
+      isStreamingRef.current = false
       sessionIdRef.current = null
+      clearActiveSession()
       // Restore SDK session ID from frontmatter for conversation resume
       sdkSessionIdRef.current = data.frontmatter?.session_id ?? null
     } catch {
@@ -506,8 +535,14 @@ export function useChat() {
   }, [])
 
   const clearMessages = useCallback(() => {
+    cancelFinalSave()
+    stopSaveTimer()
     setMessages([])
+    messagesRef.current = []
+    isDirtyRef.current = false
     setError(null)
+    setIsStreaming(false)
+    isStreamingRef.current = false
     slugRef.current = null
     setConversationSlug(null)
     sessionIdRef.current = null
