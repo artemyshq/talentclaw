@@ -179,7 +179,6 @@ function ActiveChatView({
 }) {
   const { messages, isStreaming, error } = useChatContext()
   const scrollRef = useRef<HTMLDivElement>(null)
-  const prevScrollHeightRef = useRef(0)
 
   // Scroll to bottom whenever messages change (new message sent/received)
   useEffect(() => {
@@ -193,19 +192,9 @@ function ActiveChatView({
     const el = scrollRef.current
     if (!el || !isStreaming) return
 
-    // Reset so first tick of new stream always triggers a scroll
-    prevScrollHeightRef.current = 0
-
     const interval = setInterval(() => {
-      const sh = el.scrollHeight
-      if (sh !== prevScrollHeightRef.current) {
-        prevScrollHeightRef.current = sh
-        // Only auto-scroll if user is near the bottom (hasn't scrolled up)
-        const distFromBottom = sh - el.scrollTop - el.clientHeight
-        if (distFromBottom < 300) {
-          el.scrollTop = sh
-        }
-      }
+      // Always pin to bottom during streaming
+      el.scrollTop = el.scrollHeight
     }, 100)
 
     return () => clearInterval(interval)
