@@ -180,20 +180,26 @@ function ActiveChatView({
   const { messages, isStreaming, error } = useChatContext()
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Scroll to bottom whenever messages change (new message sent/received)
+  // Scroll to bottom on new messages and when streaming ends (typewriter snap)
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
     el.scrollTop = el.scrollHeight
-  }, [messages.length])
+    // Double-RAF catches typewriter snap render after streaming ends
+    let id = requestAnimationFrame(() => {
+      id = requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight
+      })
+    })
+    return () => cancelAnimationFrame(id)
+  }, [messages.length, isStreaming])
 
-  // During streaming, poll for height changes and auto-scroll
+  // During streaming, poll to pin scroll to bottom
   useEffect(() => {
     const el = scrollRef.current
     if (!el || !isStreaming) return
 
     const interval = setInterval(() => {
-      // Always pin to bottom during streaming
       el.scrollTop = el.scrollHeight
     }, 100)
 
