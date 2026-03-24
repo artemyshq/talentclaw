@@ -7,7 +7,7 @@ import { TitleBar } from "@/components/workspace/title-bar"
 import { TopBar } from "@/components/workspace/top-bar"
 import { ChatProvider } from "@/components/chat/chat-provider"
 import { DataRefreshProvider } from "@/components/data-refresh-provider"
-import { listJobs, getWorkspaceTree, getProfile } from "@/lib/fs-data"
+import { listJobs, getProfile } from "@/lib/fs-data"
 
 export default async function WorkspaceLayout({
   children,
@@ -15,17 +15,14 @@ export default async function WorkspaceLayout({
   children: React.ReactNode
 }) {
   let jobs: Awaited<ReturnType<typeof listJobs>> = []
-  let tree: Awaited<ReturnType<typeof getWorkspaceTree>>["tree"] = []
   let displayName = ""
 
   try {
-    const [jobsResult, treeResult, profile] = await Promise.all([
+    const [jobsResult, profile] = await Promise.all([
       listJobs(),
-      getWorkspaceTree(),
       getProfile(),
     ])
     jobs = jobsResult
-    tree = treeResult.tree
     displayName = profile.frontmatter.display_name ?? ""
   } catch {
     // Fall through with safe defaults so layout still renders
@@ -51,7 +48,6 @@ export default async function WorkspaceLayout({
               <Sidebar
                 jobCount={jobCount}
                 activeCount={activeCount}
-                tree={tree}
               />
             </SidebarShell>
             <div className="flex-1 flex flex-col min-w-0">

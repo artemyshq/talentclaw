@@ -3,7 +3,21 @@ export function APPLY_PROMPT(
   jobTitle: string,
   company: string,
 ): string {
-  return `I'd like to apply to the ${jobTitle} position at ${company}. The job slug is ${jobSlug}. Please draft an application note and submit it.`
+  return `I'd like to apply to the ${jobTitle} position at ${company}. The job slug is ${jobSlug}.
+If a tailored resume variant exists for this job in resumes/variants/, export it to PDF (resumes/exports/) before submitting.
+If no variant exists, create one from resumes/base.md first, then export and submit.`
+}
+
+export function TAILOR_RESUME_PROMPT(
+  jobSlug: string,
+  jobTitle: string,
+  company: string,
+  variantSlug: string,
+): string {
+  return `Please tailor my resume for the ${jobTitle} position at ${company}.
+Read my base resume from the resumes/base.md file, then read the job details from jobs/${jobSlug}.md.
+Create a tailored variant at resumes/variants/${variantSlug}.md that highlights relevant experience and skills for this role.
+Preserve the structure and authenticity of the original — adjust emphasis and wording, don't fabricate.`
 }
 
 export function DRAFT_FOLLOWUP_PROMPT(

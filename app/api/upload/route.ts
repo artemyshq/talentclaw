@@ -2,7 +2,7 @@ export const runtime = "nodejs"
 
 import fs from "node:fs/promises"
 import path from "node:path"
-import { getDataDir } from "@/lib/fs-data"
+import { getDataDir, saveBaseResume } from "@/lib/fs-data"
 
 const MAX_SIZE = 10 * 1024 * 1024 // 10 MB
 const ALLOWED_EXTENSIONS = new Set([".pdf", ".docx", ".doc", ".txt"])
@@ -32,41 +32,25 @@ export async function POST(request: Request) {
     }
 
     const dataDir = getDataDir()
-    const resumesDir = path.join(dataDir, "resumes")
-    await fs.mkdir(resumesDir, { recursive: true })
+    const originalsDir = path.join(dataDir, "resumes", "originals")
+    await fs.mkdir(originalsDir, { recursive: true })
 
-    // Save original file with timestamp for version tracking
+    // Save original file to originals/ with timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
     const originalName = file.name.replace(/\s+/g, "-").toLowerCase()
     const versionedName = `${timestamp}_${originalName}`
-    const filePath = path.join(resumesDir, versionedName)
+    const filePath = path.join(originalsDir, versionedName)
 
     const buffer = Buffer.from(await file.arrayBuffer())
     await fs.writeFile(filePath, buffer)
 
-    // Copy to "current" and extract text in parallel (both depend only on filePath)
-    const currentPath = path.join(resumesDir, `current${ext}`)
+    // Extract text from the uploaded file
     const { extractText } = await import("@/lib/document")
-    const [extraction] = await Promise.all([
-      extractText(filePath),
-      fs.copyFile(filePath, currentPath),
-    ])
+    const extraction = await extractText(filePath)
 
-    // Save extracted markdown and generate PDF
+    // Write base.md — the immutable canonical markdown
     if (extraction.text) {
-      const mdPath = path.join(resumesDir, "current.md")
-      await fs.writeFile(mdPath, extraction.text)
-
-      // Generate PDF from markdown for ATS submission
-      if (ext !== ".pdf") {
-        try {
-          const { markdownToPdf } = await import("@/lib/pdf-gen")
-          const pdfBuffer = await markdownToPdf(extraction.text)
-          await fs.writeFile(path.join(resumesDir, "current.pdf"), pdfBuffer)
-        } catch (e) {
-          console.error("PDF generation failed:", e)
-        }
-      }
+      await saveBaseResume(extraction.text)
     }
 
     return Response.json({

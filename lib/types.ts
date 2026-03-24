@@ -89,6 +89,24 @@ export interface ApplicationFile {
   content: string
 }
 
+// Resume variant frontmatter (resumes/variants/*.md)
+export const ResumeVariantFrontmatterSchema = z.object({
+  parent: z.string().default("base.md"),
+  job: z.string().optional(),
+  base_hash: z.string(),
+  status: z.enum(["draft", "final"]).default("draft"),
+  created: z.string(),
+  label: z.string().optional(),
+})
+
+export type ResumeVariantFrontmatter = z.infer<typeof ResumeVariantFrontmatterSchema>
+
+export interface ResumeVariantFile {
+  slug: string
+  frontmatter: ResumeVariantFrontmatter
+  content: string
+}
+
 // Experience entry (within profile)
 export const ExperienceSchema = z.object({
   company: z.string(),
@@ -230,25 +248,6 @@ export interface ThreadFile {
   frontmatter: ThreadFrontmatter
   messages: MessageFile[]
 }
-
-// File tree node (for sidebar)
-export interface TreeNode {
-  name: string // "acme-sre.md" or "jobs"
-  path: string // "jobs/acme-sre.md" — relative to ~/.talentclaw/
-  type: "file" | "directory"
-  children?: TreeNode[]
-  count?: number // file count for directories
-}
-
-// File type detection (for file viewer dispatch)
-export type FileType =
-  | "job"
-  | "application"
-  | "profile"
-  | "company"
-  | "contact"
-  | "message"
-  | "generic"
 
 // Conversation (chat history)
 export const ConversationFrontmatterSchema = z.object({

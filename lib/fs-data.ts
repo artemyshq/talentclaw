@@ -2,6 +2,7 @@ import fs from "node:fs/promises"
 import path from "node:path"
 import os from "node:os"
 import matter from "gray-matter"
+import crypto from "node:crypto"
 import {
   JobFrontmatterSchema,
   ApplicationFrontmatterSchema,
@@ -11,6 +12,7 @@ import {
   MessageFrontmatterSchema,
   ContactFrontmatterSchema,
   CompanyFrontmatterSchema,
+  ResumeVariantFrontmatterSchema,
 } from "./types"
 /**
  * Coerce YAML Date objects to ISO strings in parsed frontmatter.
@@ -44,7 +46,6 @@ import type {
   ApplicationFile,
   ProfileFile,
   ActivityEntry,
-  TreeNode,
   ThreadFile,
   ThreadFrontmatter,
   MessageFrontmatter,
@@ -54,8 +55,8 @@ import type {
   CompanyFile,
   ConversationFile,
   ConversationFrontmatter,
+  ResumeVariantFile,
 } from "./types"
-import { getCached, setCache, invalidateCache } from "./cache"
 
 // Per-file async mutex to prevent concurrent read-modify-write corruption
 const fileLocks = new Map<string, Promise<void>>()
@@ -201,7 +202,7 @@ async function createEntity<T>(
   const validated = schema.parse(frontmatter)
   const fileContent = matter.stringify(content, validated as Record<string, unknown>)
   await fs.writeFile(filePath, fileContent, "utf-8")
-  invalidateWorkspaceCache()
+
   markGraphDirty()
 }
 
@@ -219,7 +220,7 @@ async function updateEntity<T>(
     const validated = schema.parse(merged)
     await fs.writeFile(filePath, matter.stringify(content, validated as Record<string, unknown>), "utf-8")
   })
-  invalidateWorkspaceCache()
+
   markGraphDirty()
 }
 
@@ -237,7 +238,7 @@ async function deleteEntity(
     }
     throw err
   }
-  invalidateWorkspaceCache()
+
   markGraphDirty()
 }
 
@@ -271,7 +272,7 @@ export async function updateJobStatus(
     data.status = status
     await fs.writeFile(filePath, matter.stringify(content, data), "utf-8")
   })
-  invalidateWorkspaceCache()
+
   markGraphDirty()
 }
 
@@ -331,108 +332,6 @@ export async function appendActivity(
   const line =
     JSON.stringify({ ts: new Date().toISOString(), ...entry }) + "\n"
   await fs.appendFile(filePath, line, "utf-8")
-}
-
-// --- Workspace Tree ---
-
-export async function getWorkspaceTree(): Promise<{ tree: TreeNode[]; fileCount: number }> {
-  const cacheKey = "workspace-tree"
-  const cached = getCached<{ tree: TreeNode[]; fileCount: number }>(cacheKey)
-  if (cached) return cached
-
-  const dataDir = getDataDir()
-
-  async function buildTree(dir: string, relativeTo: string): Promise<TreeNode[]> {
-    try {
-      const entries = await fs.readdir(dir, { withFileTypes: true })
-
-      // Separate dirs and files, sort alphabetically
-      const dirs = entries.filter((e) => e.isDirectory() && !e.name.startsWith("."))
-      const files = entries.filter((e) => e.isFile() && !e.name.startsWith("."))
-      dirs.sort((a, b) => a.name.localeCompare(b.name))
-      files.sort((a, b) => a.name.localeCompare(b.name))
-
-      // Read subdirectories in parallel
-      const dirNodes = await Promise.all(
-        dirs.map(async (entry) => {
-          const fullPath = path.join(dir, entry.name)
-          const relPath = path.relative(relativeTo, fullPath)
-          const children = await buildTree(fullPath, relativeTo)
-          const count = countFiles(children)
-          return { name: entry.name, path: relPath, type: "directory" as const, children, count }
-        })
-      )
-
-      // File nodes
-      const fileNodes = files.map((entry) => {
-        const fullPath = path.join(dir, entry.name)
-        const relPath = path.relative(relativeTo, fullPath)
-        return { name: entry.name, path: relPath, type: "file" as const }
-      })
-
-      return [...dirNodes, ...fileNodes]
-    } catch {
-      return []
-    }
-  }
-
-  const tree = await buildTree(dataDir, dataDir)
-  const result = { tree, fileCount: countFiles(tree) }
-  setCache(cacheKey, result, 30000) // 30 second TTL
-  return result
-}
-
-export function invalidateWorkspaceCache(): void {
-  invalidateCache("workspace-tree")
-}
-
-function countFiles(nodes: TreeNode[]): number {
-  let count = 0
-  for (const node of nodes) {
-    if (node.type === "file") count++
-    else if (node.children) count += countFiles(node.children)
-  }
-  return count
-}
-
-// --- Read File By Path ---
-
-export async function readFileByPath(
-  relativePath: string
-): Promise<{ frontmatter: Record<string, unknown>; content: string } | null> {
-  // Security: reject traversal attempts
-  if (relativePath.includes("..") || path.isAbsolute(relativePath)) {
-    return null
-  }
-
-  const dataDir = getDataDir()
-  // Append .md if no extension
-  let filePath = relativePath
-  if (!path.extname(filePath)) {
-    filePath = filePath + ".md"
-  }
-
-  const fullPath = path.resolve(dataDir, filePath)
-
-  // Security: ensure resolved path stays within data dir
-  const safeDirPrefix = path.resolve(dataDir) + path.sep
-  if (!fullPath.startsWith(safeDirPrefix) && fullPath !== path.resolve(dataDir)) {
-    return null
-  }
-
-  try {
-    const raw = await fs.readFile(fullPath, "utf-8")
-
-    if (filePath.endsWith(".md")) {
-      const { data, content } = matter(raw)
-      return { frontmatter: data, content: content.trim() }
-    }
-
-    // Non-markdown files: return raw content
-    return { frontmatter: {}, content: raw }
-  } catch {
-    return null
-  }
 }
 
 // --- Workspace Stats (used by dashboard for mtime info) ---
@@ -503,7 +402,7 @@ export async function updateProfile(
     const validated = ProfileFrontmatterSchema.parse(merged)
     await fs.writeFile(filePath, matter.stringify(existingContent, validated), "utf-8")
   })
-  invalidateWorkspaceCache()
+
   markGraphDirty()
 }
 
@@ -657,7 +556,7 @@ export async function createMessage(
       // thread.md doesn't exist yet — skip update
     }
   })
-  invalidateWorkspaceCache()
+
   markGraphDirty()
 }
 
@@ -773,6 +672,101 @@ export async function deleteConversation(slug: string): Promise<void> {
   await fs.unlink(filePath).catch(() => {})
 }
 
+// --- Resumes ---
+
+const VARIANTS_SUBDIR = "resumes/variants"
+
+export function computeContentHash(content: string): string {
+  return crypto.createHash("sha256").update(content).digest("hex")
+}
+
+/** Falls back to legacy current.md during migration. */
+export async function getBaseResume(): Promise<{ content: string; hash: string } | null> {
+  const resumesDir = path.join(getDataDir(), "resumes")
+  for (const name of ["base.md", "current.md"]) {
+    try {
+      const content = await fs.readFile(path.join(resumesDir, name), "utf-8")
+      return { content, hash: computeContentHash(content) }
+    } catch { /* try next */ }
+  }
+  return null
+}
+
+export async function saveBaseResume(content: string): Promise<string> {
+  const resumesDir = path.join(getDataDir(), "resumes")
+  await ensureDir(resumesDir)
+  await fs.writeFile(path.join(resumesDir, "base.md"), content)
+  return computeContentHash(content)
+}
+
+export async function listVariants(): Promise<ResumeVariantFile[]> {
+  const { items } = await listEntities(VARIANTS_SUBDIR, ResumeVariantFrontmatterSchema)
+  return items
+}
+
+export async function getVariant(slug: string): Promise<ResumeVariantFile | null> {
+  return getEntity(VARIANTS_SUBDIR, ResumeVariantFrontmatterSchema, slug)
+}
+
+export async function createVariant(
+  slug: string,
+  opts: { job?: string; label?: string } = {},
+): Promise<string> {
+  const base = await getBaseResume()
+  if (!base) throw new Error("No base resume found. Upload a resume first.")
+
+  await createEntity(
+    VARIANTS_SUBDIR,
+    ResumeVariantFrontmatterSchema,
+    slug,
+    {
+      parent: "base.md",
+      base_hash: base.hash,
+      status: "draft" as const,
+      created: new Date().toISOString().slice(0, 10),
+      job: opts.job,
+      label: opts.label,
+    },
+    base.content,
+  )
+  return slug
+}
+
+export async function updateVariant(
+  slug: string,
+  data: Partial<Record<string, unknown>>,
+): Promise<void> {
+  await updateEntity(VARIANTS_SUBDIR, ResumeVariantFrontmatterSchema, slug, data)
+}
+
+export async function isVariantStale(
+  slug: string,
+  baseHash?: string,
+): Promise<boolean> {
+  const [variant, hash] = await Promise.all([
+    getVariant(slug),
+    baseHash != null
+      ? Promise.resolve(baseHash)
+      : getBaseResume().then(b => b?.hash),
+  ])
+  if (!variant || !hash) return false
+  return variant.frontmatter.base_hash !== hash
+}
+
+export async function exportVariantPdf(slug: string): Promise<string> {
+  const variant = await getVariant(slug)
+  if (!variant) throw new Error(`Variant not found: ${slug}`)
+
+  const { markdownToPdf } = await import("@/lib/pdf-gen")
+  const pdfBuffer = await markdownToPdf(variant.content)
+
+  const exportsDir = path.join(getDataDir(), "resumes", "exports")
+  await ensureDir(exportsDir)
+  const pdfPath = path.join(exportsDir, `${slug}.pdf`)
+  await fs.writeFile(pdfPath, pdfBuffer)
+  return pdfPath
+}
+
 // --- Onboarding Check ---
 
 export async function hasCompletedOnboarding(): Promise<boolean> {
@@ -781,11 +775,11 @@ export async function hasCompletedOnboarding(): Promise<boolean> {
   // Check 1: Profile fields set
   if (profile.frontmatter.display_name || profile.frontmatter.headline) return true
 
-  // Check 2: Resume uploaded
+  // Check 2: Resume uploaded (new base.md or legacy current.*)
   const resumesDir = path.join(getDataDir(), "resumes")
   try {
     const files = await fs.readdir(resumesDir)
-    if (files.some(f => f.startsWith("current."))) return true
+    if (files.includes("base.md") || files.some(f => f.startsWith("current."))) return true
   } catch { /* dir doesn't exist */ }
 
   // Check 3: Has conversation history (user has interacted with agent)

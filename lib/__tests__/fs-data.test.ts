@@ -22,8 +22,6 @@ import {
   getJob,
   getProfile,
   getActivityLog,
-  getWorkspaceTree,
-  readFileByPath,
 } from "@/lib/fs-data"
 
 const mockedFs = vi.mocked(fs)
@@ -143,42 +141,5 @@ describe("getActivityLog", () => {
 
     const entries = await getActivityLog(2)
     expect(entries).toHaveLength(2)
-  })
-})
-
-describe("getWorkspaceTree", () => {
-  it("returns empty tree when data dir is empty", async () => {
-    mockedFs.readdir.mockResolvedValue([] as unknown as Awaited<ReturnType<typeof fs.readdir>>)
-    const { tree, fileCount } = await getWorkspaceTree()
-    expect(tree).toEqual([])
-    expect(fileCount).toBe(0)
-  })
-})
-
-describe("readFileByPath", () => {
-  it("rejects path traversal attempts", async () => {
-    const result = await readFileByPath("../etc/passwd")
-    expect(result).toBeNull()
-  })
-
-  it("rejects absolute paths", async () => {
-    const result = await readFileByPath("/etc/passwd")
-    expect(result).toBeNull()
-  })
-
-  it("returns null for missing files", async () => {
-    mockedFs.readFile.mockRejectedValue(new Error("ENOENT"))
-    const result = await readFileByPath("jobs/nonexistent")
-    expect(result).toBeNull()
-  })
-
-  it("parses markdown files with frontmatter", async () => {
-    const content = matter.stringify("Body text.", { title: "Test" })
-    mockedFs.readFile.mockResolvedValue(content)
-
-    const result = await readFileByPath("jobs/test")
-    expect(result).not.toBeNull()
-    expect(result!.frontmatter.title).toBe("Test")
-    expect(result!.content).toBe("Body text.")
   })
 })

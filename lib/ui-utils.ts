@@ -163,3 +163,22 @@ export function barColor(score: number): string {
 export function pluralize(count: number, singular: string, plural?: string): string {
   return count === 1 ? singular : (plural ?? `${singular}s`)
 }
+
+// Day label for grouping: "Today", "Yesterday", or formatted date
+export function getDayLabel(dateStr: string): string {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const target = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+  if (target.getTime() === today.getTime()) return "Today"
+  if (target.getTime() === yesterday.getTime()) return "Yesterday"
+
+  const opts: Intl.DateTimeFormatOptions =
+    date.getFullYear() === now.getFullYear()
+      ? { month: "long", day: "numeric" }
+      : { month: "long", day: "numeric", year: "numeric" }
+  return date.toLocaleDateString("en-US", opts)
+}
