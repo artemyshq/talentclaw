@@ -179,19 +179,36 @@ function ActiveChatView({
 }) {
   const { messages, isStreaming, error } = useChatContext()
   const scrollRef = useRef<HTMLDivElement>(null)
-
   const rafRef = useRef<number | null>(null)
+  const userScrolledUpRef = useRef(false)
+  const prevMessageCountRef = useRef(0)
 
-  // Auto-scroll to bottom when DOM content changes (typewriter effect, new messages).
-  // MutationObserver catches character-by-character reveals that don't change `messages`.
-  // Throttled to one scrollTo per animation frame to avoid hammering the compositor.
+  // Track manual scroll: mark "scrolled up" only when user actively scrolls away from bottom
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    function onScroll() {
+      const atBottom = el!.scrollHeight - el!.scrollTop - el!.clientHeight < 100
+      userScrolledUpRef.current = !atBottom
+    }
+    el.addEventListener("scroll", onScroll, { passive: true })
+    return () => el.removeEventListener("scroll", onScroll)
+  }, [])
+
+  // Auto-scroll on new messages and DOM mutations (typewriter effect).
+  // Reset "scrolled up" when new messages arrive so we always follow new content.
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
 
+    // New messages arrived — reset the user-scrolled flag and scroll to bottom
+    if (messages.length > prevMessageCountRef.current) {
+      userScrolledUpRef.current = false
+    }
+    prevMessageCountRef.current = messages.length
+
     function scheduleScroll() {
-      // Skip if user has scrolled up to read earlier messages
-      if (el!.scrollHeight - el!.scrollTop - el!.clientHeight > 100) return
+      if (userScrolledUpRef.current) return
       if (rafRef.current !== null) return
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = null
