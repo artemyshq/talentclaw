@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import { FileText, Image as ImageIcon } from "lucide-react"
 import type { ChatMessage } from "@/lib/agent/types"
 
 function TypingIndicator() {
@@ -112,6 +113,27 @@ function useTypewriter(fullContent: string, active: boolean): string {
   return fullContent.slice(0, revealedLen)
 }
 
+/** Parse [Attached files] block from message content */
+function parseAttachments(content: string): { text: string; files: string[] } {
+  const match = content.match(/^\[Attached files\]\n((?:- .+\n?)+)\n*/)
+  if (!match) return { text: content, files: [] }
+  const fileLines = match[1].split("\n").filter(Boolean)
+  const files = fileLines.map((line) => {
+    // "- filename.pdf → /path/to/file" → "filename.pdf"
+    const m = line.match(/^- (.+?)(?:\s*→\s*.+)?$/)
+    return m ? m[1] : line.replace(/^- /, "")
+  })
+  return { text: content.slice(match[0].length).trim(), files }
+}
+
+function attachmentIcon(name: string) {
+  const ext = name.split(".").pop()?.toLowerCase() ?? ""
+  if (["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext)) {
+    return <ImageIcon className="w-3 h-3 shrink-0" />
+  }
+  return <FileText className="w-3 h-3 shrink-0" />
+}
+
 export function ChatMessageBubble({
   message,
   isLastAssistant = false,
@@ -127,10 +149,24 @@ export function ChatMessageBubble({
   const displayedContent = useTypewriter(message.content, isActivelyStreaming)
 
   if (isUser) {
+    const { text: userText, files } = parseAttachments(message.content)
     return (
       <div className="flex justify-end animate-[chat-appear_0.3s_ease-out]">
         <div className="bg-surface-overlay text-text-primary rounded-2xl px-5 py-3 text-[15px] leading-[1.6] max-w-[75%] lg:max-w-lg">
-          {message.content}
+          {files.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {files.map((f) => (
+                <span
+                  key={f}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-raised/60 text-text-secondary text-xs"
+                >
+                  {attachmentIcon(f)}
+                  <span className="truncate max-w-[140px]">{f}</span>
+                </span>
+              ))}
+            </div>
+          )}
+          {userText}
         </div>
       </div>
     )
