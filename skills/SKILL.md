@@ -157,7 +157,7 @@ The web UI has already saved the resume text to `~/.talentclaw/resumes/base.md`.
 
 1. *Read and extract silently* — read `base.md`, extract ALL structured fields (display_name, headline, skills, experience array, education array, projects array, experience_years), and write them to `~/.talentclaw/profile.md` frontmatter. Wrap all file operations in `<internal>` tags. Do NOT show YAML, code blocks, extracted data tables, or file paths to the user.
 2. *Welcome and acknowledge* — open with a warm, brief response that shows you understand their background. Reference specific things from the resume (their arc, notable projects, distinctive positioning) to demonstrate you actually read it. Offer to help with any resume tweaks or changes they'd like.
-3. *Ask targeted questions* — ask 2-3 questions about what the resume can't tell you: target roles, compensation expectations, location/remote preferences, search mode (active/passive/monitoring), and what's driving their search. React to their answers, don't just check boxes.
+3. *Ask targeted questions* — ask 2-3 questions about what the resume can't tell you: target roles, compensation expectations, location/remote preferences, email address for job applications, search mode (active/passive/monitoring), and what's driving their search. React to their answers, don't just check boxes.
 4. *Complete the profile* — after the user answers, write the career context sections to profile.md: career_arc_summary, core_strengths_summary, current_situation_summary, growth_edges_summary. Write these in **first person** ("I spent a decade..." not "Jeff spent a decade..."). Also update frontmatter with preferences the user shared (preferred_roles, preferred_locations, remote_preference, salary_range, availability). Do NOT label anything as "draft".
 5. *First search* — search for jobs via web search based on their profile. Save discovered jobs to `~/.talentclaw/jobs/`. Walk through the top 3-5 results with genuine assessments — not just listing them, but explaining why each one fits or doesn't. Ask if they'd like to apply to any of the strong matches.
 6. *Next steps* — mention the visual dashboard (`npx talentclaw`) if they're in a plugin context. If browser-use isn't installed, mention it casually as an optional upgrade for autonomous applications.
@@ -214,7 +214,41 @@ A passive user who wants to stay aware of exceptional opportunities.
 
 Use web search to find job listings on company career pages, job boards (LinkedIn, Indeed, Glassdoor), and ATS platforms (Greenhouse, Lever, Workday). Start narrow based on the user's profile, expand if needed.
 
-### Applications via browser-use
+### Applications via ATS API (Tier 1)
+
+Before using browser-use, check if the job URL supports direct API submission. This is faster, more reliable, and avoids CAPTCHA issues.
+
+1. **Detect the ATS platform:**
+   ```
+   bun run lib/ats/cli.ts detect "<job-url>"
+   ```
+   This returns JSON: `{ "platform": "lever"|"greenhouse"|"ashby"|"unknown", "companySlug": "...", "postingId": "..." }`
+
+2. **If platform is "lever" — submit via API:**
+   a. Read the user's profile from `~/.talentclaw/profile.md` to get: display_name, email, phone, linkedin_url, github_url
+   b. If email is missing from the profile, ask the user for it before proceeding. Save it to their profile for future use.
+   c. Check for custom application questions:
+      ```
+      bun run lib/ats/cli.ts questions "<job-url>"
+      ```
+   d. If custom questions exist, draft answers using the user's profile and job context
+   e. **Always pause before submitting** — show the user what will be sent (name, email, resume, custom answers) and get explicit confirmation
+   f. Submit:
+      ```
+      bun run lib/ats/cli.ts submit "<job-url>" "<resume-pdf-path>" --name "Full Name" --email "email@example.com" --phone "555-1234" --linkedin "https://linkedin.com/in/..." --cover-letter "Application note text" --answers '{"field0":"answer1","field1":"answer2"}'
+      ```
+   g. Parse the JSON result. On success, record the application with these additional frontmatter fields:
+      - `ats_platform: lever`
+      - `ats_application_id: <from response>`
+      - `submission_method: ats_api`
+
+3. **If platform is "greenhouse", "ashby", or "unknown"** — fall through to browser-use (Tier 2) or manual submission (Tier 3).
+
+4. **If API submission fails** — inform the user of the error and fall back to browser-use.
+
+### Applications via Browser (Tier 2 Fallback)
+
+Use browser-use when ATS API submission is unavailable (non-Lever platforms) or fails. This approach works for any site but may be blocked by anti-automation measures.
 
 Use browser-use to apply directly on job sites:
 

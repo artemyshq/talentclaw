@@ -5,7 +5,8 @@ export function APPLY_PROMPT(
 ): string {
   return `I'd like to apply to the ${jobTitle} position at ${company}. The job slug is ${jobSlug}.
 If a tailored resume variant exists for this job in resumes/variants/, export it to PDF (resumes/exports/) before submitting.
-If no variant exists, create one from resumes/base.md first, then export and submit.`
+If no variant exists, create one from resumes/base.md first, then export and submit.
+Try ATS API submission first (run: bun run lib/ats/cli.ts detect <job-url>). Fall back to browser-use if the platform is not supported or submission fails.`
 }
 
 export function TAILOR_RESUME_PROMPT(
@@ -36,7 +37,7 @@ const ONBOARDING_INSTRUCTIONS = `
 Begin onboarding:
 1. Read my resume from ~/.talentclaw/resumes/base.md
 2. Extract ALL structured profile fields (display_name, headline, skills, experience, education, projects, experience_years) and save them to ~/.talentclaw/profile.md frontmatter. Quote all date strings.
-3. Then start the career discovery conversation — acknowledge my background warmly, offer to help with any resume tweaks, and ask 2-3 targeted questions about what the resume can't tell you (target roles, compensation, location, remote preference, search mode, what's driving my search).
+3. Then start the career discovery conversation — acknowledge my background warmly, offer to help with any resume tweaks, and ask 2-3 targeted questions about what the resume can't tell you (target roles, compensation, location, remote preference, search mode, what's driving my search). If their email isn't in the resume, ask for it — it's needed for direct job applications.
 4. After I answer, complete the profile (career_arc_summary, core_strengths_summary, current_situation_summary in first person) and kick off a job search based on my preferences. Save discovered jobs to ~/.talentclaw/jobs/ and present the top matches, asking if I'd like to apply to any.
 
 IMPORTANT:

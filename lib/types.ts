@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { AtsPlatformSchema } from "./ats/types"
 
 // All valid pipeline stages (includes "saved" for backward compat with existing data)
 export const PIPELINE_STAGES = [
@@ -82,6 +83,9 @@ export const ApplicationFrontmatterSchema = z.object({
   confidence_score: z.number().optional(),
   confidence_reasoning: z.string().optional(),
   tailored_content: z.string().optional(),
+  ats_platform: AtsPlatformSchema.optional(),
+  ats_application_id: z.string().optional(),
+  submission_method: z.enum(["ats_api", "browser_use", "manual"]).optional(),
 })
 
 export type ApplicationFrontmatter = z.infer<
@@ -155,6 +159,11 @@ export type Goal = z.infer<typeof GoalSchema>
 // Profile frontmatter
 export const ProfileFrontmatterSchema = z.object({
   display_name: z.string().optional(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  linkedin_url: z.string().url().optional(),
+  github_url: z.string().url().optional(),
+  website_url: z.string().url().optional(),
   headline: z.string().optional(),
   skills: z.array(z.string()).optional(),
   experience_years: z.number().optional(),
