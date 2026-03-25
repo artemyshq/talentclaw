@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { useRouter, usePathname } from "next/navigation"
 import { SquarePen } from "lucide-react"
 import { CrabLogo } from "@/components/crab-logo"
 import { getGreeting } from "@/lib/ui-utils"
@@ -10,12 +11,11 @@ import { ChatInput } from "./chat-input"
 import { SuggestionChips } from "./suggestion-chips"
 
 function NewChatView({
-  displayName,
   onSend,
 }: {
-  displayName: string
   onSend: (text: string) => void
 }) {
+  const { displayName } = useChatContext()
   const firstName = displayName.split(" ")[0]
 
   return (
@@ -137,9 +137,32 @@ function ActiveChatView({
   )
 }
 
-export function ChatPage({ displayName = "" }: { displayName?: string }) {
-  const { messages, isAvailable, sendMessage, clearMessages, pendingMessage, clearPending } =
+export function ChatPage({ initialSlug }: { initialSlug?: string } = {}) {
+  const { messages, isAvailable, sendMessage, clearMessages, pendingMessage, clearPending, conversationSlug, loadConversation } =
     useChatContext()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const loadingSlugRef = useRef<string | null>(null)
+
+  // When mounting /chat (no slug), start fresh
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!initialSlug) clearMessages() }, [])
+
+  // When navigating to /chat/[slug], load that conversation
+  useEffect(() => {
+    if (initialSlug && conversationSlug !== initialSlug && loadingSlugRef.current !== initialSlug) {
+      loadingSlugRef.current = initialSlug
+      loadConversation(initialSlug).finally(() => { loadingSlugRef.current = null })
+    }
+  }, [initialSlug, conversationSlug, loadConversation])
+
+  // Update URL when a new conversation is created on /chat
+  useEffect(() => {
+    if (!initialSlug && conversationSlug && pathname === "/chat") {
+      router.replace(`/chat/${conversationSlug}`)
+    }
+  }, [conversationSlug, initialSlug, pathname, router])
 
   // Auto-send pending message from sendPrefilled navigation
   useEffect(() => {
@@ -164,13 +187,13 @@ export function ChatPage({ displayName = "" }: { displayName?: string }) {
   const isEmpty = messages.length === 0
 
   if (isEmpty) {
-    return <NewChatView displayName={displayName} onSend={sendMessage} />
+    return <NewChatView onSend={sendMessage} />
   }
 
   return (
     <ActiveChatView
       onSend={sendMessage}
-      onNewChat={clearMessages}
+      onNewChat={() => { clearMessages(); router.push("/chat") }}
     />
   )
 }

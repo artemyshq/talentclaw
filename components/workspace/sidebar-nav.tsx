@@ -2,7 +2,7 @@
 
 import { useMemo, useCallback } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Home, MessageCircle, KanbanSquare, User, X, SquarePen } from "lucide-react"
 import { useSidebar } from "./sidebar-wrapper"
 import { useChatContext } from "@/components/chat/chat-provider"
@@ -26,21 +26,18 @@ function groupByDay(items: ConversationSummary[]): { label: string; items: Conve
 }
 
 function SidebarConversations() {
-  const { conversations, conversationSlug, loadConversation, clearMessages } = useChatContext()
+  const { conversations, clearMessages } = useChatContext()
   const { setOpen } = useSidebar()
   const pathname = usePathname()
+  const router = useRouter()
 
   const grouped = useMemo(() => groupByDay(conversations), [conversations])
 
-  const handleSelect = useCallback((slug: string) => {
-    loadConversation(slug)
-    setOpen(false)
-  }, [loadConversation, setOpen])
-
   const handleNewChat = useCallback(() => {
     clearMessages()
+    router.push("/chat")
     setOpen(false)
-  }, [clearMessages, setOpen])
+  }, [clearMessages, router, setOpen])
 
   return (
     <div className="flex flex-col min-h-0">
@@ -68,12 +65,12 @@ function SidebarConversations() {
                 {group.label}
               </div>
               {group.items.map((c) => {
-                const isActive = pathname === "/chat" && c.slug === conversationSlug
+                const isActive = pathname === `/chat/${c.slug}`
                 return (
-                  <button
+                  <Link
                     key={c.slug}
-                    type="button"
-                    onClick={() => handleSelect(c.slug)}
+                    href={`/chat/${c.slug}`}
+                    onClick={() => setOpen(false)}
                     className={`w-full text-left rounded-lg text-[13px] transition-colors px-2.5 py-1.5 cursor-pointer truncate block ${
                       isActive
                         ? "bg-accent-subtle text-accent font-medium"
@@ -81,7 +78,7 @@ function SidebarConversations() {
                     }`}
                   >
                     {c.frontmatter.title}
-                  </button>
+                  </Link>
                 )
               })}
             </div>
@@ -156,7 +153,7 @@ export function SidebarNav({
       {/* Main nav */}
       <nav className="px-1.5 pb-2 shrink-0">
         {navItems.map((item) => {
-          const isActive = pathname === item.href
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
           return (
             <Link
               key={item.href}
