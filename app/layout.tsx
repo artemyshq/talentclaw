@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://talentclaw.sh"),
   title: "talentclaw - Your AI Career Platform",
   description:
     "A local-first career CRM powered by AI. Discover jobs, manage your pipeline, and let your agent handle the search.",
