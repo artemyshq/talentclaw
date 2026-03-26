@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "app/**/*.ts": {
+      "excludeFiles": "{node_modules/electron/**,node_modules/app-builder-bin/**,node_modules/@anthropic-ai/claude-agent-sdk/**,node_modules/electron-builder/**,node_modules/7zip-bin/**}"
+    }
+  }
+}
