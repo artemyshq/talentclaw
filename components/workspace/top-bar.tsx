@@ -16,7 +16,7 @@ export function TopBar() {
   const { toggle } = useSidebar()
   const pageName = pageNames[pathname] || "Career Hub"
 
-  if (hiddenTopBarRoutes.has(pathname)) return null
+  if (hiddenTopBarRoutes.has(pathname) || pathname.startsWith("/chat")) return null
 
   return (
     <header className="h-12 flex items-center justify-between px-5 border-b border-border-subtle bg-surface/80 backdrop-blur-sm shrink-0">

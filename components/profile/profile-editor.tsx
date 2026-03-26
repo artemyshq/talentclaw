@@ -152,11 +152,18 @@ function BasicInfoTab({
     (fm.preferred_locations || []).join(", ")
   )
   const [remotePreference, setRemotePreference] = useState(fm.remote_preference || "")
+  const fmtDollars = (v: string) => {
+    const n = v.replace(/[^0-9]/g, "")
+    if (!n) return ""
+    return "$" + Number(n).toLocaleString("en-US")
+  }
+  const parseDollars = (v: string) => v.replace(/[^0-9]/g, "")
+
   const [salaryMin, setSalaryMin] = useState(
-    fm.salary_range?.min != null ? String(fm.salary_range.min) : ""
+    fm.salary_range?.min != null ? fmtDollars(String(fm.salary_range.min)) : ""
   )
   const [salaryMax, setSalaryMax] = useState(
-    fm.salary_range?.max != null ? String(fm.salary_range.max) : ""
+    fm.salary_range?.max != null ? fmtDollars(String(fm.salary_range.max)) : ""
   )
   const [availability, setAvailability] = useState(fm.availability || "")
 
@@ -167,8 +174,8 @@ function BasicInfoTab({
     if (!displayName.trim()) newErrors.displayName = "Name is required"
     if (experienceYears && (isNaN(Number(experienceYears)) || Number(experienceYears) < 0))
       newErrors.experienceYears = "Must be a positive number"
-    if (salaryMin && isNaN(Number(salaryMin))) newErrors.salaryMin = "Must be a number"
-    if (salaryMax && isNaN(Number(salaryMax))) newErrors.salaryMax = "Must be a number"
+    if (salaryMin && isNaN(Number(parseDollars(salaryMin)))) newErrors.salaryMin = "Must be a number"
+    if (salaryMax && isNaN(Number(parseDollars(salaryMax)))) newErrors.salaryMax = "Must be a number"
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -193,10 +200,12 @@ function BasicInfoTab({
       availability: availability || undefined,
     }
 
-    if (salaryMin || salaryMax) {
+    const rawMin = parseDollars(salaryMin)
+    const rawMax = parseDollars(salaryMax)
+    if (rawMin || rawMax) {
       updates.salary_range = {
-        min: salaryMin ? Number(salaryMin) : undefined,
-        max: salaryMax ? Number(salaryMax) : undefined,
+        min: rawMin ? Number(rawMin) : undefined,
+        max: rawMax ? Number(rawMax) : undefined,
         currency: "USD",
       }
     }
@@ -206,24 +215,25 @@ function BasicInfoTab({
 
   return (
     <div className="space-y-5">
-      <div>
+      <div className="grid grid-cols-[auto_1fr] gap-3">
+        <div className="w-64">
+          <InputField
+            label="Display Name"
+            value={displayName}
+            onChange={setDisplayName}
+            placeholder="Your name"
+          />
+          {errors.displayName && (
+            <p className="text-xs text-danger mt-1">{errors.displayName}</p>
+          )}
+        </div>
         <InputField
-          label="Display Name"
-          value={displayName}
-          onChange={setDisplayName}
-          placeholder="How you want to be known"
+          label="Headline"
+          value={headline}
+          onChange={setHeadline}
+          placeholder="Senior Backend Engineer | Distributed Systems"
         />
-        {errors.displayName && (
-          <p className="text-xs text-danger mt-1">{errors.displayName}</p>
-        )}
       </div>
-
-      <InputField
-        label="Headline"
-        value={headline}
-        onChange={setHeadline}
-        placeholder="Senior Backend Engineer | Distributed Systems"
-      />
 
       <InputField
         label="Skills"
@@ -233,26 +243,12 @@ function BasicInfoTab({
       />
       <p className="text-xs text-text-muted -mt-3">Separate skills with commas. Aim for 8-15 industry-standard terms.</p>
 
-      <div>
-        <InputField
-          label="Years of Experience"
-          value={experienceYears}
-          onChange={setExperienceYears}
-          placeholder="8"
-          type="number"
-        />
-        {errors.experienceYears && (
-          <p className="text-xs text-danger mt-1">{errors.experienceYears}</p>
-        )}
-      </div>
-
       <InputField
         label="Preferred Roles"
         value={preferredRoles}
         onChange={setPreferredRoles}
         placeholder="Staff Engineer, Tech Lead, Principal Engineer"
       />
-      <p className="text-xs text-text-muted -mt-3">Comma-separated list of target roles.</p>
 
       <InputField
         label="Preferred Locations"
@@ -261,49 +257,63 @@ function BasicInfoTab({
         placeholder="San Francisco, New York, Remote"
       />
 
-      <SelectField
-        label="Remote Preference"
-        value={remotePreference}
-        onChange={setRemotePreference}
-        options={REMOTE_OPTIONS}
-      />
-
-      <div>
-        <FieldLabel>Salary Range (USD)</FieldLabel>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <input
-              type="number"
-              value={salaryMin}
-              onChange={(e) => setSalaryMin(e.target.value)}
-              placeholder="Min (e.g. 150000)"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-raised border border-border-default text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors"
-            />
-            {errors.salaryMin && (
-              <p className="text-xs text-danger mt-1">{errors.salaryMin}</p>
-            )}
-          </div>
-          <div>
-            <input
-              type="number"
-              value={salaryMax}
-              onChange={(e) => setSalaryMax(e.target.value)}
-              placeholder="Max (e.g. 200000)"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-raised border border-border-default text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors"
-            />
-            {errors.salaryMax && (
-              <p className="text-xs text-danger mt-1">{errors.salaryMax}</p>
-            )}
-          </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <InputField
+            label="Years of Experience"
+            value={experienceYears}
+            onChange={setExperienceYears}
+            placeholder="8"
+            type="number"
+          />
+          {errors.experienceYears && (
+            <p className="text-xs text-danger mt-1">{errors.experienceYears}</p>
+          )}
         </div>
+        <SelectField
+          label="Remote Preference"
+          value={remotePreference}
+          onChange={setRemotePreference}
+          options={REMOTE_OPTIONS}
+        />
+        <SelectField
+          label="Availability"
+          value={availability}
+          onChange={setAvailability}
+          options={AVAILABILITY_OPTIONS}
+        />
       </div>
 
-      <SelectField
-        label="Availability"
-        value={availability}
-        onChange={setAvailability}
-        options={AVAILABILITY_OPTIONS}
-      />
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <FieldLabel>Salary Min</FieldLabel>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={salaryMin}
+            onChange={(e) => setSalaryMin(fmtDollars(e.target.value))}
+            placeholder="$150,000"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-surface-raised border border-border-default text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors"
+          />
+          {errors.salaryMin && (
+            <p className="text-xs text-danger mt-1">{errors.salaryMin}</p>
+          )}
+        </div>
+        <div>
+          <FieldLabel>Salary Max</FieldLabel>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={salaryMax}
+            onChange={(e) => setSalaryMax(fmtDollars(e.target.value))}
+            placeholder="$200,000"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-surface-raised border border-border-default text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors"
+          />
+          {errors.salaryMax && (
+            <p className="text-xs text-danger mt-1">{errors.salaryMax}</p>
+          )}
+        </div>
+      </div>
 
       <div className="pt-2">
         <button

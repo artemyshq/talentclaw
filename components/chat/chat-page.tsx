@@ -86,16 +86,13 @@ function ActiveChatView({
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-      {/* Header with conversation title + new chat */}
-      <div className="flex items-center gap-2 px-5 py-3 shrink-0">
-        <span className="text-sm font-medium text-text-primary truncate">
-          {title}
-        </span>
+      {/* New chat button */}
+      <div className="flex justify-end px-5 pt-3 pb-1 shrink-0">
         <button
           type="button"
           onClick={onNewChat}
           title="New chat"
-          className="ml-auto p-1.5 rounded-lg border border-border-subtle text-text-muted hover:text-text-primary hover:bg-surface-overlay transition-colors cursor-pointer"
+          className="p-1.5 rounded-lg border border-border-subtle text-text-muted hover:text-text-primary hover:bg-surface-overlay transition-colors cursor-pointer"
         >
           <SquarePen className="w-4 h-4" />
         </button>
@@ -104,7 +101,7 @@ function ActiveChatView({
       {/* Messages */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto chat-scrollbar px-6 pb-4"
+        className="flex-1 overflow-y-auto chat-scrollbar px-6 pt-4 pb-4"
       >
         <div className="max-w-3xl mx-auto flex flex-col gap-4">
           {messages.map((msg, i) => (
