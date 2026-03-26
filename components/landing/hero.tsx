@@ -1,4 +1,4 @@
-import { Terminal, Apple } from "lucide-react"
+import { Terminal } from "lucide-react"
 import { CrabLogo } from "@/components/crab-logo"
 import { CopyCommand } from "@/components/landing/copy-command"
 
@@ -29,23 +29,12 @@ export function Hero() {
         </p>
 
         <div className="flex flex-col items-center gap-3">
-          <div className="flex items-center gap-3 flex-wrap justify-center">
-            <div className="rounded-xl border border-border-default bg-surface-raised overflow-hidden">
-              <CopyCommand
-                command="npx talentclaw"
-                icon={<Terminal className="w-4 h-4 text-emerald-600" />}
-                className="relative px-5 py-3 hover:bg-surface/50"
-              />
-            </div>
-            <a
-              href="https://github.com/artemysone/talentclaw/releases/latest/download/TalentClaw-arm64.dmg"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl bg-accent text-white font-medium text-[0.9rem] hover:bg-accent-hover transition-colors"
-            >
-              <Apple className="w-4 h-4" />
-              Download for Mac
-            </a>
+          <div className="rounded-xl border border-border-default bg-surface-raised overflow-hidden">
+            <CopyCommand
+              command="npx talentclaw"
+              icon={<Terminal className="w-4 h-4 text-emerald-600" />}
+              className="relative px-5 py-3 hover:bg-surface/50"
+            />
           </div>
           <div className="rounded-xl border border-border-default bg-surface-raised overflow-hidden">
             <CopyCommand
