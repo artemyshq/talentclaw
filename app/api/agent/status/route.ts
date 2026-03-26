@@ -1,6 +1,6 @@
 export const runtime = "nodejs"
 
-import { isAgentConfigured } from "@/lib/agent"
+import { isAgentConfigured } from "@/lib/agent/config"
 
 export async function GET() {
   const available = isAgentConfigured()
