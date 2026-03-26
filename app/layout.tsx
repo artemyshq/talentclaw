@@ -2,15 +2,22 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "talentclaw - Your AI Career Agent",
+  title: "talentclaw - Your AI Career Platform",
   description:
     "A local-first career CRM powered by AI. Discover jobs, manage your pipeline, and let your agent handle the search.",
   openGraph: {
-    title: "talentclaw - Your AI Career Agent",
+    title: "talentclaw - Your AI Career Platform",
     description:
       "A local-first career CRM powered by AI. Discover jobs, manage your pipeline, and let your agent handle the search.",
     siteName: "talentclaw",
+    url: "https://talentclaw.sh",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "talentclaw - Your AI Career Platform",
+    description:
+      "A local-first career CRM powered by AI. Discover jobs, manage your pipeline, and let your agent handle the search.",
   },
 }
 
