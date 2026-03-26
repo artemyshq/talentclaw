@@ -19,14 +19,8 @@ export function Hero() {
         </div>
 
         <h1 className="font-prose text-[clamp(2.2rem,5vw,3.5rem)] font-bold leading-[1.12] tracking-[-0.03em] mb-5">
-          Your AI career agent that searches, applies, and follows up.
+          The AI career platform that searches, evaluates, and organizes.
         </h1>
-
-        <p className="text-text-secondary text-[clamp(1rem,2vw,1.15rem)] mb-8 max-w-[580px] mx-auto">
-          TalentClaw finds jobs that match your skills, applies on your
-          behalf, and manages your entire pipeline — profile, applications,
-          interviews, offers. All your career data stays on your machine.
-        </p>
 
         <div className="flex flex-col items-center gap-3">
           <div className="rounded-xl border border-border-default bg-surface-raised overflow-hidden">

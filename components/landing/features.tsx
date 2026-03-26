@@ -66,25 +66,22 @@ function PipelineIcon({ className = "w-7 h-7" }: { className?: string }) {
   )
 }
 
-function BrowserIcon({ className = "w-7 h-7" }: { className?: string }) {
+function ResumeIcon({ className = "w-7 h-7" }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      {/* Browser frame */}
-      <rect x="3" y="5" width="26" height="22" rx="3.5" stroke="#78716c" strokeWidth="1.2" fill="none" />
-      {/* URL bar */}
-      <rect x="3" y="5" width="26" height="6" rx="3.5" fill="#f5f5f4" />
-      <line x1="3" y1="11" x2="29" y2="11" stroke="#78716c" strokeWidth="0.6" opacity="0.3" />
-      <rect x="10" y="7" width="12" height="2.5" rx="1.2" fill="#e7e5e4" />
-      {/* Traffic lights */}
-      <circle cx="6.5" cy="8.2" r="1" fill="#fc5753" opacity="0.7" />
-      <circle cx="9.5" cy="8.2" r="1" fill="#fdbc40" opacity="0.0" />
-      {/* Form fields */}
-      <rect x="6" y="14" width="14" height="2" rx="1" fill="#059669" opacity="0.2" />
-      <rect x="6" y="18" width="10" height="2" rx="1" fill="#059669" opacity="0.15" />
-      {/* Submit button */}
-      <rect x="6" y="22" width="7" height="3" rx="1.5" fill="#059669" opacity="0.6" />
-      {/* Checkmark on button */}
-      <path d="M8 23.5L9 24.5L11.5 22.5" stroke="white" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Document */}
+      <rect x="6" y="3" width="16" height="22" rx="2.5" stroke="#78716c" strokeWidth="1.2" fill="none" />
+      {/* Header line */}
+      <rect x="9" y="7" width="10" height="2" rx="1" fill="#059669" opacity="0.6" />
+      {/* Body lines */}
+      <rect x="9" y="12" width="10" height="1.5" rx="0.75" fill="#a8a29e" opacity="0.3" />
+      <rect x="9" y="15.5" width="8" height="1.5" rx="0.75" fill="#a8a29e" opacity="0.3" />
+      <rect x="9" y="19" width="10" height="1.5" rx="0.75" fill="#a8a29e" opacity="0.3" />
+      {/* Pen overlay */}
+      <g transform="translate(19,16) rotate(-45)">
+        <rect x="0" y="0" width="3" height="11" rx="1" fill="#059669" opacity="0.8" />
+        <path d="M0.5 11L1.5 13.5L2.5 11" fill="#059669" opacity="0.8" />
+      </g>
     </svg>
   )
 }
@@ -151,14 +148,14 @@ const features: Feature[] = [
   },
   // Row 2
   {
-    icon: <BrowserIcon />,
-    title: "Apply Anywhere",
-    desc: "TalentClaw's agent applies to jobs on your behalf across Greenhouse, Lever, LinkedIn, and other platforms. You review and approve — the agent handles the forms.",
+    icon: <ResumeIcon />,
+    title: "Resume, Tailored",
+    desc: "TalentClaw builds a tailored resume variant for each role, highlighting the experience and skills that matter most. Export a polished PDF when you're ready to apply.",
   },
   {
     icon: <AgentIcon />,
     title: "The Agent Works, You Decide",
-    desc: "TalentClaw researches companies, evaluates fit, and drafts applications. You review what it found and make the calls. Think of it as a career advisor that never sleeps.",
+    desc: "TalentClaw researches companies, evaluates fit against your profile, and surfaces what matters. You make every decision — the agent does the legwork.",
   },
   {
     icon: <LocalIcon />,

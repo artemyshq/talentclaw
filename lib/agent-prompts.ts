@@ -4,9 +4,9 @@ export function APPLY_PROMPT(
   company: string,
 ): string {
   return `I'd like to apply to the ${jobTitle} position at ${company}. The job slug is ${jobSlug}.
-If a tailored resume variant exists for this job in resumes/variants/, export it to PDF (resumes/exports/) before submitting.
-If no variant exists, create one from resumes/base.md first, then export and submit.
-Try ATS API submission first (run: bun run lib/ats/cli.ts detect <job-url>). If the platform is unsupported or submission fails, prepare an Apply Kit and direct the user to the Apply Kit page for manual submission.`
+If a tailored resume variant exists for this job in resumes/variants/, export it to PDF (resumes/exports/).
+If no variant exists, create one from resumes/base.md first, then export.
+Prepare the application — draft a cover letter, highlight key qualifications, and have the resume PDF ready for submission.`
 }
 
 export function TAILOR_RESUME_PROMPT(
