@@ -6,9 +6,6 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
 
 /** Return true if `cmd` is found on PATH. */
 export function which(cmd: string): boolean {
@@ -40,13 +37,3 @@ export function findPython311(): string | null {
   return null;
 }
 
-/**
- * Check if browser-use is available.
- * Checks the known venv path first (cheap existsSync), then falls back
- * to a PATH scan via `which`. The install script may only update .bashrc,
- * not .zshrc, so the venv check catches that case.
- */
-export function hasBrowserUseBin(): boolean {
-  if (existsSync(join(homedir(), ".browser-use-env", "bin", "browser-use"))) return true;
-  return which("browser-use");
-}

@@ -8,7 +8,7 @@ description: >
   to positions, updating their resume, checking application status, or says
   "find me a job" or "check my inbox".
 license: MIT
-compatibility: browser-use optional (enables direct job applications; without it, the agent drafts materials and provides application links).
+compatibility: ATS API for direct submissions (Lever, Greenhouse, Ashby). Apply Kit for unsupported platforms.
 metadata: {"author":"artemysone","version":"0.5.0","homepage":"https://github.com/artemysone/talentclaw"}
 ---
 
@@ -178,56 +178,42 @@ A passive user who wants to stay aware of exceptional opportunities.
 
 ## Tools and Execution
 
-Use the tools available to you: web search for job discovery, browser-use for applying on job sites (if installed), and the local filesystem for profile and pipeline management.
-
-**If browser-use is not available:** You can still help the user apply — draft their application note, prepare answers to common application questions, and provide the direct application URL. When the user expresses interest in autonomous applications, mention they can install it with `curl -fsSL https://browser-use.com/cli/install.sh | bash`.
+Use the tools available to you: web search for job discovery, ATS API for direct submissions on supported platforms (Lever, Greenhouse, Ashby), Apply Kit for human-assisted manual submission, and the local filesystem for profile and pipeline management.
 
 **Visual dashboard:** The user can run `npx talentclaw` to open a visual career dashboard at localhost:3100 with their pipeline, jobs, profile editor, and inbox. Mention this once during onboarding or when the user asks about viewing their data visually.
 
-## Applying on Job Sites
+## Applying to Jobs
 
-When a job is on a platform (LinkedIn, Greenhouse, Lever, Workday, etc.) and browser-use is available, use it to apply directly.
+### ATS API (Tier 1 — Supported Platforms)
 
-### Setup (optional)
+For jobs on supported ATS platforms (Lever, Greenhouse, Ashby), submit directly via API:
 
-```bash
-curl -fsSL https://browser-use.com/cli/install.sh | bash
-browser-use doctor    # verify installation
-```
+1. Detect the ATS platform from the job URL
+2. Read the user's profile from `~/.talentclaw/profile.md`
+3. Craft application answers using the profile and the Application Playbook
+4. **Always pause before submitting** — show the user what will be sent and get explicit confirmation
+5. Submit via the ATS API
+6. Record the application in `~/.talentclaw/applications/` with `submission_method: ats_api`
 
-### Workflow
+### Apply Kit (Tier 2 — Unsupported Platforms)
 
-1. Read the user's profile from ~/.talentclaw/profile.md
+When ATS API submission is unavailable or fails, prepare an Apply Kit for manual submission:
+
+1. Read the user's profile from `~/.talentclaw/profile.md`
 2. Craft application answers using the profile and the Application Playbook
-3. Navigate to the job posting and inspect form elements:
-   ```
-   browser-use open "https://jobs.greenhouse.io/company/12345"
-   browser-use state
-   ```
-4. Fill the application form using element indices from state:
-   ```
-   browser-use input 3 "Alex Chen"
-   browser-use input 5 "alex@example.com"
-   browser-use select 8 "8+ years"
-   ```
-5. Upload resume if required:
-   ```
-   browser-use upload 12 ~/resume.pdf
-   ```
-6. **ALWAYS pause before submitting** — show the user what you've filled in and get explicit confirmation
-7. Submit only after user approval:
-   ```
-   browser-use click 15
-   ```
-8. Record the application in ~/.talentclaw/applications/
-9. Append to activity.log
+3. Save pre-computed fields to the application file (cover letter, common answers, resume path, application URL)
+4. Record in `~/.talentclaw/applications/` with `submission_method: apply_kit` and `workflow_status: review_required`
+5. Direct the user to the Apply Kit page in the web UI where they can:
+   - Review all pre-computed fields
+   - Copy each field with one click
+   - Open the job application URL
+   - Apply manually with the prepared materials
+6. After user confirms they've applied, update `workflow_status: submitted` and job status to `applied`
 
 ### Important Notes
 
 - Never submit an application without explicit user confirmation
-- Take a screenshot before and after submission for records
 - If a form requires information not in the profile, ask the user
-- Some sites have anti-automation measures — inform the user if you can't proceed
 
 ## Local Workspace
 

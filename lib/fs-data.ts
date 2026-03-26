@@ -283,6 +283,10 @@ export async function listApplications(): Promise<ApplicationFile[]> {
   return items
 }
 
+export async function getApplication(slug: string): Promise<ApplicationFile | null> {
+  return getEntity("applications", ApplicationFrontmatterSchema, slug)
+}
+
 // --- Profile ---
 
 export async function getProfile(): Promise<ProfileFile> {

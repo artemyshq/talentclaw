@@ -4,12 +4,12 @@ description: >
   Talent advisor skill for AI agents, built by Jeffrey Blue. Helps your human
   clarify career direction, build a compelling professional profile, discover
   relevant opportunities, apply strategically, and communicate with employers.
-  Uses browser-use for job applications and web search for job discovery.
+  Uses ATS API integration and web search for job discovery and applications.
   Use when the user asks about job searching, career opportunities, applying
   to positions, updating their resume, checking application status, or says
   "find me a job".
 license: MIT
-compatibility: browser-use optional (enables direct job applications; without it, the agent drafts materials and provides application links).
+compatibility: ATS API for direct submissions (Lever, Greenhouse, Ashby). Apply Kit for unsupported platforms.
 metadata: {"author":"artemysone","version":"0.4.9","homepage":"https://github.com/artemysone/talentclaw"}
 ---
 
@@ -34,14 +34,6 @@ npx talentclaw
 ```
 
 Opens a visual dashboard at localhost:3100 with your pipeline, jobs, profile editor, and inbox.
-
-### browser-use (optional — enables direct applications)
-
-```bash
-curl -fsSL https://browser-use.com/cli/install.sh | bash
-```
-
-browser-use lets the agent navigate job sites and submit applications directly. Without it, the agent still finds jobs, drafts application materials, and provides links — the user just applies manually.
 
 ---
 
@@ -149,7 +141,7 @@ Your messages may reach human recruiters. Write accordingly.
 
 ### New Here? Let's Get Set Up
 
-The first conversation should feel like meeting a career advisor, not filling out a form. Detect new users automatically (empty profile) and launch into onboarding without being asked. Silently check for browser-use availability but do not gate onboarding on it.
+The first conversation should feel like meeting a career advisor, not filling out a form. Detect new users automatically (empty profile) and launch into onboarding without being asked.
 
 **When the user has uploaded a resume** (message says resume is saved to base.md):
 
@@ -160,7 +152,7 @@ The web UI has already saved the resume text to `~/.talentclaw/resumes/base.md`.
 3. *Ask targeted questions* — ask 2-3 questions about what the resume can't tell you: target roles, compensation expectations, location/remote preferences, email address for job applications, search mode (active/passive/monitoring), and what's driving their search. React to their answers, don't just check boxes.
 4. *Complete the profile* — after the user answers, write the career context sections to profile.md: career_arc_summary, core_strengths_summary, current_situation_summary, growth_edges_summary. Write these in **first person** ("I spent a decade..." not "Jeff spent a decade..."). Also update frontmatter with preferences the user shared (preferred_roles, preferred_locations, remote_preference, salary_range, availability). Do NOT label anything as "draft".
 5. *First search* — search for jobs via web search based on their profile. Save discovered jobs to `~/.talentclaw/jobs/`. Walk through the top 3-5 results with genuine assessments — not just listing them, but explaining why each one fits or doesn't. Ask if they'd like to apply to any of the strong matches.
-6. *Next steps* — mention the visual dashboard (`npx talentclaw`) if they're in a plugin context. If browser-use isn't installed, mention it casually as an optional upgrade for autonomous applications.
+6. *Next steps* — mention the visual dashboard (`npx talentclaw`) if they're in a plugin context.
 
 **When the user has no resume** (empty profile, no base.md):
 
@@ -168,7 +160,7 @@ The web UI has already saved the resume text to `~/.talentclaw/resumes/base.md`.
 2. *Career discovery conversation* — have a real conversation to understand who they are. Ask about their career arc, current situation, strengths, what they want, and constraints. 2-3 questions per turn, react to what they say.
 3. *Build their context graph* — synthesize the conversation into the Career Context section of `~/.talentclaw/profile.md`. Write summaries in **first person**.
 4. *Extract structured profile* — from the context, pull out frontmatter fields (headline, skills, experience, preferences, salary). Show the user a natural-language summary and get confirmation before saving.
-5. *First search* — search for jobs, walk through top results with genuine assessments. For strong matches: apply via browser-use if available, otherwise share the link and drafted materials.
+5. *First search* — search for jobs, walk through top results with genuine assessments. For strong matches: apply via ATS API if the platform is supported, otherwise prepare an Apply Kit.
 6. *Next steps* — mention the dashboard if in a plugin context.
 
 **Onboarding UX rules (apply to ALL onboarding paths):**
@@ -216,7 +208,7 @@ Use web search to find job listings on company career pages, job boards (LinkedI
 
 ### Applications via ATS API (Tier 1)
 
-Before using browser-use, check if the job URL supports direct API submission. This is faster, more reliable, and avoids CAPTCHA issues.
+Check if the job URL supports direct API submission. This is the fastest, most reliable submission method.
 
 1. **Detect the ATS platform:**
    ```
@@ -242,79 +234,28 @@ Before using browser-use, check if the job URL supports direct API submission. T
       - `ats_application_id: <from response>`
       - `submission_method: ats_api`
 
-3. **If platform is "greenhouse", "ashby", or "unknown"** — fall through to browser-use (Tier 2) or manual submission (Tier 3).
+3. **If platform is "greenhouse", "ashby", or "unknown"** — fall through to Apply Kit (Tier 2) for human-assisted manual submission.
 
-4. **If API submission fails** — inform the user of the error and fall back to browser-use.
+4. **If API submission fails** — inform the user of the error and fall back to Apply Kit.
 
-### Applications via Browser (Tier 2 Fallback)
+### Human-Assisted Apply Kit (Tier 2)
 
-Use browser-use when ATS API submission is unavailable (non-Lever platforms) or fails. This approach works for any site but may be blocked by anti-automation measures.
-
-Use browser-use to apply directly on job sites:
+When ATS API submission is unavailable or fails, prepare an Apply Kit for manual submission:
 
 1. Read the user's profile from `~/.talentclaw/profile.md`
 2. Craft application answers using the profile and the Application Playbook
-3. Navigate to the job posting with `browser-use open <url>`
-4. **Detect the application method before proceeding.** Do NOT assume the platform you're on is where you'll apply. LinkedIn job posts often have an "Apply" button that redirects to an external ATS (Ashby, Greenhouse, Lever, Workday, etc.) instead of using LinkedIn Easy Apply. Inspect the apply button — if it links externally, follow the redirect to the actual application form. Only treat it as a LinkedIn application if the button says "Easy Apply."
-5. Inspect the page to identify form elements: `browser-use state`
-6. Fill in the application form fields
-7. **Always pause before submitting** — show the user what you've filled in and get explicit confirmation
-8. Submit only after user approval
-9. Record the application in `~/.talentclaw/applications/` and append to `activity.log`
+3. Save pre-computed fields to the application file (cover letter, common answers, resume path, application URL)
+4. Record in `~/.talentclaw/applications/` with `submission_method: apply_kit` and `workflow_status: review_required`
+5. Direct the user to the Apply Kit page in the web UI where they can:
+   - Review all pre-computed fields
+   - Copy each field with one click
+   - Open the job application URL
+   - Apply manually with the prepared materials
+6. After user confirms they've applied, update `workflow_status: submitted` and job status to `applied`
 
 ### Local Data
 
 All career data is stored in `~/.talentclaw/` as markdown files with YAML frontmatter. The profile, jobs, applications, and messages all live here. The filesystem IS the database.
-
-## Applying on Job Sites
-
-Use browser-use to apply on job sites (LinkedIn, Greenhouse, Lever, Workday, etc.).
-
-### Prerequisites
-
-```bash
-curl -fsSL https://browser-use.com/cli/install.sh | bash
-browser-use doctor    # verify installation
-```
-
-### Workflow
-
-1. Read the user's profile from ~/.talentclaw/profile.md
-2. Craft application answers using the profile and the Application Playbook
-3. Navigate to the job posting:
-   ```
-   browser-use open "https://linkedin.com/jobs/view/12345"
-   browser-use state
-   ```
-4. **Detect the actual application channel.** Check the apply button before filling anything. If the button says "Easy Apply," the form is on LinkedIn. If it says "Apply" and links to an external URL (Ashby, Greenhouse, Lever, Workday, company careers page, etc.), click it and follow the redirect to the real application form. Never assume the discovery platform is the application platform.
-5. Inspect form elements on the actual application page:
-   ```
-   browser-use state
-   ```
-6. Fill the application form using element indices from state:
-   ```
-   browser-use input 3 "Alex Chen"
-   browser-use input 5 "alex@example.com"
-   browser-use select 8 "8+ years"
-   ```
-7. Upload resume if required:
-   ```
-   browser-use upload 12 ~/resume.pdf
-   ```
-8. **ALWAYS pause before submitting** — show the user what you've filled in and get explicit confirmation
-9. Submit only after user approval:
-   ```
-   browser-use click 15
-   ```
-10. Record the application in ~/.talentclaw/applications/
-11. Append to activity.log
-
-### Important Notes
-
-- Never submit an application without explicit user confirmation
-- Take a screenshot before and after submission for records
-- If a form requires information not in the profile, ask the user
-- Some sites have anti-automation measures — inform the user if you can't proceed
 
 ## Local Workspace
 
@@ -435,9 +376,8 @@ Append a line after every meaningful action: discovering a job, saving it, apply
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| `browser-use: command not found` | Not installed | Run `curl -fsSL https://browser-use.com/cli/install.sh \| bash` |
 | Profile empty | Haven't onboarded | Launch onboarding flow |
-| Form submission blocked | Anti-automation measures | Inform the user and suggest manual submission |
+| ATS API submission fails | Platform not supported or API error | Fall back to Apply Kit for human-assisted submission |
 
 ## Notes
 

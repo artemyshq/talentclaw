@@ -22,6 +22,7 @@ import { PipelineCard } from "./pipeline-card"
 import type { KanbanCardData } from "@/components/kanban/card"
 import { SearchBar } from "@/components/query/search-bar"
 import { PIPELINE_DISPLAY_STAGES } from "@/lib/types"
+import type { PipelineStage } from "@/lib/types"
 import { STAGE_LABELS, STAGE_HEX, pluralize } from "@/lib/ui-utils"
 import { moveJobToStage } from "@/app/actions"
 
@@ -87,7 +88,7 @@ function StagePill({ stage, count, onClick }: PillProps) {
 // ---------------------------------------------------------------------------
 
 interface ExpandedColumnProps {
-  stage: string
+  stage: PipelineStage
   cards: KanbanCardData[]
   searchQuery?: string
   onSearchChange?: (value: string) => void
@@ -132,7 +133,7 @@ function ExpandedColumn({ stage, cards, searchQuery, onSearchChange, totalCount 
         {cards.length > 0 ? (
           <div className="flex flex-col gap-2">
             {cards.map((card) => (
-              <PipelineCard key={card.id} card={card} />
+              <PipelineCard key={card.id} card={card} stage={stage} />
             ))}
           </div>
         ) : searchQuery ? (

@@ -11,17 +11,21 @@ import {
   DollarSign,
   ExternalLink,
   Heart,
+  Send,
 } from "lucide-react"
+import Link from "next/link"
 import type { KanbanCardData } from "@/components/kanban/card"
 import { matchScoreClass, isSafeUrl } from "@/lib/ui-utils"
+import type { PipelineStage } from "@/lib/types"
 import { MatchTooltip } from "@/components/jobs/match-tooltip"
 import { DeleteJobButton } from "@/components/jobs/delete-job-button"
 
 interface PipelineCardProps {
   card: KanbanCardData
+  stage?: PipelineStage
 }
 
-export function PipelineCard({ card }: PipelineCardProps) {
+export function PipelineCard({ card, stage }: PipelineCardProps) {
   const [favorited, setFavorited] = useState(false)
 
   const {
@@ -54,6 +58,16 @@ export function PipelineCard({ card }: PipelineCardProps) {
         className="absolute bottom-3 right-3.5 flex items-center gap-1"
         onPointerDown={(e) => e.stopPropagation()}
       >
+        {(stage === "discovered" || stage === "saved") && (
+          <Link
+            href={`/pipeline/${card.id}/apply`}
+            onClick={(e) => e.stopPropagation()}
+            className="p-1.5 rounded-lg text-text-muted hover:text-accent hover:scale-110 transition-all"
+            title="Apply Kit"
+          >
+            <Send className="w-3.5 h-3.5" />
+          </Link>
+        )}
         <DeleteJobButton slug={card.id} jobTitle={card.title} />
         <button
           type="button"

@@ -69,62 +69,6 @@ describe("CLI onboarding E2E", () => {
     expect(existsSync(join(tmpDir, "messages"))).toBe(true);
   });
 
-  it("detects missing browser-use when not on PATH and no venv", { timeout: 35000 }, () => {
-    // Run with a PATH that excludes browser-use, and a HOME that has no venv
-    const fakeHome = mkdtempSync(join(tmpdir(), "fakehome-"));
-    try {
-      const output = execSync(`npx tsx ${CLI_PATH} setup`, {
-        encoding: "utf-8",
-        timeout: 30000,
-        env: {
-          ...process.env,
-          TALENTCLAW_DIR: tmpDir,
-          HOME: fakeHome,
-          PATH: MINIMAL_PATH,
-        },
-        stdio: ["pipe", "pipe", "pipe"],
-      });
-      // Should show [!!] for browser-use
-      expect(output).toContain("[!!]");
-      expect(output).toContain("browser-use");
-    } catch (e: any) {
-      // Command may fail — check stdout/stderr for the checklist
-      const combined = (e.stdout || "") + (e.stderr || "");
-      expect(combined).toContain("browser-use");
-    } finally {
-      rmSync(fakeHome, { recursive: true, force: true });
-    }
-  });
-
-  it("detects browser-use via venv fallback path", { timeout: 35000 }, () => {
-    // Create a fake venv with a browser-use binary
-    const fakeHome = mkdtempSync(join(tmpdir(), "fakehome-"));
-    const venvBin = join(fakeHome, ".browser-use-env", "bin");
-    execSync(`mkdir -p "${venvBin}" && touch "${venvBin}/browser-use" && chmod +x "${venvBin}/browser-use"`);
-
-    try {
-      const output = execSync(`npx tsx ${CLI_PATH} setup`, {
-        encoding: "utf-8",
-        timeout: 30000,
-        env: {
-          ...process.env,
-          TALENTCLAW_DIR: tmpDir,
-          HOME: fakeHome,
-          PATH: MINIMAL_PATH,
-        },
-        stdio: ["pipe", "pipe", "pipe"],
-      });
-      // browser-use should show as [ok] via the venv fallback
-      expect(output).toMatch(/\[ok\].*browser-use/);
-    } catch (e: any) {
-      const combined = (e.stdout || "") + (e.stderr || "");
-      // Even if exit code is non-zero, the checklist should show browser-use as ok
-      expect(combined).toMatch(/\[ok\].*browser-use/);
-    } finally {
-      rmSync(fakeHome, { recursive: true, force: true });
-    }
-  });
-
   it("detects python3.13 when system python3 is old", () => {
     // Create a fake python3 that reports < 3.11, and a python3.13 that reports >= 3.11
     const fakeBin = mkdtempSync(join(tmpdir(), "fakebin-"));

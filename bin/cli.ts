@@ -13,7 +13,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isServerReady } from "../lib/server-constants";
 import { hasClaudeCredentialFiles } from "../lib/claude-auth";
-import { which, findPython311, hasBrowserUseBin } from "../lib/deps";
+import { which } from "../lib/deps";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -89,7 +89,6 @@ function writeIfMissing(path: string, content: string): void {
 interface DepStatus {
   hasClaude: boolean;
   hasClaudeAuth: boolean;
-  hasBrowserUse: boolean;
 }
 
 function checkClaudeAuth(): boolean {
@@ -111,29 +110,6 @@ function checkClaudeAuth(): boolean {
   }
 
   return hasClaudeCredentialFiles();
-}
-
-function installPython(): string | null {
-  if (process.platform === "darwin") {
-    // macOS — use Homebrew
-    if (which("brew")) {
-      try {
-        execSync("brew install python@3.13", { stdio: "pipe", timeout: 300000 });
-        return "python3.13";
-      } catch { /* fall through */ }
-    }
-  }
-  // Linux — try apt if available
-  if (process.platform === "linux" && which("apt-get")) {
-    try {
-      execSync("sudo apt-get update -qq && sudo apt-get install -y -qq python3 python3-pip", {
-        stdio: "pipe",
-        timeout: 300000,
-      });
-      return "python3";
-    } catch { /* fall through */ }
-  }
-  return null;
 }
 
 function checkDeps(): DepStatus {
@@ -166,37 +142,7 @@ function checkDeps(): DepStatus {
     }
   }
 
-  // --- Python 3.11+ (required for browser-use — auto-install) ---
-  let pythonBin = findPython311();
-  if (!pythonBin) {
-    console.log("  Installing Python...");
-    pythonBin = installPython();
-  }
-
-  // --- browser-use (required — auto-install, needs Python) ---
-  let hasBrowserUse = hasBrowserUseBin();
-  if (!hasBrowserUse && pythonBin) {
-    try {
-      console.log("  Installing browser-use...");
-      // Use the discovered python3.x binary so the install script
-      // picks up 3.11+ even when the system python3 is older (e.g. macOS 3.9)
-      execSync(`curl -fsSL https://browser-use.com/cli/install.sh | PYTHON=${pythonBin} bash`, { stdio: "pipe", timeout: 300000 });
-      hasBrowserUse = hasBrowserUseBin();
-      if (!hasBrowserUse) {
-        // Fallback: install via pip directly with the correct python
-        execSync(`${pythonBin} -m pip install browser-use`, { stdio: "pipe", timeout: 300000 });
-        hasBrowserUse = hasBrowserUseBin();
-      }
-      if (hasBrowserUse) {
-        console.log("  Installing Chromium...");
-        execSync("browser-use install", { stdio: "pipe", timeout: 300000 });
-      }
-    } catch {
-      // Will show as missing in checklist
-    }
-  }
-
-  return { hasClaude, hasClaudeAuth, hasBrowserUse };
+  return { hasClaude, hasClaudeAuth };
 }
 
 // ---------------------------------------------------------------------------
@@ -218,12 +164,6 @@ function printChecklist(deps: DepStatus, webUrl?: string, webError?: string): vo
       ? (process.env.ANTHROPIC_API_KEY ? "API key" : "Claude subscription")
       : (deps.hasClaude ? "run: claude login" : "install Claude Code first"),
   );
-  check(
-    "browser-use",
-    deps.hasBrowserUse,
-    deps.hasBrowserUse ? "installed" : "failed — run: curl -fsSL https://browser-use.com/cli/install.sh | bash",
-  );
-
   if (webError) {
     check("Web UI", false, webError);
   } else if (webUrl) {

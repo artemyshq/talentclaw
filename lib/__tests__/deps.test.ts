@@ -1,21 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { join } from "node:path";
-import { homedir } from "node:os";
 
 vi.mock("node:child_process", () => ({
   execFileSync: vi.fn(),
 }));
 
-vi.mock("node:fs", () => ({
-  existsSync: vi.fn(),
-}));
-
-import { which, findPython311, hasBrowserUseBin } from "../deps";
+import { which, findPython311 } from "../deps";
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
 
 const mockExecFileSync = vi.mocked(execFileSync);
-const mockExistsSync = vi.mocked(existsSync);
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -102,33 +94,3 @@ describe("findPython311", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// hasBrowserUseBin()
-// ---------------------------------------------------------------------------
-
-// hasBrowserUseBin checks existsSync (venv path) first, then which() as fallback.
-
-describe("hasBrowserUseBin", () => {
-  const venvPath = join(homedir(), ".browser-use-env", "bin", "browser-use");
-
-  it("returns true via venv path (checked first)", () => {
-    mockExistsSync.mockReturnValueOnce(true);
-    expect(hasBrowserUseBin()).toBe(true);
-    // Should not spawn a subprocess since existsSync found it
-    expect(mockExecFileSync).not.toHaveBeenCalled();
-  });
-
-  it("falls back to which() when venv doesn't exist", () => {
-    mockExistsSync.mockReturnValueOnce(false);
-    // which("browser-use") succeeds
-    mockExecFileSync.mockReturnValueOnce(Buffer.from("/usr/local/bin/browser-use"));
-    expect(hasBrowserUseBin()).toBe(true);
-    expect(mockExistsSync).toHaveBeenCalledWith(venvPath);
-  });
-
-  it("returns false when neither venv nor PATH has it", () => {
-    mockExistsSync.mockReturnValue(false);
-    mockExecFileSync.mockImplementation(() => { throw new Error("not found"); });
-    expect(hasBrowserUseBin()).toBe(false);
-  });
-});

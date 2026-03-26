@@ -37,12 +37,28 @@ async function main() {
     if (!url) exitError("Usage: cli.ts questions <url>")
 
     const info = detectAtsPlatform(url)
-    if (info.platform !== "lever") {
-      exitError(`Custom questions only supported for Lever (detected: ${info.platform})`)
+    let questions
+
+    switch (info.platform) {
+      case "lever": {
+        const { fetchLeverCustomQuestions } = await import("./lever")
+        questions = await fetchLeverCustomQuestions(info.companySlug, info.postingId)
+        break
+      }
+      case "greenhouse": {
+        const { fetchGreenhouseCustomQuestions } = await import("./greenhouse")
+        questions = await fetchGreenhouseCustomQuestions(info.companySlug, info.postingId)
+        break
+      }
+      case "ashby": {
+        const { fetchAshbyCustomQuestions } = await import("./ashby")
+        questions = await fetchAshbyCustomQuestions(info.companySlug, info.postingId)
+        break
+      }
+      default:
+        exitError(`Custom questions not supported for platform: ${info.platform}`)
     }
 
-    const { fetchLeverCustomQuestions } = await import("./lever")
-    const questions = await fetchLeverCustomQuestions(info.companySlug, info.postingId)
     exitJson(questions)
   }
 
@@ -54,9 +70,6 @@ async function main() {
     }
 
     const info = detectAtsPlatform(url)
-    if (info.platform !== "lever") {
-      exitError(`Submission only supported for Lever (detected: ${info.platform})`)
-    }
 
     const name = getFlag(args, "--name")
     const email = getFlag(args, "--email")
@@ -86,14 +99,40 @@ async function main() {
       }
     }
 
-    const { submitLeverApplication } = await import("./lever")
-    const result = await submitLeverApplication(
-      info.companySlug,
-      info.postingId,
-      applicant,
-      resumePath,
-      customAnswers
-    )
+    let result
+
+    switch (info.platform) {
+      case "lever": {
+        const { submitLeverApplication } = await import("./lever")
+        result = await submitLeverApplication(
+          info.companySlug, info.postingId, applicant, resumePath, customAnswers
+        )
+        break
+      }
+      case "greenhouse": {
+        const { submitGreenhouseApplication } = await import("./greenhouse")
+        result = await submitGreenhouseApplication(
+          info.companySlug, info.postingId, applicant, resumePath, customAnswers
+        )
+        break
+      }
+      case "ashby": {
+        const { submitAshbyApplication } = await import("./ashby")
+        result = await submitAshbyApplication(
+          info.companySlug, info.postingId, applicant, resumePath, customAnswers
+        )
+        break
+      }
+      default:
+        exitError(`Submission not supported for platform: ${info.platform}`)
+    }
+
+    if (!result.success && result.error?.includes("not configured")) {
+      process.stderr.write(`\nHint: ${result.error}\n`)
+      process.stderr.write(
+        "Add the key to your .env file or export it in your shell.\n\n"
+      )
+    }
 
     exitJson(result, result.success ? 0 : 1)
   }

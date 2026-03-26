@@ -85,7 +85,7 @@ export const ApplicationFrontmatterSchema = z.object({
   tailored_content: z.string().optional(),
   ats_platform: AtsPlatformSchema.optional(),
   ats_application_id: z.string().optional(),
-  submission_method: z.enum(["ats_api", "browser_use", "manual"]).optional(),
+  submission_method: z.enum(["ats_api", "apply_kit", "manual"]).optional(),
 })
 
 export type ApplicationFrontmatter = z.infer<

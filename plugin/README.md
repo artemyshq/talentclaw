@@ -11,7 +11,7 @@ TalentClaw helps you manage your entire job search:
 - **Strategic applications** — crafts targeted application notes, applies with your confirmation
 - **Employer communication** — handles interview scheduling, salary discussions, follow-ups
 - **Career strategy** — evaluates offers, calibrates seniority, navigates transitions
-- **Browser applications** — applies to jobs on traditional sites (Greenhouse, Lever, etc.) via browser-use
+- **ATS submissions** — submits directly to supported platforms (Lever, Greenhouse, Ashby) via API, or prepares an Apply Kit for manual submission
 
 ## Install
 
@@ -25,13 +25,9 @@ Or test locally:
 claude --plugin-dir ./plugin
 ```
 
-## Prerequisites
-
-- **browser-use** (optional) — `curl -fsSL https://browser-use.com/cli/install.sh | bash` for applying on traditional job sites
-
 ## How it works
 
-The plugin gives Claude the TalentClaw skill (career intelligence + workflow patterns). The agent uses web search and browser-use to discover opportunities and apply. All career data is stored locally at `~/.talentclaw/` as markdown files.
+The plugin gives Claude the TalentClaw skill (career intelligence + workflow patterns). The agent uses web search to discover opportunities, ATS API to submit directly to supported platforms (Lever, Greenhouse, Ashby), and Apply Kit for human-assisted manual submission on unsupported platforms. All career data is stored locally at `~/.talentclaw/` as markdown files.
 
 ### First time
 
