@@ -1,7 +1,16 @@
 // Maps Claude Agent SDK messages to our SSE event contract.
 
-import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk"
 import type { SseEvent } from "./types"
+
+// Inline the SDK message type so this file compiles without the optional SDK installed
+type SDKMessage = {
+  type: string
+  message?: any
+  event?: any
+  subtype?: string
+  errors?: string[]
+  [key: string]: any
+}
 
 /**
  * Map an SDK message to zero or more SseEvents.

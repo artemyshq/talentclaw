@@ -56,6 +56,7 @@ export async function runAgent(
     try {
       const claudePath = process.env.TALENTCLAW_CLAUDE_PATH || undefined
 
+      // @ts-ignore — SDK is an optional dependency, only available locally
       const { query } = await import("@anthropic-ai/claude-agent-sdk")
       const conversation = query({
         prompt: message,
