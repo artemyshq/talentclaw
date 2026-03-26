@@ -47,14 +47,19 @@ interface PillProps {
 }
 
 function StagePill({ stage, count, onClick }: PillProps) {
+  const { setNodeRef, isOver } = useDroppable({ id: stage })
   const hex = STAGE_HEX[stage] || "#64748b"
   const fillPct = Math.min(count * 12, 90)
 
   return (
     <button
+      ref={setNodeRef}
       type="button"
       onClick={onClick}
-      className="flex flex-col items-center h-full min-h-[600px] w-[44px] min-w-[44px] rounded-2xl bg-surface-raised border border-border-subtle relative overflow-hidden py-3 transition-all hover:border-border-default hover:shadow-sm cursor-pointer shrink-0"
+      className={`flex flex-col items-center h-full min-h-[600px] w-[44px] min-w-[44px] rounded-2xl bg-surface-raised border-2 relative overflow-hidden py-3 transition-all hover:border-border-default hover:shadow-sm cursor-pointer shrink-0 ${
+        isOver ? "shadow-lg scale-105" : "border-border-subtle"
+      }`}
+      style={isOver ? { borderColor: hex, background: `color-mix(in srgb, ${hex} 8%, white)` } : undefined}
     >
       {/* Thermometer fill from top */}
       <div
@@ -95,18 +100,21 @@ interface ExpandedColumnProps {
   searchQuery?: string
   onSearchChange?: (value: string) => void
   totalCount?: number
+  onCardDeleted?: (cardId: string) => void
 }
 
-function ExpandedColumn({ stage, cards, searchQuery, onSearchChange, totalCount }: ExpandedColumnProps) {
+function ExpandedColumn({ stage, cards, searchQuery, onSearchChange, totalCount, onCardDeleted }: ExpandedColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage })
   const cardIds = useMemo(() => cards.map((c) => c.id), [cards])
+  const hex = STAGE_HEX[stage] || "#64748b"
 
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[320px] flex flex-col px-4 ${
-        isOver ? "bg-accent/[0.03] rounded-2xl" : ""
+      className={`min-w-0 w-[540px] shrink-0 flex flex-col px-4 rounded-2xl transition-colors ${
+        isOver ? "border-2" : "border-2 border-transparent"
       }`}
+      style={isOver ? { borderColor: hex, background: `color-mix(in srgb, ${hex} 5%, transparent)` } : undefined}
     >
       {/* Centered stage label */}
       <div className="flex items-center justify-center gap-2 mb-5 pt-1">
@@ -144,7 +152,7 @@ function ExpandedColumn({ stage, cards, searchQuery, onSearchChange, totalCount 
         {cards.length > 0 ? (
           <div className="flex flex-col gap-2">
             {cards.map((card) => (
-              <PipelineCard key={card.id} card={card} stage={stage} />
+              <PipelineCard key={card.id} card={card} stage={stage} onDeleted={onCardDeleted} />
             ))}
           </div>
         ) : searchQuery ? (
@@ -214,6 +222,16 @@ export function PipelineBoard({ initialData }: PipelineBoardProps) {
   )
 
   // ---- Drag handlers ----
+
+  const removeCard = useCallback((cardId: string) => {
+    setColumns((prev) => {
+      const next = { ...prev }
+      for (const stage of Object.keys(next)) {
+        next[stage] = next[stage].filter((c) => c.id !== cardId)
+      }
+      return next
+    })
+  }, [])
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event
@@ -297,7 +315,7 @@ export function PipelineBoard({ initialData }: PipelineBoardProps) {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-1.5 items-stretch min-h-[600px]">
+      <div className="flex gap-7 items-stretch min-h-[600px]">
         {PIPELINE_DISPLAY_STAGES.map((stage) =>
           stage === expandedStage ? (
             <ExpandedColumn
@@ -307,6 +325,7 @@ export function PipelineBoard({ initialData }: PipelineBoardProps) {
               searchQuery={stage === "discovered" ? searchQuery : undefined}
               onSearchChange={stage === "discovered" ? setSearchQuery : undefined}
               totalCount={stage === "discovered" ? discovered.length : undefined}
+              onCardDeleted={removeCard}
             />
           ) : (
             <StagePill

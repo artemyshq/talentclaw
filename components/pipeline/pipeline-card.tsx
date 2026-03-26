@@ -21,9 +21,10 @@ import { DeleteJobButton } from "@/components/jobs/delete-job-button"
 interface PipelineCardProps {
   card: KanbanCardData
   stage?: PipelineStage
+  onDeleted?: (cardId: string) => void
 }
 
-export function PipelineCard({ card, stage }: PipelineCardProps) {
+export function PipelineCard({ card, stage, onDeleted }: PipelineCardProps) {
   const [favorited, setFavorited] = useState(false)
 
   const {
@@ -53,7 +54,7 @@ export function PipelineCard({ card, stage }: PipelineCardProps) {
     >
       {/* Action buttons — bottom right, isolated from drag sensor */}
       <div
-        className="absolute bottom-3 right-3.5 flex items-center gap-1"
+        className="absolute bottom-2.5 right-3.5 flex items-center gap-1"
         onPointerDown={(e) => e.stopPropagation()}
       >
         <button
@@ -73,7 +74,7 @@ export function PipelineCard({ card, stage }: PipelineCardProps) {
             fill={favorited ? "currentColor" : "none"}
           />
         </button>
-        <DeleteJobButton slug={card.id} jobTitle={card.title} />
+        <DeleteJobButton slug={card.id} jobTitle={card.title} onDeleted={() => onDeleted?.(card.id)} />
       </div>
 
       {/* Row 1: Title + match score */}
@@ -141,7 +142,7 @@ export function PipelineCard({ card, stage }: PipelineCardProps) {
             href={safeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-accent hover:text-accent-hover transition-colors"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-medium hover:bg-emerald-600 transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             Apply

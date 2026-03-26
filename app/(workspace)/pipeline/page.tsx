@@ -25,7 +25,9 @@ export default async function PipelinePage() {
         id: job.slug,
         title: fm.title,
         company: fm.company,
-        appliedDate: fm.discovered_at || null,
+        appliedDate: fm.discovered_at
+          ? new Date(fm.discovered_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+          : null,
         nextAction: null,
         matchScore: fm.match_score ?? null,
         matchBreakdown: breakdown,

@@ -7,15 +7,19 @@ import { deleteJobAction } from "@/app/actions/jobs"
 interface DeleteJobButtonProps {
   slug: string
   jobTitle: string
+  onDeleted?: () => void
 }
 
-export function DeleteJobButton({ slug, jobTitle }: DeleteJobButtonProps) {
+export function DeleteJobButton({ slug, jobTitle, onDeleted }: DeleteJobButtonProps) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   const handleDelete = () => {
     startTransition(async () => {
-      await deleteJobAction(slug)
+      const result = await deleteJobAction(slug)
+      if (!result.error) {
+        onDeleted?.()
+      }
       setShowConfirm(false)
     })
   }
